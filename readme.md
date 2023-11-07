@@ -1,12 +1,13 @@
 If you use this template for research, please [cite it](template_reference.bib):
 > Kedron, P., & Holler, J. (2023). Template for Reproducible and Replicable Research in Human-Environment and Geographical Sciences. https://doi.org/10.17605/OSF.IO/W29MQ
 
-# Title of Study
+# Replication of Brodie et al. 2023
 
 ## Contributors
 
-- First Name Last Name\*, email address, @githubname, ORCID link, affiliated institution(s)
-- First Name Last Name, email address, @githubname, ORCID link, affiliated institution(s)
+- Peter Kedron\*, peterkedron@ucsb.edu, @Peter-Kedron, [0000-0002-1093-3416](https://orcid.org/0000-0002-1093-3416), University of California Santa Barbara
+- Lei Song, lsong@ucsb.edu, @githubname, ORCID link, University of California Santa Barbara
+- Amy Frazier, afrazier@ucsb.edu, ORCID link, University of California Santa Barbara
 
 \* Corresponding author and creator
 
@@ -16,9 +17,7 @@ Write a brief abstract about your research project.
 If the project is a reproduction or replication study, include the full citation with a statement
 This study is a *reproduction/replication* of:
 
-> citation to prior study
-
-A graphical abstract of the study could also be included as an image here.
+> Brodie JF, Mohd-Azlan J, Chen C, Wearn OR, Deith MCM, Ball JGC, Slade EM, Burslem DFRP, Teoh SW, Williams PJ, Nguyen A, Moore JH, Goetz SJ, Burns P, Jantz P, Hakkenberg CR, Kaszta ZM, Cushman S, Coomes D, Helmy OE, Reynolds G, Rodríguez JP, Jetz W, Luskin MS. Landscape-scale benefits of protected areas for tropical biodiversity. Nature. 2023 Aug;620(7975):807-812. doi: 10.1038/s41586-023-06410-z. Epub 2023 Aug 23. PMID: 37612395.
 
 ## Study Metadata
 
