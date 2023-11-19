@@ -1,0 +1,61 @@
+field name,explanation
+station,sampling site ID
+lat,in WGS84
+long,in WGS84
+country,self-explanatory
+elev,in m
+slope,in degrees
+TPI,topographic position index
+access,accessibility (see Deith & Brodie 2020; doi.org/10.1098/rspb.2019.2677)
+access_log10,log transformation of 'access'
+Hansen_recentloss,was the site recently deforested?
+bio01,bioclimatic variables from WorldClim
+bio02,bioclimatic variables from WorldClim
+bio03,bioclimatic variables from WorldClim
+bio04,bioclimatic variables from WorldClim
+bio05,bioclimatic variables from WorldClim
+bio06,bioclimatic variables from WorldClim
+bio07,bioclimatic variables from WorldClim
+bio08,bioclimatic variables from WorldClim
+bio09,bioclimatic variables from WorldClim
+bio10,bioclimatic variables from WorldClim
+bio11,bioclimatic variables from WorldClim
+bio12,bioclimatic variables from WorldClim
+bio13,bioclimatic variables from WorldClim
+bio14,bioclimatic variables from WorldClim
+bio15,bioclimatic variables from WorldClim
+bio16,bioclimatic variables from WorldClim
+bio17,bioclimatic variables from WorldClim
+bio18,bioclimatic variables from WorldClim
+bio19,bioclimatic variables from WorldClim
+bio20,bioclimatic variables from WorldClim
+bio21,bioclimatic variables from WorldClim
+bio22,bioclimatic variables from WorldClim
+bio23,bioclimatic variables from WorldClim
+bio24,bioclimatic variables from WorldClim
+bio25,bioclimatic variables from WorldClim
+bio26,bioclimatic variables from WorldClim
+bio27,bioclimatic variables from WorldClim
+bio28,bioclimatic variables from WorldClim
+bio29,bioclimatic variables from WorldClim
+bio30,bioclimatic variables from WorldClim
+bio31,bioclimatic variables from WorldClim
+bio32,bioclimatic variables from WorldClim
+bio33,bioclimatic variables from WorldClim
+bio34,bioclimatic variables from WorldClim
+bio35,bioclimatic variables from WorldClim
+PA,Is the site in a protected area?
+PA_size_km2,self-explanatory
+dist_to_PA,in km
+PA_year,year of designation
+utm_east,self-explanatory
+utm_north,self-explanatory
+asymptPD,asymptotically estimated phylogenetic diversity
+SR.mean,mean estimate species richness
+maxFRic,max observed functional richness
+rh_95_a0.pred,GEDI forest structure (see https://rcdata.nau.edu/geode_data/GEDIv002_L0204A_20190417to20220413_kriging/seasia/)
+pavd_0_5.pred,GEDI forest structure (see https://rcdata.nau.edu/geode_data/GEDIv002_L0204A_20190417to20220413_kriging/seasia/)
+pai_a0.pred,GEDI forest structure (see https://rcdata.nau.edu/geode_data/GEDIv002_L0204A_20190417to20220413_kriging/seasia/)
+fhd_pai_1m_a0.pred,GEDI forest structure (see https://rcdata.nau.edu/geode_data/GEDIv002_L0204A_20190417to20220413_kriging/seasia/)
+cover_a0.pred,GEDI forest structure (see https://rcdata.nau.edu/geode_data/GEDIv002_L0204A_20190417to20220413_kriging/seasia/)
+agbd_a0.pred,GEDI forest structure (see https://rcdata.nau.edu/geode_data/GEDIv002_L0204A_20190417to20220413_kriging/seasia/)
