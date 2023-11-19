@@ -5,3 +5,4 @@ Store raw data as collected or downloaded here if the data is suitable for publi
 - Files starting with `GEDI` is the GEDI tree structure layers.
 - Folder `protected_area` has database for protected areas.
 - Folder `training` has the raw csv files for the model training.
+
