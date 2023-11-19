@@ -18,6 +18,12 @@ Backup of *.doc*
 ~$*.xls*
 *.xlt
 
+# Ignore tif files
+*.tif
+
+# Ignore protected area folder
+data/raw/piublic/protected_area
+
 # Ignore common R files
 .Rproj.user
 .Rhistory
