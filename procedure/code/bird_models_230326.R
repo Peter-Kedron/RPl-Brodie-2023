@@ -1,3 +1,7 @@
+# Code download from https://doi.org/10.5281/zenodo.7796347
+# Modified by Lei Song (lsong@ucsb.edu)
+# Time: Nov 25, 2023
+
 # csv for the code:
 # https://figshare.com/articles/dataset/Data/22527295
 
@@ -83,6 +87,30 @@ m53<-mean(dat$fhd_pai_1m_a0.pred,na.rm=T); s53<-sd(dat$fhd_pai_1m_a0.pred,na.rm=
 m55<-mean(dat$cover_a0.pred,na.rm=T); s55<-sd(dat$cover_a0.pred,na.rm=T); dat$cover_a0.pred.z<-(dat$cover_a0.pred-m55)/s55
 m60<-mean(dat$agbd_a0.pred,na.rm=T); s60<-sd(dat$agbd_a0.pred,na.rm=T); dat$agbd_a0.pred.z<-(dat$agbd_a0.pred-m60)/s60
 
+######################################################################################
+# It is not wise to remove NA with all these non-used columns, so ignore these lines #
+# Subset of data
+# d1 <- dat
+# d1 <- subset(d1, select = -c(PA_cat, dist_to_PA.z, PA_edge_effect.z))
+# d1 <- d1[complete.cases(d1), ]
+######################################################################################
+
+######################### Exploratory analysis ###############################
+#----- Find the best GEDI variable
+# t1 <- lm(asymptPD ~ rh_95_a0.pred.z, data = d1)
+# t2 <- lm(asymptPD ~ pavd_0_5.pred.z, data = d1)
+# t3 <- lm(asymptPD ~ pai_a0.pred.z, data = d1)
+# t4 <- lm(asymptPD ~ fhd_pai_1m_a0.pred.z, data = d1)
+# t5 <- lm(asymptPD ~ cover_a0.pred.z, data = d1)
+# t6 <- lm(asymptPD ~ agbd_a0.pred.z, data = d1)
+# AIC(t1)
+# AIC(t2)
+# AIC(t3)
+# AIC(t4) 
+# AIC(t5) 
+# AIC(t6)
+##############################################################################
+
 ############################################################################################################
 ################################## LINEAR MODELS ###########################################################
 ############################################################################################################
@@ -90,6 +118,7 @@ m60<-mean(dat$agbd_a0.pred,na.rm=T); s60<-sd(dat$agbd_a0.pred,na.rm=T); dat$agbd
 d1 <- dat
 d1$gedi.m <- d1$rh_95_a0.pred.z 
 d1$understory.m <- d1$pavd_0_5.pred.z
+d1 <- subset(d1, Hansen_recentloss == 0)
 
 ############################################################################################################
 #--------------------------- PD (phylogenetic diversity) ----------------------------------------------------------------------------
@@ -106,7 +135,6 @@ d1b <- subset(d1b, station != "L6127181")
 d1b <- subset(d1b, station != "L3865754")
 
 # Question: what is the rationality to include spatial coordinate? 
-d1b$PA <- as.factor(d1b$PA)
 d1b <- d1b %>% select(y, PA, country, utm_east, utm_north, utm_east.z, utm_north.z, gedi.m, access_log10.z, HDI.z)
 d1b <- d1b[complete.cases(d1b), ]
 matchb <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
@@ -135,7 +163,6 @@ d3b <- subset(d3b, station != "L3846512")
 d3b <- subset(d3b, station != "L2129865")
 d3b <- subset(d3b, station != "L3267752")
 
-d3b$PA <- as.factor(d3b$BigPA)
 d3b <- d3b %>% select(y, BigPA, dist_to_PA.z, PA_size_km2.z, country, utm_east, utm_north, utm_east.z, utm_north.z, gedi.m, access_log10.z, HDI.z)
 d3b <- d3b[complete.cases(d3b), ]
 
@@ -165,7 +192,6 @@ mm02b <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseTo
 	data = dmatch, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 summary(mm02b)
 
-
 ########## Below are repeat code for FR and SR ##################
 
 ############################################################################################################
@@ -179,6 +205,8 @@ d1b <- subset(d1b, station != "L921125")
 d1b <- subset(d1b, station != "L2422371")
 d1b <- subset(d1b, station != "L4331944")
 d1b <- subset(d1b, station != "L13465594")
+d1b <- d1b %>% select(y, PA, country, utm_east, utm_north, utm_east.z, utm_north.z, gedi.m, access_log10.z, HDI.z)
+d1b <- d1b[complete.cases(d1b), ]
 matchb <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
 	data = d1b, method = "full", distance = "glm", link = "probit", replace = F)
 dmatchb <- match.data(matchb)
@@ -188,8 +216,6 @@ summary(mm02b)
 
 #----- Outside PAs - 'PA size' effect - Matched -----
 d3 <- subset(d1, PA == 0)
-tmp <- subset(dat1, select = c(station, dist_to_PA.z))
-d3 <- left_join(d3, tmp, by = "station")
 d3$PA_size_km2 <- (d3$PA_size_km2.z * s44) + m44
 PA_size_threshold.z <- (500 - m44) / s44
 d3$BigPA <- ifelse(d3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
@@ -203,6 +229,8 @@ d3b <- subset(d3b, station != "L3267752")
 d3b <- subset(d3b, station != "L4331944")
 d3b <- subset(d3b, station != "L13465594")
 d3b <- subset(d3b, station != "L1084299")
+d3b <- d3b %>% select(y, BigPA, dist_to_PA.z, PA_size_km2.z, country, utm_east, utm_north, utm_east.z, utm_north.z, gedi.m, access_log10.z, HDI.z)
+d3b <- d3b[complete.cases(d3b), ]
 matchb <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
 	dist_to_PA.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
@@ -217,6 +245,8 @@ PA_dist_threshold <- 2 # threshold distance (km)
 d3b$CloseToPA <- ifelse(d3b$dist_to_PA > PA_dist_threshold, 0, 1)
 
 #--- Matched dataset
+d3b <- d3b %>% select(y, CloseToPA, PA_size_km2.z, country, utm_east, utm_north, utm_east.z, utm_north.z, gedi.m, access_log10.z, HDI.z)
+d3b <- d3b[complete.cases(d3b), ]
 match2 <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
 	PA_size_km2.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
@@ -241,6 +271,8 @@ d1b <- subset(d1b, station != "L1122096")
 d1b <- subset(d1b, station != "L7010824")
 d1b <- subset(d1b, station != "L3865754")
 d1b <- subset(d1b, station != "L3776738")
+d1b <- d1b %>% select(y, PA, country, utm_east, utm_north, utm_east.z, utm_north.z, gedi.m, access_log10.z, HDI.z)
+d1b <- d1b[complete.cases(d1b), ]
 matchb <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
 	data = d1b, method = "full", distance = "glm", link = "probit", replace = F)
 dmatchb <- match.data(matchb)
@@ -250,12 +282,9 @@ summary(mm02b)
 
 #----- Outside PAs - 'PA size' effect - Matched -----
 d3 <- subset(d1, PA == 0)
-tmp <- subset(dat1, select = c(station, dist_to_PA.z))
-d3 <- left_join(d3, tmp, by = "station")
 d3$PA_size_km2 <- (d3$PA_size_km2.z * s44) + m44
 PA_size_threshold.z <- (500 - m44) / s44
 d3$BigPA <- ifelse(d3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
-
 
 #--- Matched dataset
 d3b <- d3
@@ -264,6 +293,8 @@ d3b <- subset(d3b, station != "L4225511")
 d3b <- subset(d3b, station != "L5624588")
 d3b <- subset(d3b, station != "L3321319")
 d3b <- subset(d3b, station != "L14087870")
+d3b <- d3b %>% select(y, BigPA, dist_to_PA.z, PA_size_km2.z, country, utm_east, utm_north, utm_east.z, utm_north.z, gedi.m, access_log10.z, HDI.z)
+d3b <- d3b[complete.cases(d3b), ]
 matchb <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
 	dist_to_PA.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
