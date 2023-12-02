@@ -30,7 +30,7 @@ library(cowplot)
 library(here)
 
 ###################### Package related to methodology ########################
-# who would name a package with their own name??
+# who would name a package with their own name?? # good point
 # functions for data cleaning, processing, analysis
 library(Hmisc) 
 # https://kosukeimai.github.io/MatchIt/
@@ -47,8 +47,51 @@ library(nlme)
 # for tests in Linear Mixed Effects Models
 library(lmerTest) # not used
 library(dplyr)
+library(dagitty) # for drawing the directed acyclic graph (DAG)
+library(ggdag) # for drawing dag
 
 setwd(here('data/raw/public/training')) 
+
+#--------------------------- DRAW DAG ---------------------------------------------------
+dagBrodie <- dagitty("dag {
+  PA -> Diversity
+  Connectivity -> Diversity
+  ForestStructure -> PA
+  SiteAccessibility -> PA
+  Bioclimate -> ForestStructure -> PA ->   Diversity
+  Bioclimate -> UnderstoryDensity -> Diversity
+  Bioclimate -> Diversity
+  Elevation -> Bioclimate
+  Elevation -> ForestStructure
+  Elevation -> UnderstoryDensity
+  Elevation -> SiteAccessibility
+  Topography -> UnderstoryDensity
+  Topography -> ForestStructure
+  Topography -> SiteAccessibility
+  Topography -> Diversity
+  HDI -> Diversity
+               }")
+plot(graphLayout(dagBrodie))
+
+
+coordinates( dagBrodie ) <-  list(
+    x=c(Diversity = 3, UnderstoryDensity = 1, ForestStructure = 2, PA = 3, SiteAccessibility = 4, HDI = 5, Bioclimate = 2, Elevation = 3, Topography = 4, Connectivity = 6),
+    y=c(Diversity = 3, UnderstoryDensity = 2, ForestStructure = 2, PA = 2, SiteAccessibility = 2, HDI = 2, Bioclimate = 1, Elevation = 1, Topography = 1, Connectivity = 2))
+plot(dagBrodie)
+
+exposures(dagBrodie) <- c("PA")
+outcomes(dagBrodie) <- c("Diversity")
+isAdjustmentSet(dagBrodie, c("Connectivity"))
+
+theme_set(theme_dag())
+tidy_dagBrodie <- tidy_dagitty(dagBrodie)
+ggdag(tidy_dagBrodie,text_size=3,node_size = 10,edge_type="link",node=F,text_col="Black") +
+    theme_dag()
+
+#This shows you what needs to be adjusted
+ggdag_adjustment_set(tidy_dagBrodie, node_size = 20, text_col = "black") + 
+    theme(legend.position = "bottom")
+
 
 #--------------------------- LOAD DATA ---------------------------------------------------
 # Hmm... The file they shared not the same as the one they used here.
