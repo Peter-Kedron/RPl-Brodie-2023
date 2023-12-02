@@ -81,6 +81,7 @@ pas_conn <- function(pas, pts, template, buffer_size = 0.083, max_dist = 10){
     # now the code uses `touches == TRUE` for rasterization to use all polygons
     
     # Calculate
+    # wenxin: I think this is max_dist here because 10 km is already the median dispersal distance
     k <- -log(0.5) / (max_dist / 2)
     
     metrics <- pbmclapply(unique(pts$station), function(sta_id){
