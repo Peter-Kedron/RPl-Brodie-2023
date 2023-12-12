@@ -17,13 +17,6 @@
 ##  They did not share the code, but they share the final training dataset used
 ##  for the code
 
-# - Structural causal modelling
-##  I think they just use this as a conceptual tool to select variables
-##  So maybe no code at all.
-
-# - Linear mixed-effects modelling and propensity score matching
-##  The code they shared
-
 # Load Packages and Set Working Directory --------------------------------------
 
 # Load data manipulation and visualization packages
@@ -41,6 +34,11 @@ library(MatchIt)  # matching for covariate balance in observational studies
 library(optmatch)  # optimal full matching algorithm, for propensity score matching
 library(nlme)  # linear mixed-effect modelling
 
+# load packages and dependencies as of 2023-12-05
+library(groundhog)
+pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
+          "MatchIt", "optmatch", "nlme")
+groundhog.library(pkgs, "2023-12-05")
 
 # Set working directory
 setwd(here('data/raw/public/training')) 
@@ -119,9 +117,9 @@ ggdag_adjustment_set(tidy_dagBrodie,
 # ------------------------------------------------------------------------------
 # Lei - Hmm... The file they shared not the same as the one they used here.
 
-# Deviation 1: The data file shared by the original authors did not include a
+# Deviation 1: The data file shared by the original authors did not include the
 # human development index (HDI) measure. Following the in-text description we 
-# assigned each station the HDI of it country.
+# assigned each station the HDI of its country.
 
 # Clarification 1: Brodie et al. identified two GEDI-based measures of forest 
 # structure as the best fit for their diversity data. We follow their procedure, 
@@ -211,20 +209,22 @@ dat_clean <- subset(dat, Hansen_recentloss == 0)
 
 # Linear Mixed Effects Model of PA Efficacy ------------------------------------
 
-# Lei - Hmm...Remove, based on what justification?
-### Peter - There is no statistical justification in the paper, but high 
-### leverage outliers are typically removed because they exert undue control on 
-### The regression estimates. Brodie et al. identified outlier using the 
-### hatvalue function. We should run the analysis with their outlier set remove, 
-### but also # run the hatvalues analysis to identify the outliers for our 
-### particular specification thereby mirroring their procedure.
-
-dat_clean$y <- dat_clean$asymptPD
+# Extension 1: We introduce an interaction term to assess the moderating effect
+# of PA connectivity on the effect of PA status on biodiversity
 
 # Replicate data frame for PD sub-analysis
 dat_PD_efficacy <- dat_clean
 
 # Remove high-leverage outliers identified by Brodie et al. 
+
+# Lei - Hmm...Remove, based on what justification?
+### Peter - There is no statistical justification in the paper, but high 
+### leverage outliers are typically removed because they exert undue control on 
+### The regression estimates. Brodie et al. identified outlier using the 
+### hatvalue function. We should run the analysis with their outlier set 
+### removed, but also run the hatvalues analysis to identify the outliers for  
+### our particular specification thereby mirroring their procedure.
+
 PD_efficacy_outliers <- c("L2422371", "L3776738", "L2521761", "L6127181", 
                              "L3865754")
 dat_PD_efficacy <- dat_PD_efficacy[! dat_PD_efficacy$station %in% 
@@ -234,6 +234,7 @@ dat_PD_efficacy <- dat_PD_efficacy[! dat_PD_efficacy$station %in%
 # Lei - Question: what is the rationality to include spatial coordinate?
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis
+
 dat_PD_efficacy <- dat_PD_efficacy %>% select(asymptPD, PA, country, utm_east, 
                           utm_north, utm_east.z, utm_north.z, forest_structure, 
                           access_log10.z, HDI.z)
@@ -256,11 +257,14 @@ mod_PD_efficacy <- lme(asymptPD ~ forest_structure + access_log10.z
                                                   nugget = TRUE))
 summary(mod_PD_efficacy) 
 
+# Peter - we may want to introduce a spatial autocorrelation check of the model 
+# residuals
+
 # Run linear mixed effect model with the addition of connectivity moderator
 
 # Peter - equation set up is the same, but we will add the interaction terms 
 # + conn + conn:PA. that formulation is less efficient that conn*PA, but it 
-# makes all the terms in the formula explicit and easier to read
+# makes all the terms in the formula explicit and easier to read.
 
 mod_PD_efficacy_conn <- lme(asymptPD ~ forest_structure + access_log10.z 
                              + HDI.z + PA, random = list(~1 | country), 
@@ -356,14 +360,17 @@ mod_PD_dist <- lme(asymptPD ~ forest_structure + access_log10.z + HDI.z +
                                         nugget = TRUE))
 summary(mod_PD_dist)
 
-
+# Peter - repeat the model above with the connectivity metrics included if we 
+# think this is an analysis we wish to pursue
 
 
 ########## Below are repeat code for FR and SR ##################
 # ----------------- Analysis of Functional Richness (FR) -----------------------
 
 # Linear Mixed Effects Model of PA Efficacy ------------------------------------
+
 # Peter changed naming so dat_clean == d1 in old code
+
 d1$y <- d1$maxFR # no such variable in the csv, only maxFRic, not fully sure if they are the same
 
 #----- All sites - PA effect - Matched -----
