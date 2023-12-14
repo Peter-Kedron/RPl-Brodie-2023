@@ -1,38 +1,33 @@
-# Adapted from code download from https://doi.org/10.5281/zenodo.7796347
+# Adapted from Brodie et al. (2023) 
+# Code downloaded from: https://doi.org/10.5281/zenodo.7796347
+# Data downloaded from: https://figshare.com/articles/dataset/Data/22527295
+#
 # Modified by Lei Song (lsong@ucsb.edu), Peter Kedron (peter.kedron@ucsb.edu)
-# Time: Dec 12, 2023
+# Last updated: Dec 13, 2023
+#
+# Comments on original code and modifications:----------------------------------
+# 
+# Issue 1: The author provided data file did not include several variables used 
+#          in the analysis. We corrected the data file following the description
+#          of data construction provided in the published article. 
+#
+# Issue 2: While measures of the response variables PD, FR, and SR were provided 
+#          in the data file, how these variables were constructed is not 
+#          described. Moreover, the original data used to produce these 
+#          variables was not available, which limited their evaluation. 
+#
+# Issue 3: Procedures to construct the predictor variables forest structure and
+#          understory density were not provided. Only the final values were 
+#          provided. Original GEDI can be tracked down online, but cannot be 
+#          used to construct the predictor variables.
+# 
+# Issue 4: The authors did not base the standardization of their predictors in 
+#          the spillover analyses on the subsets of data used in those analyses. 
+#          Rather the standardization from the full data set was carried into 
+#          these analyses.
 
-# csv for the code:
-# https://figshare.com/articles/dataset/Data/22527295
-
-# Author Comments:
-# - Species observations, trait data and phylogeny construction
-##  Data source and pre-cleaning are described clear in the main text.
-##  PD calculation is described very vague and they did not share any code.
-
-# - Variables
-##  I think we could have all independent variables.
-
-# - Diversity estimation
-##  They did not share the code, but they share the final training dataset used
-##  for the code
 
 # Load Packages and Set Working Directory --------------------------------------
-
-# Load data manipulation and visualization packages
-library(tidyverse)
-library(cowplot)
-library(here)
-
-# Load packages to construct directed acyclic graphs (DAG)
-library(dagitty)  # consruct and draw DAGs 
-library(ggdag)  # manipulate DAG visulaization
-
-# Load analysis packages
-library(Hmisc)  # functions for data cleaning, processing, analysis
-library(MatchIt)  # matching for covariate balance in observational studies
-library(optmatch)  # optimal full matching algorithm, for propensity score matching
-library(nlme)  # linear mixed-effect modelling
 
 # load packages and dependencies as of 2023-12-05
 library(groundhog)
@@ -115,8 +110,6 @@ ggdag_adjustment_set(tidy_dagBrodie,
 # ------------------------------------------------------------------------------
 # Process Data and Construct Variables
 # ------------------------------------------------------------------------------
-# Lei - Hmm... The file they shared not the same as the one they used here.
-
 # Deviation 1: The data file shared by the original authors did not include the
 # human development index (HDI) measure. Following the in-text description we 
 # assigned each station the HDI of its country.
@@ -126,7 +119,7 @@ ggdag_adjustment_set(tidy_dagBrodie,
 # but clarify the mapping of measure to concepts by matching variable names to 
 # those used in the structural causal modelling
 
-# Extension 1: We introduce X measures of station to PA connectivity, calculated
+# Extension 1: We introduce 2 measures of station to PA connectivity, calculated
 # following the procedures defined in calc_conn_metrics.R.
 
 
@@ -165,13 +158,8 @@ dat <- dat_brodie %>% select(station, country, PA, utm_east, utm_north,
 # dat <- left_join(dat, data_conn_metrics, by = "station")
 
 # Scale subset of continuous variables in dat
-# Lei - Drive me nut. The commented out variables are missing in the csv. 
-### Peter deleted because these variables are also not used in the subsequent 
-### analysis.
-
 # Peter - Need to add the connectivity measures to the scaling list when they 
 # are introduced
-
 dat_scale <- data.frame(scale(subset(dat, select = c("utm_east", "utm_north", 
                                                      "HDI", "access_log10", 
                                                      "PA_size_km2", 
@@ -212,18 +200,17 @@ dat_clean <- subset(dat, Hansen_recentloss == 0)
 # Extension 1: We introduce an interaction term to assess the moderating effect
 # of PA connectivity on the effect of PA status on biodiversity
 
+# Modification: We may attempt to match without the lat long coordinates 
+# included in the probit model.
+
 # Replicate data frame for PD sub-analysis
 dat_PD_efficacy <- dat_clean
 
 # Remove high-leverage outliers identified by Brodie et al. 
-
-# Lei - Hmm...Remove, based on what justification?
-### Peter - There is no statistical justification in the paper, but high 
-### leverage outliers are typically removed because they exert undue control on 
-### The regression estimates. Brodie et al. identified outlier using the 
-### hatvalue function. We should run the analysis with their outlier set 
-### removed, but also run the hatvalues analysis to identify the outliers for  
-### our particular specification thereby mirroring their procedure.
+### Brodie et al. identified outlier using the hatvalue function. We should run 
+### the analysis with their outlier set removed, but also run the hatvalues 
+### analysis to identify the outliers for our particular specification thereby 
+### mirroring their procedure.
 
 PD_efficacy_outliers <- c("L2422371", "L3776738", "L2521761", "L6127181", 
                              "L3865754")
@@ -231,7 +218,6 @@ dat_PD_efficacy <- dat_PD_efficacy[! dat_PD_efficacy$station %in%
                                      PD_efficacy_outliers, ]
 
 # Select variables for analysis and restrict to rows with complete values 
-# Lei - Question: what is the rationality to include spatial coordinate?
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis
 
@@ -261,26 +247,21 @@ summary(mod_PD_efficacy)
 # residuals
 
 # Run linear mixed effect model with the addition of connectivity moderator
-
 # Peter - equation set up is the same, but we will add the interaction terms 
 # + conn + conn:PA. that formulation is less efficient that conn*PA, but it 
 # makes all the terms in the formula explicit and easier to read.
 
-mod_PD_efficacy_conn <- lme(asymptPD ~ forest_structure + access_log10.z 
-                             + HDI.z + PA, random = list(~1 | country), 
-                             data = dat_matched_PD, weights = ~I(1/weights), 
-                             correlation = corExp(form = ~utm_east + utm_north, 
-                                                  nugget = TRUE))
-summary(mod_PD_efficacy_conn) 
-
 
 # Linear Mixed Effects Model of PA Size Spillovers -----------------------------
+
+# Modification: We will re-standardize the predictor variables after subset for
+# each of the two spillover analyses, rather than just carrying through the 
+# universal standardization.
 
 # Subset dataset to stations outside of PA
 dat_PA_size <- subset(dat_clean, PA==0)
 
 # Label nearest PA that are above a 500km2 size threshold as large PA
-# Peter -  I used the mean and sd of the overall dataset following Brodie
 PA_size_threshold.z <- (500 - mean(dat_clean$PA_size_km2)) / 
                         sd(dat_clean$PA_size_km2)
 dat_PA_size$BigPA <- ifelse(dat_PA_size$PA_size_km2.z < PA_size_threshold.z, 
@@ -324,10 +305,11 @@ summary(mod_PD_size)
 
 # Linear Mixed Effects Model of PA Distance Spillovers -----------------------------
 
+# Modification: We will re-standardize the predictor variables after subset for
+# each of the two spillover analyses, rather than just carrying through the 
+# universal standardization.
+
 # Label nearest PA that are > 2km  size threshold as large PA
-# Peter -  I used the mean and sd of the overall dataset following Brodie. 
-# Interesting too that Brodie did not subset for distance outliers, instead
-# using the subset from the spillover size analysis
 dat_PD_spill$CloseToPA <- ifelse(d3b$dist_to_PA > 2, 0, 1)
 
 # Select variables for analysis and restrict to rows with complete values 
@@ -335,8 +317,6 @@ dat_PD_spill$CloseToPA <- ifelse(d3b$dist_to_PA > 2, 0, 1)
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis.
 
-# Peter - This code seems a bit odd because almost all of this selection was 
-# already done above. I think you are just removing the dist variable.
 dat_PD_spill <- dat_PD_spill %>% select(asymptPD, CloseToPA, PA_size_km2.z, 
                                         country, utm_east, utm_north, 
                                         utm_east.z, utm_north.z, 
@@ -346,7 +326,7 @@ dat_PD_spill <- dat_PD_spill[complete.cases(dat_PD_spill), ]
 # Perform propensity score matching again following the DAG
 match_dist <- matchit(CloseToPA ~ utm_north.z + utm_east.z + forest_structure 
                                   + access_log10.z + HDI.z + PA_size_km2.z, 
-                      data = d3b, method = "full", distance = "glm", 
+                      data = dat_PD_spill, method = "full", distance = "glm", 
                       link = "probit", replace = F)
 dat_matched_dist <- match.data(match_dist)
 
