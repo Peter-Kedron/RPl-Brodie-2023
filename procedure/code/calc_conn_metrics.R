@@ -1,13 +1,37 @@
+## -------------------------------------------------------------------
+## Script name: calc_conn_metrics
+## Purpose of script: Calculate connectivity metrics in different ways.
+## Author: Lei Song
+## Date Created: 2023-12-14
+## Email: lsong@ucsb.edu
+
+## Usage
+## Rscript path/to/calc_conn_metrics.R --src_dir data/raw/public 
+## --dst_path path/for/result.csv
+## -------------------------------------------------------------------
+
 # Load libraries
 library(sf)
 library(dplyr)
 library(terra)
 library(stringr)
-library(pbmcapply)
+library(pbapply)
+library(optparse)
 sf_use_s2(FALSE) # deal with buffering odd
 
-# Directories
-src_dir <- "data/raw/public"
+# Command line inputs
+option_list <- list(
+    make_option(c("-s", "--src_dir"), 
+                action = "store", default = "data/raw/public", type = 'character',
+                help = "The source directory for reading data [default %default]."),
+    make_option(c("-d", "--dst_dir"), 
+                action = "store", default = 'data/derived/public', type = 'character',
+                help = paste0("The path to save the csv [default %default].")))
+opt <- parse_args(OptionParser(option_list = option_list))
+
+# Directories and paths
+src_dir <- opt$src_dir
+dst_dir <- opt$dst_dir
 
 # Read samples and raster template
 fnames <- list.files(file.path(src_dir, "training"), full.names = TRUE)
@@ -24,9 +48,10 @@ template <- rast(
 values(template) <- 1:ncell(template)
 
 # Get WDPA, too lazy so just download the gdb and put it in the right place
-st_layers(
-    file.path(src_dir, "protected_area", "WDPA_WDOECM_Nov2023_Public_AS",
-              "WDPA_WDOECM_Nov2023_Public_AS.gdb"))
+## Check available layers
+# st_layers(
+#     file.path(src_dir, "protected_area", "WDPA_WDOECM_Nov2023_Public_AS",
+#               "WDPA_WDOECM_Nov2023_Public_AS.gdb"))
 pas <- read_sf(
     file.path(src_dir, "protected_area", "WDPA_WDOECM_Nov2023_Public_AS",
               "WDPA_WDOECM_Nov2023_Public_AS.gdb"),
@@ -38,7 +63,7 @@ pas <- pas %>%
                        "SGP", "THA", "VDR", "SVR", "BRN")) %>% 
     select(WDPAID, NAME, REP_AREA, GIS_AREA, REP_M_AREA, GIS_M_AREA) %>% 
     rename(Geometry = SHAPE) %>% 
-    slice(unique(unlist(st_intersects(st_as_sfc(st_bbox(template)), .)))) %>% 
+    slice(unique(unlist(suppressMessages(st_intersects(st_as_sfc(st_bbox(template)), .))))) %>% 
     mutate(id = 1:nrow(.))
 
 # Split MULTIPOLYGON to POLYGONS because each segment should be treated independently
@@ -60,12 +85,17 @@ pts_clean <- extract(template, pts, cells = TRUE, bind = TRUE) %>%
 # Points inside of PA could (both are ecologically meaningful):
 # - the distance of this points to other surrounding PAs.
 # - or the boundary distance between the PA having this point and other PAs.
-pas_conn <- function(pas, pts, template, buffer_size = 0.083, max_dist = 10){
+pas_conn <- function(pas, pts, template, 
+                     med_dist = 10,
+                     # roughly 5 times, the flux is around 0.0#
+                     buffer_size = 0.00833 * 5 * med_dist,
+                     dst_path = NULL){
     # pas has two layers: first is the index of PAs, the second is the area
     # pts is a sf of points to process, at least have column station
     # template: grid template
-    # buffer_size is the buffer size in right unit, e.g. degree or meter
-    # max_dist is the maximum dispersal distance in km
+    # med_dist is the median dispersal distance in KM.
+    # buffer_size is the buffer size in RIGHT unit, e.g. degree or meter
+    # dst_path: the path to save result
     
     # result
     # flux_ptg: flux for point to polygons
@@ -82,13 +112,12 @@ pas_conn <- function(pas, pts, template, buffer_size = 0.083, max_dist = 10){
     
     # Calculate
     # wenxin: I think this is max_dist here because 10 km is already the median dispersal distance
-    k <- -log(0.5) / (max_dist / 2)
+    k <- -log(0.5) / (med_dist)
     
-    metrics <- pbmclapply(unique(pts$station), function(sta_id){
-        message(sta_id)
+    metrics <- do.call(rbind, pblapply(unique(pts$station), function(sta_id){
         # Get involved polygons
         pts_this <- pts %>% filter(station == sta_id)
-        pas_included <- st_intersection(st_buffer(pts_this, buffer_size), pas)
+        pas_included <- suppressMessages(st_intersection(st_buffer(pts_this, buffer_size), pas))
         
         # Calculate the metrics
         if (nrow(pas_included) > 0){
@@ -99,7 +128,7 @@ pas_conn <- function(pas, pts, template, buffer_size = 0.083, max_dist = 10){
             awf_ptg <- sum(exp(- k * dists) * as.numeric(pas_included$REP_AREA))
             
             ## Check if this point is inside of a PA
-            id_pfp <- unlist(st_intersects(pts_this, pas_included))
+            id_pfp <- unlist(suppressMessages(st_intersects(pts_this, pas_included)))
             
             if(length(id_pfp) > 0){
                 # PA point
@@ -174,10 +203,25 @@ pas_conn <- function(pas, pts, template, buffer_size = 0.083, max_dist = 10){
                        flux_rst_ptp = 0, awf_rst_ptp = 0,
                        flux_rst_ptp2 = 0, awf_rst_ptp2 = 0)
         }
-    }, mc.cores = detectCores()) %>% bind_rows()
+    }))
+    
+    # add common parameters
+    metrics <- metrics %>% mutate(buffer_size = buffer_size, med_dist = med_dist)
+    
+    # save out
+    if (!is.null(dst_path)){
+        write.csv(metrics, dst_path, row.names = FALSE)
+    }
     
     # return
-    metrics %>% mutate(buffer_size = buffer_size, max_dist = max_dist)
+    metrics
 }
 
-conn_metrics <- pas_conn(pas, pts, template, buffer_size = 0.083, max_dist = 10)
+# Calculate and save out the result
+conn_metrics <- do.call(
+    rbind, lapply(c(1, 10, 30, 100), function(med_dist){
+        message(sprintf("Calculate flux for median dispersal distance: %s", med_dist))
+        pas_conn(pas, pts, template, med_dist = med_dist)
+    }))
+dst_path <- file.path(dst_dir, "conn_flux.csv")
+write.csv(conn_metrics, dst_path, row.names = FALSE)

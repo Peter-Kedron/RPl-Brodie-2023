@@ -20,7 +20,12 @@ dat <- data.frame(read.csv("mammal_data_230326.csv", header = T))
 names(dat)[names(dat) == "lat_wgs84"] <- "lat"
 names(dat)[names(dat) == "long_wgs84"] <- "long"
 
-# HDI
+# HDI, the same for birds
+# Reference:
+# Human Development Report 2020: The Next Frontier—Human Development and the 
+# Anthropocene (United Nations Development Programme, 2020).
+# website: https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
+# https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
 HDI <- data.frame(
     country = unique(dat$country), 
     HDI = c(0.803, 0.768, 0.800, 0.705, 0.939,  0.703))
