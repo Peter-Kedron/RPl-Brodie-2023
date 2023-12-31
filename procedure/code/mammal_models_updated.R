@@ -67,7 +67,7 @@ dagBrodie <- dagitty("dag {
   PA [exposure]
   Diversity [outcome]
                }"
-                     )
+)
 
 # Organize the data into a visual hierarchy
 coordinates( dagBrodie ) <-  list(x = c(Diversity = 3, 
@@ -104,7 +104,7 @@ isAdjustmentSet(dagBrodie, c("Connectivity"))
 ggdag_adjustment_set(tidy_dagBrodie, 
                      node_size = 20, 
                      text_col = "black"
-                     ) + theme(legend.position = "bottom")
+) + theme(legend.position = "bottom")
 
 
 # ------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ ggdag_adjustment_set(tidy_dagBrodie,
 rm(list = ls())
 
 # Load the data provided by Brodie et al. (2023)
-dat_brodie <- data.frame(read.csv("bird_data_230326.csv", header = T))
+dat_brodie <- data.frame(read.csv("mammal_data_230326.csv", header = T))
 
 # Simplify the variable names of site identifier and geographic coordinates
 names(dat_brodie)[names(dat_brodie) == "site"] <- "station"
@@ -146,12 +146,11 @@ grep("HDI", names(dat_brodie), value = TRUE)
 # https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
 dat_HDI <- data.frame(
     country = unique(dat_brodie$country), 
-    HDI = c(0.593, 0.768, 0.705, 0.607, 0.803, 0.939, 0.800, 
-            0.703, 0.829))
+    HDI = c(0.803, 0.768, 0.800, 0.705, 0.939,  0.703))
 dat_brodie <- left_join(dat_brodie, dat_HDI, by = "country")
 
 # Create dataframe containing the subset of variable used in the analysis
-dat <- dat_brodie %>% select(station, country, PA, utm_east, utm_north, 
+dat <- dat_brodie %>% select(station, study_area, country, PA, utm_east, utm_north, 
                              Hansen_recentloss,access_log10, HDI, dist_to_PA, 
                              PA_size_km2, rh_95_a0.pred, pavd_0_5.pred, 
                              pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
@@ -175,8 +174,8 @@ dat_scale <- data.frame(scale(subset(dat, select = c("utm_east", "utm_north",
                                                      "fhd_pai_1m_a0.pred", 
                                                      "cover_a0.pred", 
                                                      "agbd_a0.pred"), 
-                                     ), 
-                              center = TRUE, scale = TRUE))
+), 
+center = TRUE, scale = TRUE))
 
 # Append scaled variables to data with .z suffixes
 dat[paste0(names(dat_scale), '.z')] <- dat_scale
@@ -193,7 +192,6 @@ names(dat)[names(dat) == "pavd_0_5.pred.z"] <- "understory_density"
 # Hansen et al. (2013)
 dat_clean <- subset(dat, Hansen_recentloss == 0)
 
-
 # ------------------------------------------------------------------------------
 # Linear Mixed-Effects Modelling and Propensity Score Matching
 # ------------------------------------------------------------------------------
@@ -208,27 +206,27 @@ dat_clean <- subset(dat, Hansen_recentloss == 0)
 # Modification: We may attempt to match without the lat long coordinates 
 # included in the probit model.
 
+# ----------------- Analysis of phylogenetic diversity (PD) --------------------
+
+# Linear Mixed Effects Model of PA Efficacy ------------------------------------
+
+# Extension 1: We introduce an interaction term to assess the moderating effect
+# of PA connectivity on the effect of PA status on biodiversity
+
+# Modification: We may attempt to match without the lat long coordinates 
+# included in the probit model.
+
 # Replicate data frame for PD sub-analysis
 dat_PD_efficacy <- dat_clean
-
-# Remove high-leverage outliers identified by Brodie et al. 
-### Brodie et al. identified outlier using the hatvalue function. We should run 
-### the analysis with their outlier set removed, but also run the hatvalues 
-### analysis to identify the outliers for our particular specification thereby 
-### mirroring their procedure.
-
-PD_efficacy_outliers <- c("L2422371", "L3776738", "L2521761", "L6127181", 
-                          "L3865754")
-dat_PD_efficacy <- dat_PD_efficacy[! dat_PD_efficacy$station %in% 
-                                       PD_efficacy_outliers, ]
 
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis
 
-dat_PD_efficacy <- dat_PD_efficacy %>% select(asymptPD, PA, country, utm_east, 
-                          utm_north, utm_east.z, utm_north.z, forest_structure, 
-                          access_log10.z, HDI.z)
+dat_PD_efficacy <- dat_PD_efficacy %>% 
+    select(asymptPD, PA, study_area, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, forest_structure, 
+           access_log10.z, HDI.z)
 dat_PD_efficacy <- dat_PD_efficacy[complete.cases(dat_PD_efficacy), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -242,11 +240,11 @@ dat_matched_PD <- match.data(match_PD)
 # Run original Brodie linear mixed effects model with exponential spatial 
 # correlation structure for the residuals 
 mod_PD_efficacy <- lme(asymptPD ~ forest_structure + access_log10.z 
-                       + HDI.z + PA, random = list(~1 | country), 
+                       + HDI.z + PA, random = list(~1 | country, ~1 | study_area), 
                        data = dat_matched_PD, weights = ~I(1/weights), 
                        correlation = corExp(form = ~utm_east + utm_north, 
                                             nugget = TRUE))
-summary(mod_PD_efficacy) 
+summary(mod_PD_efficacy)
 
 # Peter - we may want to introduce a spatial autocorrelation check of the model 
 # residuals
@@ -268,28 +266,29 @@ dat_PA_size <- subset(dat_clean, PA==0)
 
 # Label nearest PA that are above a 500km2 size threshold as large PA
 PA_size_threshold.z <- (500 - mean(dat_clean$PA_size_km2)) / 
-                        sd(dat_clean$PA_size_km2)
+    sd(dat_clean$PA_size_km2)
 dat_PA_size$BigPA <- ifelse(dat_PA_size$PA_size_km2.z < PA_size_threshold.z, 
                             0, 1)
 
 # Remove high-leverage outliers identified by Brodie et al. 
-dat_PD_size_outliers <- c("L1084299", "L4225511", "L3846512", "L2129865", 
-                          "L3267752")
+dat_PD_size_outliers <- c("WM-OP009", "WM-HCV003", "C24A25", "C1A09", 
+                          "C1B12")
 dat_PD_spill <- dat_PA_size[! dat_PA_size$station %in% 
-                             dat_PD_size_outliers, ]
+                                dat_PD_size_outliers, ]
 
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis
-dat_PD_spill <- dat_PD_spill %>% select(asymptPD, BigPA, dist_to_PA.z, 
-                                      country, utm_east, 
-                                      utm_north, utm_east.z, utm_north.z, 
-                                      forest_structure, access_log10.z, HDI.z)
+dat_PD_spill <- dat_PD_spill %>% 
+    select(asymptPD, BigPA, dist_to_PA.z, 
+           study_area, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, 
+           forest_structure, access_log10.z, HDI.z)
 dat_PD_spill <- dat_PD_spill[complete.cases(dat_PD_spill), ]
 
 # Perform propensity score matching again following the DAG
 match_size <- matchit(BigPA ~ utm_north.z + utm_east.z + forest_structure + 
-                              access_log10.z + HDI.z + dist_to_PA.z, 
+                          access_log10.z + HDI.z + dist_to_PA.z, 
                       data = dat_PD_spill, method = "full", distance = "glm", 
                       link = "probit", replace = F)
 data_matched_size <- match.data(match_size)
@@ -297,16 +296,15 @@ data_matched_size <- match.data(match_size)
 # Run original Brodie linear mixed effects model with exponential spatial 
 # correlation structure for the residuals 
 mod_PD_size <- lme(asymptPD ~ forest_structure + access_log10.z + HDI.z + 
-                              dist_to_PA.z + BigPA, 
-                   random = list(~1 | country), data = data_matched_size, 
-                   weights = ~I(1/weights), 
+                       dist_to_PA.z + BigPA, 
+                   random = list(~1 | country, ~1 | study_area), 
+                   data = data_matched_size, weights = ~I(1/weights), 
                    correlation = corExp(form = ~utm_east + utm_north, 
                                         nugget = TRUE))
 summary(mod_PD_size)
 
 # Peter - repeat the model above with the connectivity metrics included if we 
 # think this is an analysis we wish to pursue
-
 
 # Linear Mixed Effects Model of PA Distance Spillovers -----------------------------
 
@@ -325,14 +323,14 @@ dat_PD_spill <- dat_PA_size[! dat_PA_size$station %in%
                                 dat_PD_size_outliers, ]
 
 dat_PD_spill <- dat_PD_spill %>% select(asymptPD, CloseToPA, PA_size_km2.z, 
-                                       country, utm_east, utm_north, 
+                                       study_area, country, utm_east, utm_north, 
                                        utm_east.z, utm_north.z, 
                                        forest_structure, access_log10.z, HDI.z)
 dat_PD_spill <- dat_PD_spill[complete.cases(dat_PD_spill), ]
 
 # Perform propensity score matching again following the DAG
 match_dist <- matchit(CloseToPA ~ utm_north.z + utm_east.z + forest_structure 
-                                  + access_log10.z + HDI.z + PA_size_km2.z, 
+                      + access_log10.z + HDI.z + PA_size_km2.z, 
                       data = dat_PD_spill, method = "full", distance = "glm", 
                       link = "probit", replace = F)
 dat_matched_dist <- match.data(match_dist)
@@ -340,9 +338,9 @@ dat_matched_dist <- match.data(match_dist)
 # Run original Brodie linear mixed effects model with exponential spatial 
 # correlation structure for the residuals 
 mod_PD_dist <- lme(asymptPD ~ forest_structure + access_log10.z + HDI.z + 
-                              PA_size_km2.z + CloseToPA, 
-                   random = list(~1 | country), data = dat_matched_dist, 
-                   weights = ~I(1/weights), 
+                       PA_size_km2.z + CloseToPA, 
+                   random = list(~1 | country, ~1 | study_area), 
+                   data = dat_matched_dist, weights = ~I(1/weights), 
                    correlation = corExp(form = ~utm_east + utm_north, 
                                         nugget = TRUE))
 summary(mod_PD_dist)
@@ -363,23 +361,13 @@ summary(mod_PD_dist)
 # Start over, replicate data frame for FR sub-analysis
 dat_FR_efficacy <- dat_clean
 
-# Remove high-leverage outliers identified by Brodie et al. 
-### Brodie et al. identified outlier using the hatvalue function. We should run 
-### the analysis with their outlier set removed, but also run the hatvalues 
-### analysis to identify the outliers for our particular specification thereby 
-### mirroring their procedure.
-
-FR_efficacy_outliers <- c("L921125", "L2422371", "L4331944", "L13465594")
-dat_FR_efficacy <- dat_FR_efficacy[! dat_FR_efficacy$station %in% 
-                                       FR_efficacy_outliers, ]
-
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis
 
 # No variable named maxFR in the csv, only maxFRic, not fully sure if they are the same
 dat_FR_efficacy <- dat_FR_efficacy %>% 
-    select(maxFRic, PA, country, utm_east, 
+    select(maxFRic, PA, study_area, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
            access_log10.z, HDI.z)
 dat_FR_efficacy <- dat_FR_efficacy[complete.cases(dat_FR_efficacy), ]
@@ -395,7 +383,7 @@ dat_matched_FR <- match.data(match_FR)
 # Run original Brodie linear mixed effects model with exponential spatial 
 # correlation structure for the residuals 
 mod_FR_efficacy <- lme(maxFRic ~ forest_structure + access_log10.z 
-                       + HDI.z + PA, random = list(~1 | country), 
+                       + HDI.z + PA, random = list(~1 | country, ~1 | study_area), 
                        data = dat_matched_FR, weights = ~I(1/weights), 
                        correlation = corExp(form = ~utm_east + utm_north, 
                                             nugget = TRUE))
@@ -426,18 +414,18 @@ dat_PA_size$BigPA <- ifelse(dat_PA_size$PA_size_km2.z < PA_size_threshold.z,
                             0, 1)
 
 # Remove high-leverage outliers identified by Brodie et al. 
-dat_FR_size_outliers <- c("L4225511", "L5969878", "L3267752", "L4331944", 
-                          "L13465594", "L1084299")
+dat_FR_size_outliers <- c("Bal013a", "Bal017a", "C1CT21")
 dat_FR_spill <- dat_PA_size[! dat_PA_size$station %in% 
                                 dat_FR_size_outliers, ]
 
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis
-dat_FR_spill <- dat_FR_spill %>% select(maxFRic, BigPA, dist_to_PA.z, 
-                                        country, utm_east, 
-                                        utm_north, utm_east.z, utm_north.z, 
-                                        forest_structure, access_log10.z, HDI.z)
+dat_FR_spill <- dat_FR_spill %>% 
+    select(maxFRic, BigPA, dist_to_PA.z, 
+           study_area, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, 
+           forest_structure, access_log10.z, HDI.z)
 dat_FR_spill <- dat_FR_spill[complete.cases(dat_FR_spill), ]
 
 # Perform propensity score matching again following the DAG
@@ -451,8 +439,8 @@ data_matched_size <- match.data(match_size)
 # correlation structure for the residuals 
 mod_FR_size <- lme(maxFRic ~ forest_structure + access_log10.z + HDI.z + 
                        dist_to_PA.z + BigPA, 
-                   random = list(~1 | country), data = data_matched_size, 
-                   weights = ~I(1/weights), 
+                   random = list(~1 | country, ~1 | study_area), 
+                   data = data_matched_size, weights = ~I(1/weights), 
                    correlation = corExp(form = ~utm_east + utm_north, 
                                         nugget = TRUE))
 summary(mod_FR_size)
@@ -479,7 +467,7 @@ dat_FR_spill <- dat_PA_size[! dat_PA_size$station %in%
 
 dat_FR_spill <- dat_FR_spill %>% 
     select(maxFRic, CloseToPA, PA_size_km2.z, 
-           country, utm_east, utm_north, 
+           study_area, country, utm_east, utm_north, 
            utm_east.z, utm_north.z, 
            forest_structure, access_log10.z, HDI.z)
 dat_FR_spill <- dat_FR_spill[complete.cases(dat_FR_spill), ]
@@ -495,8 +483,8 @@ dat_matched_dist <- match.data(match_dist)
 # correlation structure for the residuals 
 mod_FR_dist <- lme(maxFRic ~ forest_structure + access_log10.z + HDI.z + 
                        PA_size_km2.z + CloseToPA, 
-                   random = list(~1 | country), data = dat_matched_dist, 
-                   weights = ~I(1/weights), 
+                   random = list(~1 | country, ~1 | study_area), 
+                   data = dat_matched_dist, weights = ~I(1/weights), 
                    correlation = corExp(form = ~utm_east + utm_north, 
                                         nugget = TRUE))
 summary(mod_FR_dist)
@@ -514,23 +502,12 @@ summary(mod_FR_dist)
 # Replicate data frame for SR sub-analysis
 dat_SR_efficacy <- dat_clean
 
-# Remove high-leverage outliers identified by Brodie et al. 
-### Brodie et al. identified outlier using the hatvalue function. We should run 
-### the analysis with their outlier set removed, but also run the hatvalues 
-### analysis to identify the outliers for our particular specification thereby 
-### mirroring their procedure.
-
-SR_efficacy_outliers <- c("L4789498", "L921125", "L1122096", 
-                          "L7010824", "L3865754", "L3776738")
-dat_SR_efficacy <- dat_SR_efficacy[! dat_SR_efficacy$station %in% 
-                                       SR_efficacy_outliers, ]
-
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
 # so they are in place for our extended analysis
 
 dat_SR_efficacy <- dat_SR_efficacy %>% 
-    select(SR.mean, PA, country, utm_east, 
+    select(SR.mean, PA, study_area, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
            access_log10.z, HDI.z)
 dat_SR_efficacy <- dat_SR_efficacy[complete.cases(dat_SR_efficacy), ]
@@ -546,7 +523,7 @@ dat_matched_SR <- match.data(match_SR)
 # Run original Brodie linear mixed effects model with exponential spatial 
 # correlation structure for the residuals 
 mod_SR_efficacy <- lme(SR.mean ~ forest_structure + access_log10.z 
-                       + HDI.z + PA, random = list(~1 | country), 
+                       + HDI.z + PA, random = list(~1 | country, ~1 | study_area), 
                        data = dat_matched_SR, weights = ~I(1/weights), 
                        correlation = corExp(form = ~utm_east + utm_north, 
                                             nugget = TRUE))
@@ -577,7 +554,7 @@ dat_PA_size$BigPA <- ifelse(dat_PA_size$PA_size_km2.z < PA_size_threshold.z,
                             0, 1)
 
 # Remove high-leverage outliers identified by Brodie et al. 
-dat_SR_size_outliers <- c("L4225511", "L5624588", "L3321319", "L14087870")
+dat_SR_size_outliers <- c("Bal011", "C1CT50", "C24A25")
 dat_SR_spill <- dat_PA_size[! dat_PA_size$station %in% 
                                 dat_SR_size_outliers, ]
 
@@ -586,7 +563,7 @@ dat_SR_spill <- dat_PA_size[! dat_PA_size$station %in%
 # so they are in place for our extended analysis
 dat_SR_spill <- dat_SR_spill %>% 
     select(SR.mean, BigPA, dist_to_PA.z, 
-           country, utm_east, 
+           study_area, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, 
            forest_structure, access_log10.z, HDI.z)
 dat_SR_spill <- dat_SR_spill[complete.cases(dat_SR_spill), ]
@@ -602,8 +579,8 @@ data_matched_size <- match.data(match_size)
 # correlation structure for the residuals 
 mod_SR_size <- lme(SR.mean ~ forest_structure + access_log10.z + HDI.z + 
                        dist_to_PA.z + BigPA, 
-                   random = list(~1 | country), data = data_matched_size, 
-                   weights = ~I(1/weights), 
+                   random = list(~1 | country, ~1 | study_area), 
+                   data = data_matched_size, weights = ~I(1/weights), 
                    correlation = corExp(form = ~utm_east + utm_north, 
                                         nugget = TRUE))
 summary(mod_SR_size)
@@ -630,7 +607,7 @@ dat_SR_spill <- dat_PA_size[! dat_PA_size$station %in%
 
 dat_SR_spill <- dat_SR_spill %>% 
     select(asymptPD, CloseToPA, PA_size_km2.z, 
-           country, utm_east, utm_north, 
+           study_area, country, utm_east, utm_north, 
            utm_east.z, utm_north.z, 
            forest_structure, access_log10.z, HDI.z)
 dat_SR_spill <- dat_SR_spill[complete.cases(dat_SR_spill), ]
@@ -646,8 +623,8 @@ dat_matched_dist <- match.data(match_dist)
 # correlation structure for the residuals 
 mod_SR_dist <- lme(SR.mean ~ forest_structure + access_log10.z + HDI.z + 
                        PA_size_km2.z + CloseToPA, 
-                   random = list(~1 | country), data = dat_matched_dist, 
-                   weights = ~I(1/weights), 
+                   random = list(~1 | country, ~1 | study_area), 
+                   data = dat_matched_dist, weights = ~I(1/weights), 
                    correlation = corExp(form = ~utm_east + utm_north, 
                                         nugget = TRUE))
 summary(mod_SR_dist)
