@@ -32,12 +32,11 @@
 # load packages and dependencies as of 2023-12-05
 library(groundhog)
 pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
-          "MatchIt", "optmatch", "nlme")
+          "MatchIt", "modelsummary", "optmatch", "nlme")
 groundhog.library(pkgs, "2023-12-05")
 
-# Set working directory
-setwd(here('data/raw/public/training'))
-
+# Set folder hierarchy to data folder
+here('data/')
 
 # ------------------------------------------------------------------------------
 # Structural Causal Modelling  
@@ -127,7 +126,9 @@ ggdag_adjustment_set(tidy_dagBrodie,
 rm(list = ls())
 
 # Load the data provided by Brodie et al. (2023)
-dat_brodie <- data.frame(read.csv("bird_data_230326.csv", header = T))
+dat_brodie <- data.frame(read.csv(
+                          here("data/raw/public/training/bird_data_230326.csv"), 
+                          header = T))
 
 # Simplify the variable names of site identifier and geographic coordinates
 names(dat_brodie)[names(dat_brodie) == "site"] <- "station"
@@ -139,11 +140,11 @@ grep("hdi", names(dat_brodie), value = TRUE)
 grep("HDI", names(dat_brodie), value = TRUE)
 
 # Assign stations the HDI value of its country
-# Reference:
-# Human Development Report 2020: The Next Frontier—Human Development and the 
-# Anthropocene (United Nations Development Programme, 2020).
-# website: https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
+# Reference: Human Development Report 2020: The Next Frontier—Human Development 
+# and the Anthropocene (United Nations Development Programme, 2020).
+# https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
 # https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
+
 dat_HDI <- data.frame(
     country = unique(dat_brodie$country), 
     HDI = c(0.593, 0.768, 0.705, 0.607, 0.803, 0.939, 0.800, 
@@ -159,8 +160,10 @@ dat <- dat_brodie %>% select(station, country, PA, utm_east, utm_north,
 
 # Add the connectivity variables for each station calculated with 
 # calc_conn_metrics.R
-# dat_conn_metrics <- data.frame(read.csv("conn_metrics.csv", header = T))
-# dat <- left_join(dat, data_conn_metrics, by = "station")
+dat_conn_metrics <- data.frame(read.csv(
+                                here("data/derived/public/conn_flux.csv"), 
+                                header = T))
+dat <- left_join(dat, dat_conn_metrics, by = "station")
 
 # Scale subset of continuous variables in dat
 # Peter - Need to add the connectivity measures to the scaling list when they 
@@ -174,7 +177,8 @@ dat_scale <- data.frame(scale(subset(dat, select = c("utm_east", "utm_north",
                                                      "pai_a0.pred", 
                                                      "fhd_pai_1m_a0.pred", 
                                                      "cover_a0.pred", 
-                                                     "agbd_a0.pred"), 
+                                                     "agbd_a0.pred",
+                                                     "awf_rst_ptp2"), 
                                      ), 
                               center = TRUE, scale = TRUE))
 
@@ -208,8 +212,9 @@ dat_clean <- subset(dat, Hansen_recentloss == 0)
 # Modification: We may attempt to match without the lat long coordinates 
 # included in the probit model.
 
-# Replicate data frame for PD sub-analysis
-dat_PD_efficacy <- dat_clean
+# Replicate data frame for PD sub-analysis focus analysis on 100m dispersal 
+# distance
+dat_PD_efficacy <- subset(dat_clean, med_dist == 100)
 
 # Remove high-leverage outliers identified by Brodie et al. 
 ### Brodie et al. identified outlier using the hatvalue function. We should run 
@@ -228,7 +233,7 @@ dat_PD_efficacy <- dat_PD_efficacy[! dat_PD_efficacy$station %in%
 
 dat_PD_efficacy <- dat_PD_efficacy %>% select(asymptPD, PA, country, utm_east, 
                           utm_north, utm_east.z, utm_north.z, forest_structure, 
-                          access_log10.z, HDI.z)
+                          access_log10.z, HDI.z, awf_rst_ptp2.z)
 dat_PD_efficacy <- dat_PD_efficacy[complete.cases(dat_PD_efficacy), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -251,10 +256,18 @@ summary(mod_PD_efficacy)
 # Peter - we may want to introduce a spatial autocorrelation check of the model 
 # residuals
 
-# Run linear mixed effect model with the addition of connectivity moderator
-# Peter - equation set up is the same, but we will add the interaction terms 
-# + conn + conn:PA. that formulation is less efficient that conn*PA, but it 
-# makes all the terms in the formula explicit and easier to read.
+# Run linear mixed effect model with the addition of connectivity moderator 
+# + conn + conn:PA
+mod_CN_efficacy <- lme(asymptPD ~ forest_structure + access_log10.z 
+                       + HDI.z + PA + awf_rst_ptp2.z + awf_rst_ptp2.z:PA, 
+                       random = list(~1 | country), data = dat_matched_PD, 
+                       weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                       nugget = TRUE))
+summary(mod_CN_efficacy) 
+
+# Summarize the two model outputs in a table
+msummary(list(mod_PD_efficacy, mod_CN_efficacy))
 
 
 # Linear Mixed Effects Model of PA Size Spillovers -----------------------------
