@@ -2,7 +2,7 @@
 # Code downloaded from: https://doi.org/10.5281/zenodo.7796347
 # Data downloaded from: https://figshare.com/articles/dataset/Data/22527295
 #
-# Modified by Lei Song (lsong@ucsb.edu), Peter Kedron (peter.kedron@ucsb.edu)
+# Modified by Lei Song (lsong@ucsb.edu), Peter Kedron (peterkedron@ucsb.edu)
 # Last updated: Dec 13, 2023
 #
 # Comments on original code and modifications:----------------------------------
@@ -127,7 +127,8 @@ ggdag_adjustment_set(tidy_dagBrodie,
 rm(list = ls())
 
 # Load the data provided by Brodie et al. (2023)
-dat_brodie <- data.frame(read.csv("mammal_data_230326.csv", header = T))
+dat_brodie <- data.frame(read.csv(
+    here("data/raw/public/training/mammal_data_230326.csv"), header = T))
 
 # Simplify the variable names of site identifier and geographic coordinates
 names(dat_brodie)[names(dat_brodie) == "site"] <- "station"
@@ -158,8 +159,10 @@ dat <- dat_brodie %>% select(station, study_area, country, PA, utm_east, utm_nor
 
 # Add the connectivity variables for each station calculated with 
 # calc_conn_metrics.R
-# dat_conn_metrics <- data.frame(read.csv("conn_metrics.csv", header = T))
-# dat <- left_join(dat, data_conn_metrics, by = "station")
+dat_conn_metrics <- data.frame(read.csv(
+    here("data/derived/public/conn_flux.csv"), 
+    header = T))
+dat <- left_join(dat, dat_conn_metrics, by = "station")
 
 # Scale subset of continuous variables in dat
 # Peter - Need to add the connectivity measures to the scaling list when they 
@@ -173,7 +176,8 @@ dat_scale <- data.frame(scale(subset(dat, select = c("utm_east", "utm_north",
                                                      "pai_a0.pred", 
                                                      "fhd_pai_1m_a0.pred", 
                                                      "cover_a0.pred", 
-                                                     "agbd_a0.pred"), 
+                                                     "agbd_a0.pred",
+                                                     "awf_rst_ptp2"), 
 ), 
 center = TRUE, scale = TRUE))
 
@@ -206,18 +210,8 @@ dat_clean <- subset(dat, Hansen_recentloss == 0)
 # Modification: We may attempt to match without the lat long coordinates 
 # included in the probit model.
 
-# ----------------- Analysis of phylogenetic diversity (PD) --------------------
-
-# Linear Mixed Effects Model of PA Efficacy ------------------------------------
-
-# Extension 1: We introduce an interaction term to assess the moderating effect
-# of PA connectivity on the effect of PA status on biodiversity
-
-# Modification: We may attempt to match without the lat long coordinates 
-# included in the probit model.
-
 # Replicate data frame for PD sub-analysis
-dat_PD_efficacy <- dat_clean
+dat_PD_efficacy <- subset(dat_clean, med_dist == 100)
 
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
@@ -226,7 +220,7 @@ dat_PD_efficacy <- dat_clean
 dat_PD_efficacy <- dat_PD_efficacy %>% 
     select(asymptPD, PA, study_area, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
-           access_log10.z, HDI.z)
+           access_log10.z, HDI.z, awf_rst_ptp2.z)
 dat_PD_efficacy <- dat_PD_efficacy[complete.cases(dat_PD_efficacy), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -249,10 +243,18 @@ summary(mod_PD_efficacy)
 # Peter - we may want to introduce a spatial autocorrelation check of the model 
 # residuals
 
-# Run linear mixed effect model with the addition of connectivity moderator
-# Peter - equation set up is the same, but we will add the interaction terms 
-# + conn + conn:PA. that formulation is less efficient that conn*PA, but it 
-# makes all the terms in the formula explicit and easier to read.
+# Run linear mixed effect model with the addition of connectivity moderator 
+# + conn + conn:PA
+mod_CN_efficacy <- lme(asymptPD ~ forest_structure + access_log10.z 
+                       + HDI.z + PA + awf_rst_ptp2.z + awf_rst_ptp2.z:PA, 
+                       random = list(~1 | country), data = dat_matched_PD, 
+                       weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                                            nugget = TRUE))
+summary(mod_CN_efficacy)
+
+# Summarize the two model outputs in a table
+msummary(list(mod_PD_efficacy, mod_CN_efficacy))
 
 
 # Linear Mixed Effects Model of PA Size Spillovers -----------------------------
@@ -359,7 +361,7 @@ summary(mod_PD_dist)
 # included in the probit model.
 
 # Start over, replicate data frame for FR sub-analysis
-dat_FR_efficacy <- dat_clean
+dat_FR_efficacy <- subset(dat_clean, med_dist == 100)
 
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
@@ -369,7 +371,7 @@ dat_FR_efficacy <- dat_clean
 dat_FR_efficacy <- dat_FR_efficacy %>% 
     select(maxFRic, PA, study_area, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
-           access_log10.z, HDI.z)
+           access_log10.z, HDI.z, awf_rst_ptp2.z)
 dat_FR_efficacy <- dat_FR_efficacy[complete.cases(dat_FR_efficacy), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -392,10 +394,18 @@ summary(mod_FR_efficacy)
 # Peter - we may want to introduce a spatial autocorrelation check of the model 
 # residuals
 
-# Run linear mixed effect model with the addition of connectivity moderator
-# Peter - equation set up is the same, but we will add the interaction terms 
-# + conn + conn:PA. that formulation is less efficient that conn*PA, but it 
-# makes all the terms in the formula explicit and easier to read.
+# Run linear mixed effect model with the addition of connectivity moderator 
+# + conn + conn:PA
+mod_FR_CN_efficacy <- lme(maxFRic ~ forest_structure + access_log10.z 
+                          + HDI.z + PA + awf_rst_ptp2.z + awf_rst_ptp2.z:PA, 
+                          random = list(~1 | country, ~1 | study_area), 
+                          data = dat_matched_FR, weights = ~I(1/weights), 
+                          correlation = corExp(form = ~utm_east + utm_north, 
+                                               nugget = TRUE))
+summary(mod_FR_CN_efficacy)
+
+# Summarize the two model outputs in a table
+msummary(list(mod_FR_efficacy, mod_FR_CN_efficacy))
 
 
 # Linear Mixed Effects Model of PA Size Spillovers -----------------------------
@@ -500,7 +510,7 @@ summary(mod_FR_dist)
 # included in the probit model.
 
 # Replicate data frame for SR sub-analysis
-dat_SR_efficacy <- dat_clean
+dat_SR_efficacy <- subset(dat_clean, med_dist == 100)
 
 # Select variables for analysis and restrict to rows with complete values 
 # Peter - We need to add the eventual connectivity measures to this selection 
@@ -509,7 +519,7 @@ dat_SR_efficacy <- dat_clean
 dat_SR_efficacy <- dat_SR_efficacy %>% 
     select(SR.mean, PA, study_area, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
-           access_log10.z, HDI.z)
+           access_log10.z, HDI.z, awf_rst_ptp2.z)
 dat_SR_efficacy <- dat_SR_efficacy[complete.cases(dat_SR_efficacy), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -532,10 +542,18 @@ summary(mod_SR_efficacy)
 # Peter - we may want to introduce a spatial autocorrelation check of the model 
 # residuals
 
-# Run linear mixed effect model with the addition of connectivity moderator
-# Peter - equation set up is the same, but we will add the interaction terms 
-# + conn + conn:PA. that formulation is less efficient that conn*PA, but it 
-# makes all the terms in the formula explicit and easier to read.
+# Run linear mixed effect model with the addition of connectivity moderator 
+# + conn + conn:PA
+mod_SR_CN_efficacy <- lme(SR.mean ~ forest_structure + access_log10.z 
+                          + HDI.z + PA + awf_rst_ptp2.z + awf_rst_ptp2.z:PA, 
+                          random = list(~1 | country, ~1 | study_area), 
+                          data = dat_matched_SR, weights = ~I(1/weights), 
+                          correlation = corExp(form = ~utm_east + utm_north, 
+                                               nugget = TRUE))
+summary(mod_SR_CN_efficacy)
+
+# Summarize the two model outputs in a table
+msummary(list(mod_FR_efficacy, mod_SR_CN_efficacy))
 
 
 # Linear Mixed Effects Model of PA Size Spillovers -----------------------------
