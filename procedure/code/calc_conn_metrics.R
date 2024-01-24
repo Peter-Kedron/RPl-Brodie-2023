@@ -10,17 +10,16 @@
 ## --dst_path path/for/result.csv
 ## -------------------------------------------------------------------
 
-# Load libraries
-library(sf)
-library(dplyr)
-library(terra)
-library(stringr)
-library(pbapply)
-library(optparse)
+# Load libraries, easy to switch to use groundhog
+pkgs <- c("sf", "dplyr", "terra", "stringr", "pbapply", "optparse")
+sapply(pkgs, require, character.only = TRUE)
 sf_use_s2(FALSE) # deal with buffering odd
 
 # Command line inputs
 option_list <- list(
+    make_option(c("-t", "--taxon"), 
+                action = "store", default = "mammal", type = 'character',
+                help = "The taxon group in [bird, mammal] to process. [default %default]."),
     make_option(c("-s", "--src_dir"), 
                 action = "store", default = "data/raw/public", type = 'character',
                 help = "The source directory for reading data [default %default]."),
@@ -32,48 +31,38 @@ opt <- parse_args(OptionParser(option_list = option_list))
 # Directories and paths
 src_dir <- opt$src_dir
 dst_dir <- opt$dst_dir
+taxon <- opt$taxon
+
+# Load PAs and groups
+fnames <- file.path(dst_dir, c("clean_pas.geojson", "pa_groups.geojson"))
+if (!all(file.exists(fnames))){
+    stop("No cleaned pas and groups found, run clean_pas.R to get them.")
+} else {
+    clean_pas <- st_read(file.path(dst_dir, "clean_pas.geojson"))
+    if (taxon == "mammal"){
+        pa_groups <- st_read(file.path(dst_dir, "pa_groups.shp"))
+    } else pa_groups <- NULL
+}
 
 # Read samples and raster template
-fnames <- list.files(file.path(src_dir, "training"), full.names = TRUE)
-pts <- do.call(rbind, lapply(fnames, function(fname){
-    read.csv(fname) %>% 
-        select(all_of(names(.)[
-            str_detect(names(.), "station|country|lat|long")])) %>% 
-        st_as_sf(coords = c(3, 2), crs = 4326)
-}))
+## According to the pairs of lat/lon and east/north, they used
+## UTM Zone 46 (EPSG:32646) for projection, so here we will use the same one.
+## (Not mean it is the most right one to use)
+fname <- list.files(file.path(src_dir, "training"), full.names = TRUE, 
+                     pattern = taxon)
+pts <- read.csv(fname) %>% 
+    select(all_of(names(.)[
+        str_detect(names(.), "station|country|lat|long")])) %>% 
+    st_as_sf(coords = c(3, 2), crs = 4326) %>% 
+    st_transform(st_crs(clean_pas))
 
 template <- rast(
     file.path(src_dir, "GEDIv002_20190417to20220413_cover_krig.tif")) %>% 
-    extend(c(100, 100)) # add a buffer
+    extend(c(100, 100)) %>%  # add a buffer
+    project(crs(clean_pas))
 values(template) <- 1:ncell(template)
 
-# Get WDPA, too lazy so just download the gdb and put it in the right place
-## Check available layers
-# st_layers(
-#     file.path(src_dir, "protected_area", "WDPA_WDOECM_Nov2023_Public_AS",
-#               "WDPA_WDOECM_Nov2023_Public_AS.gdb"))
-pas <- read_sf(
-    file.path(src_dir, "protected_area", "WDPA_WDOECM_Nov2023_Public_AS",
-              "WDPA_WDOECM_Nov2023_Public_AS.gdb"),
-    layer = "WDPA_WDOECM_poly_Nov2023_AS")
-
-# Q1: should we only consider terrestrial PAs?
-pas <- pas %>% 
-    filter(ISO3 %in% c("KHM", "CHN", "IDN", "LAO", "MYS", 
-                       "SGP", "THA", "VDR", "SVR", "BRN")) %>% 
-    select(WDPAID, NAME, REP_AREA, GIS_AREA, REP_M_AREA, GIS_M_AREA) %>% 
-    rename(Geometry = SHAPE) %>% 
-    slice(unique(unlist(suppressMessages(st_intersects(st_as_sfc(st_bbox(template)), .))))) %>% 
-    mutate(id = 1:nrow(.))
-
-# Split MULTIPOLYGON to POLYGONS because each segment should be treated independently
-# Hmm... then REP_AREA is no longer usable, so calculate the GIS area
-# Q2: I think I did right thing here, didn't I?
-pas <- st_cast(pas, "POLYGON") %>% st_make_valid() %>% 
-    mutate(REP_AREA = st_area(.) %>% units::set_units("km2"))
-# Warning: some PAs may overlap (sometimes highly).
-
-# Okay, ready to calculate the flux and area weighted flux
+# Now it is near perfect to calculate the flux and area weighted flux
 ## Get cell ids, NOTE that one cell could have multiple points
 ## Also remove points outside of study area
 pts_clean <- extract(template, pts, cells = TRUE, bind = TRUE) %>% 
@@ -86,13 +75,15 @@ pts_clean <- extract(template, pts, cells = TRUE, bind = TRUE) %>%
 # - the distance of this points to other surrounding PAs.
 # - or the boundary distance between the PA having this point and other PAs.
 pas_conn <- function(pas, pts, template, 
+                     pa_groups = NULL,
                      med_dist = 10,
-                     # roughly 5 times, the flux is around 0.0#
-                     buffer_size = 0.00833 * 5 * med_dist,
+                     # 5 times, the flux is around 0.0#
+                     buffer_size = 5 * med_dist,
                      dst_path = NULL){
     # pas has two layers: first is the index of PAs, the second is the area
     # pts is a sf of points to process, at least have column station
     # template: grid template
+    # pa_groups: PAs groups or NULL. Yes for mammal and NULL for birds.
     # med_dist is the median dispersal distance in KM.
     # buffer_size is the buffer size in RIGHT unit, e.g. degree or meter
     # dst_path: the path to save result
@@ -111,6 +102,10 @@ pas_conn <- function(pas, pts, template,
     # now the code uses `touches == TRUE` for rasterization to use all polygons
     
     # Calculate
+    if (!is.null(pa_groups)){
+        pts <- pts %>% st_join(pa_groups)
+    }
+    
     # wenxin: I think this is max_dist here because 10 km is already the median dispersal distance
     k <- -log(0.5) / (med_dist)
     
@@ -118,6 +113,11 @@ pas_conn <- function(pas, pts, template,
         # Get involved polygons
         pts_this <- pts %>% filter(station == sta_id)
         pas_included <- suppressMessages(st_intersection(st_buffer(pts_this, buffer_size), pas))
+        
+        # Remove pas not at the same group
+        if (!is.null(pa_groups)){
+            pas_included <- pas_included %>% filter(group %in% pts_this$group)
+        }
         
         # Calculate the metrics
         if (nrow(pas_included) > 0){
@@ -219,9 +219,10 @@ pas_conn <- function(pas, pts, template,
 
 # Calculate and save out the result
 conn_metrics <- do.call(
-    rbind, lapply(c(1, 10, 30, 100), function(med_dist){
+    rbind, lapply(seq(10, 150, 10), function(med_dist){
         message(sprintf("Calculate flux for median dispersal distance: %s", med_dist))
-        pas_conn(pas, pts, template, med_dist = med_dist)
+        pas_conn(pas, pts, pa_groups, 
+                 template, med_dist = med_dist)
     }))
-dst_path <- file.path(dst_dir, "conn_flux.csv")
+dst_path <- file.path(dst_dir, sprintf("conn_flux_%s.csv", taxon))
 write.csv(conn_metrics, dst_path, row.names = FALSE)
