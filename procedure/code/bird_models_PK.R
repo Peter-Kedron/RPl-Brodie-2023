@@ -100,7 +100,7 @@ adjustmentSets(dagBrodie)
 isAdjustmentSet(dagBrodie, c("Connectivity"))
 
 # Plot the alternative adjustment sets
-ggdag_adjustment_set(tidy_dagBrodie, 
+ggdag_adjustment_set(dagBrodie, 
                      node_size = 20, 
                      text_col = "black"
                      ) + theme(legend.position = "bottom")
