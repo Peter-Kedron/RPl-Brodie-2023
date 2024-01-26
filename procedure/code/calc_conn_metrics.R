@@ -206,7 +206,7 @@ pas_conn <- function(pas, pts, template,
     }))
     
     # add common parameters
-    metrics <- metrics %>% mutate(buffer_size = buffer_size, med_dist = med_dist)
+    metrics <- metrics %>% mutate(med_dist = med_dist)
     
     # save out
     if (!is.null(dst_path)){
