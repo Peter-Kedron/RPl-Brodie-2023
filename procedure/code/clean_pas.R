@@ -16,7 +16,7 @@
 ## -------------------------------------------------------------------
 
 # Load libraries, easy to switch to use groundhog
-pkgs <- c("sf", "dplyr", "terra", "optparse", "wdpar")
+pkgs <- c("sf", "dplyr", "terra", "optparse", "wdpar", "stringr")
 sapply(pkgs, require, character.only = TRUE)
 sf_use_s2(FALSE) # deal with buffering odd
 
@@ -38,17 +38,9 @@ dst_dir <- opt$dst_dir
 ## According to the pairs of lat/lon and east/north, they used
 ## UTM Zone 46 (EPSG:32646) for projection, so here we will use the same one.
 ## (Not mean it is the most right one to use)
-fnames <- list.files(file.path(src_dir, "training"), full.names = TRUE)
-pts <- do.call(rbind, lapply(fnames, function(fname){
-    read.csv(fname) %>% 
-        select(all_of(names(.)[
-            str_detect(names(.), "station|country|lat|long")])) %>% 
-        st_as_sf(coords = c(3, 2), crs = 4326)
-}))
-
 template <- rast(
     file.path(src_dir, "GEDIv002_20190417to20220413_cover_krig.tif")) %>% 
-    extend(c(100, 100)) # add a buffer
+    extend(c(1000, 1000)) # add a buffer which is enough for up to 200km buffer
 values(template) <- 1:ncell(template)
 
 ########################## Query Protected areas (PAs) #########################
@@ -100,19 +92,19 @@ clean_pas <- raw_pas %>% st_intersection(adm_bry)
 bbox <- st_as_sfc(st_bbox(template)) %>% st_transform(st_crs(clean_pas))
 clean_pas <- clean_pas %>% 
     slice(unique(unlist(suppressMessages(st_intersects(bbox, .)))))
-## Note: No of PAs drop further to 1260
+## Note: No of PAs drop further to 1499
 
 # Union/separate polygons.
 # Have to drop the attributes. Shouldn't be a problem though.
 clean_pas <- st_cast(st_union(clean_pas), "POLYGON") %>% 
     st_as_sf() %>% rename(geometry = x)
-## No of PAs change from 1260 to 4270 (lose administrative meaning)
+## No of PAs change from 1260 to 7133 (lose administrative meaning)
 
 # Crop to extent again
 clean_pas <- clean_pas %>% 
     slice(unique(unlist(suppressMessages(st_intersects(bbox, .))))) %>% 
     mutate(index = 1:nrow(.))
-## No of PAs change from 4270 to 4259
+## No of PAs change from 7133 to 7129
 
 # Re-calculate the area
 clean_pas <- clean_pas %>% 
@@ -123,7 +115,7 @@ clean_pas <- clean_pas %>%
 false_pas <- st_join(clean_pas, raw_pas %>% select(MARINE)) %>% 
     filter(MARINE != "terrestrial" & REP_AREA < 0.01 %>% units::set_units("km2"))
 
-clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index))
+clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 3813
 
 ######################### Cluster Protected areas (PAs) ########################
 ## 4. Cluster the PAs that are connected. 
@@ -136,13 +128,13 @@ adm_reorg <- raw_adm_bry %>%
     st_intersection(bbox) %>% st_as_sf() %>% mutate(group = 1:nrow(.)) %>% 
     mutate(area = st_area(.) %>% units::set_units("km2"))
 
-clean_pas <- st_join(clean_pas, adm_reorg) # No is 2873
+clean_pas <- st_join(clean_pas, adm_reorg) # No is 3813
 
 ## Clean further
 false_pas <- clean_pas %>% 
     filter(area > 5e+05 %>% units::set_units("km2") & 
                REP_AREA < 1 %>% units::set_units("km2"))
-clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 2198
+clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 3142
 
 ## Re-index
 clean_pas <- clean_pas %>% mutate(index = 1:nrow(.)) %>% 

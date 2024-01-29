@@ -161,7 +161,7 @@ dat <- dat_brodie %>% select(station, country, PA, utm_east, utm_north,
 # Add the connectivity variables for each station calculated with 
 # calc_conn_metrics.R
 dat_conn_metrics <- data.frame(read.csv(
-                                here("data/derived/public/conn_flux.csv"), 
+                                here("data/derived/public/conn_flux_bird_10_150.csv"), 
                                 header = T))
 dat <- left_join(dat, dat_conn_metrics, by = "station")
 
@@ -214,7 +214,7 @@ dat_clean <- subset(dat, Hansen_recentloss == 0)
 
 # Replicate data frame for PD sub-analysis focus analysis on 100m dispersal 
 # distance
-dat_PD_efficacy <- subset(dat_clean, med_dist == 100)
+dat_PD_efficacy <- subset(dat_clean, med_dist == 80)
 
 # Remove high-leverage outliers identified by Brodie et al. 
 ### Brodie et al. identified outlier using the hatvalue function. We should run 

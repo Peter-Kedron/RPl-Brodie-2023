@@ -34,7 +34,7 @@ dst_dir <- opt$dst_dir
 taxon <- opt$taxon
 
 # Load PAs and groups
-fnames <- file.path(dst_dir, c("clean_pas.geojson", "pa_groups.geojson"))
+fnames <- file.path(dst_dir, c("clean_pas.geojson", "pa_groups.shp"))
 if (!all(file.exists(fnames))){
     stop("No cleaned pas and groups found, run clean_pas.R to get them.")
 } else {
@@ -58,16 +58,15 @@ pts <- read.csv(fname) %>%
 
 template <- rast(
     file.path(src_dir, "GEDIv002_20190417to20220413_cover_krig.tif")) %>% 
-    extend(c(100, 100)) %>%  # add a buffer
+    extend(c(3, 3)) %>% 
     project(crs(clean_pas))
-values(template) <- 1:ncell(template)
 
 # Now it is near perfect to calculate the flux and area weighted flux
 ## Get cell ids, NOTE that one cell could have multiple points
 ## Also remove points outside of study area
 pts_clean <- extract(template, pts, cells = TRUE, bind = TRUE) %>% 
     st_as_sf() %>% 
-    filter(!is.na(cell)) %>% 
+    filter(!is.na(cover_a0.pred)) %>% 
     select(station, country)
 
 # Define the function to calculate the fluxes, areas, and area weighted fluxes
