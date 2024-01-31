@@ -247,8 +247,8 @@ summary(mod_PD_efficacy)
 # + conn + conn:PA
 mod_CN_efficacy <- lme(asymptPD ~ forest_structure + access_log10.z 
                        + HDI.z + PA + awf_ptg.z + awf_ptg.z:PA, 
-                       random = list(~1 | country), data = dat_matched_PD, 
-                       weights = ~I(1/weights), 
+                       random = list(~1 | country, ~1 | study_area), 
+                       data = dat_matched_PD, weights = ~I(1/weights), 
                        correlation = corExp(form = ~utm_east + utm_north, 
                                             nugget = TRUE))
 summary(mod_CN_efficacy)
