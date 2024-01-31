@@ -112,3 +112,6 @@ $RECYCLE.BIN/
 
 # Icloud
 *.icloud
+
+# Temporary files
+*.rda
