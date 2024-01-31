@@ -16,6 +16,7 @@ pts_mammal <- st_read(file.path(dst_dir, "pts_mammal.geojson"))
 pts_all <- rbind(pts_bird %>% mutate(taxon = "bird"), 
                  pts_mammal %>% mutate(taxon = "mammal"))
 clean_pas <- st_read(file.path(dst_dir, "clean_pas.geojson"))
+pa_groups <- st_read(file.path(dst_dir, "pa_groups.shp"))
 
 ########################### Check PA attributes ################################
 # Check if point is in/out PAs
@@ -57,15 +58,38 @@ st_write(pts_all, file.path(dst_dir, 'PA_attributes_compare.geojson'))
 
 # Read flux
 awf <- lapply(c("bird", "mammal"), function(taxon){
-    read.csv(file.path(dst_dir, sprintf("conn_flux_%s_10_160.csv", taxon))) %>% 
+    read.csv(file.path(dst_dir, sprintf("conn_flux_%s_10_150.csv", taxon))) %>% 
         select(station, awf_ptg, med_dist)
 }) %>% bind_rows()
 
 awf <- left_join(awf, pts_all %>% st_drop_geometry() %>% 
                      select(station, taxon, PA_ours),
                  by = "station")
-ggplot(awf, aes(x = as.factor(med_dist), y = awf_ptg)) + 
-    geom_boxplot(aes(fill = as.factor(PA_ours))) +
-    # geom_jitter(shape = 16, position = position_jitter(0.2)) +
-    facet_wrap(~taxon, nrow = 2)
 
+write.csv(awf, file.path(dst_dir, "awf_ptg_collection.csv"), row.names = FALSE)
+
+# Check the distribution
+ggplot(awf, aes(x = as.factor(med_dist), y = awf_ptg), outlier.size = 0.8) + 
+    geom_boxplot(aes(fill = as.factor(PA_ours))) +
+    facet_wrap(~taxon, nrow = 2) +
+    xlab("Median dispersal distance (km)") +
+    ylab("Area weighted flux (point to polygon)") +
+    labs(fill = "Inside PA\n(0|1, out | in)") +
+    theme_light() +
+    theme(text = element_text(size = 10),
+          strip.text = element_text(
+              size = 12, color = "blue"))
+ggsave("sd_awf_pa.png", width = 8, height = 10)
+
+# PAs distribution
+ggplot() +
+    geom_sf(data = pa_groups, aes(fill = as.factor(group)), 
+            lwd = 0, show.legend = FALSE) +
+    geom_sf(data = clean_pas, fill = "transparent", color = 'black') +
+    geom_sf(data = pts_bird %>% mutate(Taxon = "Bird") %>% 
+                rbind(pts_mammal %>% mutate(Taxon = "Mammal")), 
+            aes(color = Taxon), size = 0.6) +
+    scale_color_manual(values = c("yellow", "blue")) +
+    theme_bw()+
+    theme(text = element_text(size = 10))
+ggsave("pas_stations.png", width = 8, height = 8)
