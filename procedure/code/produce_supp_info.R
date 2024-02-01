@@ -58,6 +58,9 @@ names(dat_brodie)[names(dat_brodie) == "site"] <- "station"
 names(dat_brodie)[names(dat_brodie) == "lat_wgs84"] <- "lat"
 names(dat_brodie)[names(dat_brodie) == "long_wgs84"] <- "long"
 
+names(dat_brodie_mammal)[names(dat_brodie_mammal) == "lat_wgs84"] <- "lat"
+names(dat_brodie_mammal)[names(dat_brodie_mammal) == "long_wgs84"] <- "long"
+
 
 # Search for HDI in the column names 
 grep("hdi", names(dat_brodie), value = TRUE)
@@ -77,8 +80,7 @@ dat_brodie <- left_join(dat_brodie, dat_HDI, by = "country")
 
 # create a dataframe to get geometry
 dat_geom_bird <- dat_brodie %>% select(long, lat, utm_east, utm_north)
-dat_geom_mammal <- dat_brodie_mammal %>% select(long_wgs84, lat_wgs84, utm_east, utm_north)
-colnames(dat_geom_mammal) <- c('long', 'lat', 'utm_east', 'utm_north')
+dat_geom_mammal <- dat_brodie_mammal %>% select(long, lat, utm_east, utm_north)
 dat_for_geom <- rbind(dat_geom_bird, dat_geom_mammal)
 # Create dataframe containing the subset of variable used in the analysis
 dat <- dat_brodie %>% select(station, country, PA, long, lat, 
@@ -270,3 +272,53 @@ write.csv(dfBirdResid, file.path(modelfolder, 'BirdsResidualsAllModels.csv'))
 
 dfMammalResid <- getResidSpecies('mammal')
 write.csv(dfMammalResid, file.path(modelfolder, 'MammalsResidualsAllModels.csv'))
+
+# ======= 3) Statistics summary of residuals in relation to dist to PAs ======
+colsTask3 <- c('long', 'lat', 'dist_to_PA', 'PA')
+
+prepDfTask3 <- function(init_df, resid_df){
+    dftask3 <- init_df %>% select(long, lat, dist_to_PA, PA)
+    dftask3 <- merge(resid_df, dftask3, by=c('long', 'lat'), all.y=TRUE)
+    
+    dfSumDisp <- data.frame(matrix(ncol=7, nrow=0))
+    
+    for(c in 1:ncol(dftask3)){
+        col <- colnames(dftask3)[c]
+        if(! col %in% colsTask3){
+            dftmp <- dftask3[append(colsTask3, col)]
+            colnames(dftmp) <- append(colsTask3, 'resid')
+            dftmp$model <- col
+            
+            strs <- strsplit(col, '_')[[1]]
+            ind <- strs[2]
+            if(length(strs)>3){
+                dftmp$dispersaldist <- as.integer(strs[4])
+            } else{
+                dftmp$dispersaldist <- 0
+            }
+            dfSumDisp <- rbind(dfSumDisp, dftmp)
+        }
+    }
+    dfSumDisp$ifWithin <- dfSumDisp$dist_to_PA < dfSumDisp$dispersaldist
+    return(dfSumDisp)
+}
+
+dfBirdTask3 <- prepDfTask3(dat_brodie, dfBirdResid)
+dfBirdTask3.outPA <- dfBirdTask3[dfBirdTask3$PA == 0, ]
+dfBirdTask3.outPA$category <- paste(dfBirdTask3.outPA$model, dfBirdTask3.outPA$ifWithin, 
+                                    sep='_')
+a <- tapply(dfBirdTask3.outPA$resid,
+            dfBirdTask3.outPA$category,
+            summary)
+
+dfMammalTask3 <- prepDfTask3(dat_brodie_mammal, dfMammalResid)
+dfBirdTask3.outPA <- dfBirdTask3[dfBirdTask3$PA == 0, ]
+
+
+# ====== local Moran's I ======
+df.dist <- as.matrix(dist(cbind(dfBirdResid$long, dfBirdResid$lat)))
+df.dist.inv <- 1/df.dist
+diag(df.dist.inv) <- 0
+resI <- localmoran(dfBirdResid$bird_sr_brodie, nb2listw(df.dist.inv))
+
+
