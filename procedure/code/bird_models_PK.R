@@ -35,6 +35,8 @@ pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc",
           "MatchIt", "modelsummary", "optmatch", "nlme")
 groundhog.library(pkgs, "2023-12-05")
 
+# lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
+
 # Set folder hierarchy to data folder
 here('data/')
 

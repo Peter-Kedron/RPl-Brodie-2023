@@ -4,50 +4,17 @@
 # Date created: 01/19/2024
 
 # ======= load packages & set up dir =======
-library(sf)
-library(dplyr)
-library(terra)
-library(ggplot2)
-library(units)
-library(cowplot)
-library(nngeo)
-library(ggplot2)
+pkgs <- c('sf', 'dplyr', 'terra', 'ggplot2', 'units', 'cowplot', 'nngeo',
+          'tidyverse', 'hrbrthemes', 'viridis', 'here', 'spdep', 'tmap')
+lapply(pkgs, library, character.only=TRUE)
 sf_use_s2(FALSE) # deal with buffering odd
 
 dir_pa <- '/Users/wenxinyang/Desktop/Dissertation/DATA'
 
-# ======= read in files ======
-# read in raster data for bounding box
-dir_ras <- file.path(dir_pa, 'BrodieData')
-template <- rast(
-    file.path(dir_ras, "GEDIv002_20190417to20220413_cover_krig.tiff")) %>% 
-    extend(c(100, 100)) # add a buffer
-values(template) <- 1:ncell(template)
-
-# read in WDPA and filter to study area - copying code from calc_conn_metrics.R
-pas <- read_sf(
-    file.path(dir_pa, "WDPA_WDOECM_Nov2023_Public_AS",
-              "WDPA_WDOECM_Nov2023_Public_AS.gdb"),
-    layer = "WDPA_WDOECM_poly_Nov2023_AS")
-
-# Q1: should we only consider terrestrial PAs?
-pas <- pas %>% 
-    filter(ISO3 %in% c("KHM", "CHN", "IDN", "LAO", "MYS", 
-                       "SGP", "THA", "VDR", "SVR", "BRN")) %>% 
-    select(WDPAID, ISO3, NAME, REP_AREA, GIS_AREA, REP_M_AREA, GIS_M_AREA) %>% 
-    rename(Geometry = SHAPE) %>% 
-    slice(unique(unlist(suppressMessages(st_intersects(st_as_sfc(st_bbox(template)), .))))) %>% 
-    mutate(id = 1:nrow(.))
-
-# Split MULTIPOLYGON to POLYGONS because each segment should be treated independently
-# Hmm... then REP_AREA is no longer usable, so calculate the GIS area
-# Q2: I think I did right thing here, didn't I?
-pas <- st_cast(pas, "POLYGON") %>% st_make_valid() %>% 
-    mutate(REP_AREA = st_area(.) %>% units::set_units("km2"))
-# Warning: some PAs may overlap (sometimes highly).
-# Wenxin: Should we dissolve them?
-
-st_write(pas, file.path(dir_ras, 'studyarea_pa.shp'))
+# ======= prep ======
+modelfolder <- '/Users/wenxinyang/Desktop/Dissertation/DATA/BrodieData/model_data'
+clean_pas <- st_read(file.path(modelfolder, "clean_pas.geojson"))
+pas <- clean_pas
 
 # ======= produce viz ======
 # histogram for PA size
@@ -68,6 +35,7 @@ ggplot(pas, aes(x=REP_AREA))+
 
 # compute nearest neighbor for all PAs in the study area
 # I used arcpro because it's much faster
+# note: studyarea_pa.shp is not the latest version, clean_pa is
 pas_1 <- read_sf(file.path(dir_ras, 'studyarea_pa.shp'))
 pas_1$nnd_km <- pas_1$NEAR_DIST/1000
 
@@ -82,10 +50,14 @@ ggplot(pas_1, aes(x=nnd_km))+
 dat_brodie <- data.frame(read.csv(
                           here("data/raw/public/training/bird_data_230326.csv"), 
                           header = T))
+dat_brodie_mammal <- data.frame(read.csv(
+    here("data/raw/public/training/mammal_data_230326.csv"),
+    header = T))
 # Simplify the variable names of site identifier and geographic coordinates
 names(dat_brodie)[names(dat_brodie) == "site"] <- "station"
 names(dat_brodie)[names(dat_brodie) == "lat_wgs84"] <- "lat"
 names(dat_brodie)[names(dat_brodie) == "long_wgs84"] <- "long"
+
 
 # Search for HDI in the column names 
 grep("hdi", names(dat_brodie), value = TRUE)
@@ -103,6 +75,11 @@ dat_HDI <- data.frame(
             0.703, 0.829))
 dat_brodie <- left_join(dat_brodie, dat_HDI, by = "country")
 
+# create a dataframe to get geometry
+dat_geom_bird <- dat_brodie %>% select(long, lat, utm_east, utm_north)
+dat_geom_mammal <- dat_brodie_mammal %>% select(long_wgs84, lat_wgs84, utm_east, utm_north)
+colnames(dat_geom_mammal) <- c('long', 'lat', 'utm_east', 'utm_north')
+dat_for_geom <- rbind(dat_geom_bird, dat_geom_mammal)
 # Create dataframe containing the subset of variable used in the analysis
 dat <- dat_brodie %>% select(station, country, PA, long, lat, 
                              Hansen_recentloss,access_log10, HDI, dist_to_PA, 
@@ -121,19 +98,175 @@ dat100 <- dat[dat$med_dist == 100, ]
 ggplot()+
     geom_histogram(aes(dat100$awf_ptg), binwidth = 100, fill="#69b3a2")
 
-write.csv(dat100, here('data/raw/public/dat100awf.csv'))
+# write.csv(dat100, here('data/raw/public/dat100awf.csv'))
 
 ggplot()+
     geom_point(aes(dat100$awf_ptg, dat100$PA))
 # awf_ptg
 
 
-# ======= residual analysis =====
-ggplot()+
-    geom_point(aes(dat_matched_PD$awf_rst_ptp2.z, residuals$resid.mod_PD_efficacy.))
+# ======= residual analysis 01/31 =====
+# ======= 1) spatial patterns of Brodie residuals =========
+models <- list.files(path=modelfolder, pattern = "\\.rda$")
+# rdmodels <- lapply(models, function(x) load(file=file.path(modelfolder, x)))
 
-residuals <- data.frame(resid(mod_PD_efficacy))
+load_object <- function(file) {
+    tmp <- new.env()
+    load(file = file, envir = tmp)
+    tmp[[ls(tmp)[1]]]
+}
 
-a <- mod_PD_efficacy$fitted
-b <- data.frame(mod_PD_efficacy$residuals)
-c <- mod_PD_efficacy$data$asymptPD
+getBrodieDf <- function(species, ind){
+    
+    modname <- paste(species, ind, "models.rda", sep="_")
+    modpath <- file.path(modelfolder, modname)
+    mod <- load_object(modpath)
+    
+    bromod <- mod$brodie
+    df <- cbind(bromod$data, data.frame(resid(bromod)))
+    df$PA <- as.factor(df$PA)
+    
+    df <- merge(df, dat_for_geom, by=c('utm_east', 'utm_north'), all.x = TRUE)
+    
+    df$species <- species
+    df$ind <- ind
+    
+    return(df)
+}
+
+getBrodieAllDfSpecies <- function(species){
+    dfspecies <- data.frame(matrix(ncol=19, nrow=0))
+    for(ind in c('sr', 'fr', 'pd')){
+        dfind <- getBrodieDf(species, ind)
+        dfspecies <- rbind(dfspecies, dfind)
+    }
+    dfspecies$category <- as.factor(paste(dfspecies$ind, dfspecies$PA, sep='-'))
+    return(dfspecies)
+}
+
+getMoransI <- function(dataf){
+    
+    df_moran <- data.frame(matrix(ncol=5, nrow=0))
+    
+    for(ind in c('sr', 'fr', 'pd')){
+        dftmp <- dataf[dataf$ind == ind, ]
+        df.dist <- as.matrix(dist(cbind(dftmp$long, dftmp$lat)))
+        df.dist.inv <- 1/df.dist
+        diag(df.dist.inv) <- 0
+        df_moran_ind <- data.frame(Moran.I(dftmp$resid.bromod., df.dist.inv))
+        df_moran_ind$ind <- ind
+        df_moran <- rbind(df_moran, df_moran_ind)
+    }
+
+    return(df_moran)
+}
+
+getMap <- function(species, ind){
+
+    df <- getBrodieDf(species, ind)
+    geodf <- st_as_sf(df, coords=c("long", "lat"), crs="epsg:4326")
+   
+     # it's taking too long to produce a map with PA boundary
+    ggplot() +
+        geom_sf(data=geodf[geodf$resid.bromod.<400, ], # can remove outlier to improve visual effect
+                aes(color=resid.bromod., shape=PA), size=0.5)+
+        scale_shape_manual(values=c(0, 1))+
+        scale_color_viridis()+
+        # geom_sf(data = clean_pas, fill = "transparent", color = 'black')+
+        theme_bw()
+}
+
+
+# analyze residuals
+BrodieMammal <- getBrodieAllDfSpecies('mammal')
+# map
+BrodieMammal %>%
+    ggplot( aes(x=category, y=resid.bromod., fill=PA)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+    # geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_ipsum() +
+    theme(
+        legend.position="none",
+        plot.title = element_text(size=11)
+    ) +
+    ggtitle(paste("Brodie mammal")) +
+    xlab("Outside (0) or within PA (1)") +
+    ylab("Residuals")
+# summary stats
+tapply(BrodieMammal$resid.bromod., BrodieMammal$category, summary)
+# Moran's I
+BrodieMammalMoran <- getMoransI(BrodieMammal)
+BrodieMammalMoran$species <- 'mammal'
+
+
+BrodieBird <- getBrodieAllDfSpecies('bird')
+BrodieBird %>%
+    ggplot( aes(x=category, y=resid.bromod., fill=PA)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+    # geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_ipsum() +
+    theme(
+        legend.position="none",
+        plot.title = element_text(size=11)
+    ) +
+    ggtitle(paste("Brodie bird")) +
+    xlab("Outside (0) or within PA (1)") +
+    ylab("Residuals")
+tapply(BrodieBird$resid.bromod., BrodieBird$category, summary)
+BrodieBirdMoran <- getMoransI(BrodieBird)
+BrodieBirdMoran$species <- 'bird'
+
+BrodieMoran <- rbind(BrodieBirdMoran, BrodieMammalMoran)
+
+# ======= 2) Residuals of all models ======
+# create a dataframe that stores all the residuals for all 
+# for birds
+species <- 'bird'
+ind <- 'sr'
+mod <- load_object(file.path(modelfolder, 'bird_sr_models.rda'))
+
+getResidSpeciesInd <- function(species, ind){
+    modname <- paste(species, ind, 'models.rda', sep='_')
+    modpath <- file.path(modelfolder, modname)
+    mods <- load_object(modpath)
+    
+    li_modnames <- names(mods)
+    
+    if(species == 'bird'){
+        dfresid <- dat_geom_bird[c('long', 'lat')]
+    }else{
+        dfresid <- dat_geom_mammal[c('long', 'lat')]
+    }
+    
+    for(i in 1:length(mods)){
+        modi <- mods[[i]]
+        df <- cbind(modi$data, data.frame(resid(modi)))
+        df$PA <- as.factor(df$PA)
+        cols <- c('long', 'lat', 'resid.modi.')
+        df <- merge(df, dat_for_geom, by=c('utm_east', 'utm_north'), all.x = TRUE)[cols]
+        names(df)[names(df) == "resid.modi."] <- paste(species, ind, li_modnames[i], sep='_')
+        
+        dfresid <- merge(dfresid, df, by=c('long', 'lat'), all.x=TRUE)
+    }
+    
+    return(dfresid)
+}
+
+getResidSpecies <- function(species){
+    dfresidsr <- getResidSpeciesInd(species, 'sr')
+    dfresidfr <- getResidSpeciesInd(species, 'fr')
+    dfresidpd <- getResidSpeciesInd(species, 'pd')
+    
+    dfresidall <- merge(dfresidsr, dfresidfr, by=c('long', 'lat'))
+    dfresidall <- merge(dfresidall, dfresidpd, by=c('long', 'lat'))
+    
+    return(dfresidall)
+}
+
+dfBirdResid <- getResidSpecies('bird')
+write.csv(dfBirdResid, file.path(modelfolder, 'BirdsResidualsAllModels.csv'))
+
+dfMammalResid <- getResidSpecies('mammal')
+write.csv(dfMammalResid, file.path(modelfolder, 'MammalsResidualsAllModels.csv'))
