@@ -65,7 +65,7 @@ dagBrodie <- dagitty("dag {
   Topography -> SiteAccessibility
   Topography -> Diversity
   HDI -> Diversity
-  PA [exposure]
+  Connectivity [exposure]
   Diversity [outcome]
                }"
                      )
@@ -163,7 +163,7 @@ dat <- dat_brodie %>% select(station, country, PA, utm_east, utm_north,
 # Add the connectivity variables for each station calculated with 
 # calc_conn_metrics.R
 dat_conn_metrics <- data.frame(read.csv(
-                                here("data/derived/public/conn_flux.csv"), 
+                                here("data/derived/public/conn_flux_bird_10_150.csv"), 
                                 header = T))
 dat <- left_join(dat, dat_conn_metrics, by = "station")
 
@@ -180,7 +180,7 @@ dat_scale <- data.frame(scale(subset(dat, select = c("utm_east", "utm_north",
                                                      "fhd_pai_1m_a0.pred", 
                                                      "cover_a0.pred", 
                                                      "agbd_a0.pred",
-                                                     "awf_rst_ptp2"), 
+                                                     "awf_ptg"), 
                                      ), 
                               center = TRUE, scale = TRUE))
 
@@ -216,7 +216,7 @@ dat_clean <- subset(dat, Hansen_recentloss == 0)
 
 # Replicate data frame for PD sub-analysis focus analysis on 100m dispersal 
 # distance
-dat_PD_efficacy <- subset(dat_clean, med_dist == 100)
+dat_PD_efficacy <- subset(dat_clean, med_dist == 150)
 
 # Remove high-leverage outliers identified by Brodie et al. 
 ### Brodie et al. identified outlier using the hatvalue function. We should run 
@@ -235,7 +235,7 @@ dat_PD_efficacy <- dat_PD_efficacy[! dat_PD_efficacy$station %in%
 
 dat_PD_efficacy <- dat_PD_efficacy %>% select(asymptPD, PA, country, utm_east, 
                           utm_north, utm_east.z, utm_north.z, forest_structure, 
-                          access_log10.z, HDI.z, awf_rst_ptp2.z)
+                          access_log10.z, HDI.z, awf_ptg.z)
 dat_PD_efficacy <- dat_PD_efficacy[complete.cases(dat_PD_efficacy), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -261,7 +261,7 @@ summary(mod_PD_efficacy)
 # Run linear mixed effect model with the addition of connectivity moderator 
 # + conn + conn:PA
 mod_CN_efficacy <- lme(asymptPD ~ forest_structure + access_log10.z 
-                       + HDI.z + PA + awf_rst_ptp2.z + awf_rst_ptp2.z:PA, 
+                       + HDI.z + PA + awf_ptg.z + awf_ptg.z:PA, 
                        random = list(~1 | country), data = dat_matched_PD, 
                        weights = ~I(1/weights), 
                        correlation = corExp(form = ~utm_east + utm_north, 
