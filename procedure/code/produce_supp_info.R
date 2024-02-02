@@ -5,7 +5,8 @@
 
 # ======= load packages & set up dir =======
 pkgs <- c('sf', 'dplyr', 'terra', 'ggplot2', 'units', 'cowplot', 'nngeo',
-          'tidyverse', 'hrbrthemes', 'viridis', 'here', 'spdep', 'tmap')
+          'tidyverse', 'hrbrthemes', 'viridis', 'here', 'spdep', 'tmap',
+          'data.table', 'stringr', 'broom', 'haven', 'extrafont', 'nlme')
 lapply(pkgs, library, character.only=TRUE)
 sf_use_s2(FALSE) # deal with buffering odd
 
@@ -27,7 +28,7 @@ list <-lapply(1:length(li_iso),
                   geom_histogram()+
                   labs(title=li_iso[[iso]], x='PA Area', y='Frequency'))
 
-cowplot::plot_grid(plotlist = list)
+# cowplot::plot_grid(plotlist = list)
 
 ggplot(pas, aes(x=REP_AREA))+
     geom_histogram()+
@@ -225,9 +226,6 @@ BrodieMoran <- rbind(BrodieBirdMoran, BrodieMammalMoran)
 # ======= 2) Residuals of all models ======
 # create a dataframe that stores all the residuals for all 
 # for birds
-species <- 'bird'
-ind <- 'sr'
-mod <- load_object(file.path(modelfolder, 'bird_sr_models.rda'))
 
 getResidSpeciesInd <- function(species, ind){
     modname <- paste(species, ind, 'models.rda', sep='_')
@@ -268,10 +266,12 @@ getResidSpecies <- function(species){
 }
 
 dfBirdResid <- getResidSpecies('bird')
-write.csv(dfBirdResid, file.path(modelfolder, 'BirdsResidualsAllModels.csv'))
+#write.csv(dfBirdResid, file.path(modelfolder, 'BirdsResidualsAllModels.csv'))
+#dfBirdResid <- read.csv(file.path(modelfolder, 'BirdsResidualsAllModels.csv'))
 
 dfMammalResid <- getResidSpecies('mammal')
-write.csv(dfMammalResid, file.path(modelfolder, 'MammalsResidualsAllModels.csv'))
+#write.csv(dfMammalResid, file.path(modelfolder, 'MammalsResidualsAllModels.csv'))
+#dfMammalResid <- read.csv(file.path(modelfolder, 'MammalsresidualsAllModels.csv'))
 
 # ======= 3) Statistics summary of residuals in relation to dist to PAs ======
 colsTask3 <- c('long', 'lat', 'dist_to_PA', 'PA')
@@ -315,10 +315,65 @@ dfMammalTask3 <- prepDfTask3(dat_brodie_mammal, dfMammalResid)
 dfBirdTask3.outPA <- dfBirdTask3[dfBirdTask3$PA == 0, ]
 
 
-# ====== local Moran's I ======
+# ====== local Moran's I (in progress) ======
+# a little suspicious --> I used GeoDa instead.
+# inverse distance weighting
+geom_birdresid <- vect(dfBirdResid, geom=c('long', 'lat'), crs='epsg:4326')
 df.dist <- as.matrix(dist(cbind(dfBirdResid$long, dfBirdResid$lat)))
 df.dist.inv <- 1/df.dist
 diag(df.dist.inv) <- 0
-resI <- localmoran(dfBirdResid$bird_sr_brodie, nb2listw(df.dist.inv))
 
+geom_birdresid$brodsrlcMoranI <- autocor(geom_birdresid$bird_sr_brodie, df.dist.inv, "locmor")
+plot(geom_birdresid, "brodsrlcMoranI")
 
+geom_birdresid$sr10lcMoranI <- autocor(geom_birdresid$bird_sr_connec_10, df.dist.inv, "locmor")
+plot(geom_birdresid, "sr10lcMoranI")
+
+# ====== tie fighter pie plot =====
+# PD for birds and mammals: PA estimates and awf_ptg.z estimates
+birds_pd_models = load_object(file.path(modelfolder, 'bird_pd_models.rda'))
+mammals_pd_models = load_object(file.path(modelfolder, 'mammal_pd_models.rda'))
+
+getEachRowPiePlot <- function(mod, var, modname){
+    modinfo <- data.frame(intervals(mod)$fixed)[var, ]
+    modinfo$model <- modname
+    modinfo$var <- var
+    modinfo$dist <- as.integer(strsplit(modname, '_')[[1]][2])
+    
+    return(modinfo)
+}
+
+getAllRowPiePlot <- function(species, ind, var){
+    mods <- load_object(file.path(modelfolder, paste(species, ind, 'models.rda', sep='_')))
+    li_modnames <- names(mods)
+    
+    dfplot <- data.frame(matrix(ncol=6, nrow=0))
+    for(i in 2:length(li_modnames)){ # removing brodie model
+        mod <- mods[[i]]
+        modname <- li_modnames[i]
+        
+        dfplot <- rbind(dfplot, getEachRowPiePlot(mod, var, modname))
+    }
+    rownames(dfplot) <- seq(1:(length(li_modnames)-1))
+    return(dfplot)
+}
+
+getFightPiePlot <- function(species, ind, var){
+    dftmp <- getAllRowPiePlot(species, ind, var)
+    dftmp %>% ggplot(aes(x=dist, y=est.))+
+        geom_point(position=position_dodge(width=2))+
+        geom_errorbar(aes(ymin=lower, ymax=upper),
+                      position=position_dodge(width=2), width=1.5)+
+        scale_x_continuous(breaks=seq(10, 150, by=10))+
+        ggtitle(paste('Plot for', species, ind, sep=' '))+
+        xlab('dispersal distance (km)')+
+        ylab(paste(var, 'effect', sep=' '))
+}
+
+getFightPiePlot('bird', 'pd', 'PA')
+getFightPiePlot('bird', 'pd', 'awf_ptg.z')
+
+getFightPiePlot('mammal', 'pd', 'PA')
+getFightPiePlot('mammal', 'pd', 'awf_ptg.z')
+
+getFightPiePlot('mammal', 'fr', 'awf_ptg.z')
