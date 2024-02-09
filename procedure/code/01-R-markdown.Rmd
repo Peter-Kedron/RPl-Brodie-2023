@@ -21,7 +21,7 @@ This study is a *replication* of:
 We replicate the analysis of Brodie et al. and introduce protected area (PA) connectivity as a statistical moderator of the effect PA status has on biodiversity.
 We find KEY FINDINGS.
 Using a causal framework that controls for X through matching, Brodie et al. (2023) find evidence that protected areas (PA) do preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
-Brodie et al. provide evidence of the efficacy of protected area status , they do not assess whether the effect they observe is altered by network connectivity.
+Brodie et al. provides evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by network connectivity.
 
 # Study metadata
 This replication uses the data file provided by Brodie et al. (2023) at <https://doi.org/10.6084/m9.figshare.22527298.v1>. 
@@ -40,17 +40,38 @@ We independently accessed the World Database on Protected Areas <https://www.pro
 # Study design
 This study consists of a reproduction of the original work by Brodie et al. (2023) and a replication to analyze how connectivity influences protected area efficacy in preserving tropical biodiversity. We first implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. We then compute and add connectivity measures at the sample points to the original dataset to further examine the effect of connectivity.
 
+The hypotheses by Brodie et al. (2023) and how they tested them:
+
+> H0: Protected areas are effective for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition.
+
+They built a causal model to assess the effect of PA on tropical bird and mammal diversity and removed confounding effects of site accessibility and habitat quality along with other factors using matching based on propensity scores. Biodiversity metrics used include species richness (SR), functional richness (FR), and phylogenetic diversity (PD). Site accessibility was proxied using Human Development Index (HDI), circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)], and an interaction term of the two variables. Habitat quality was proxied using three-dimensional habitat structure metrics derived from the Global Ecosystem Dynamics Investigation (GEDI) mission. 
+ 
+> H1: Biodiversity is higher within protected areas than outside.
+
+They tested H1 with causal models where the outcome variables are different facets of biodiversity and the treatment variable is within or outside protected areas.
+
+> H2: Biodiversity outside protected areas is higher when they are near large ones. 
+
+They tested H2 using observations outside PAs using causal models where the outcome variables are biodiversity metrics and the treatment variable is whether the observation is near large or small PAs. PAs smaller than 500 km2 are categorized as small PAs, the rest as large PAs. 
+
+> H3: Spillover & Leakage effect
+
+They "assessed diversity outside PAs as a function of Euclidean distance to the nearest reserve" and did not find a significant correlation.
+Where did they test leakage effect?
+
 We ask the research question of whether protected areas moderate the efficacy of protection on tropical biodiversity. Our hypothesis is as follows:
 
 > H0: Connectivity mdoerates the efficacy of protection on biodiversity.
 
-We build upon the existing structural causal models by Brodie et al. (2023) to test the hypothesis.
-
-Also describe the original study archetype, e.g. is it **observational**, **experimental**, **quasi-experimental**, or **exploratory**?
+We build upon the existing structural causal models by Brodie et al. (2023) to test the hypothesis. The original study archetype is quasi-experimental as it uses a matching strategy to perform causal analysis.
 
 # Materials and procedure
 
+
 ## Computational environment
+
+Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics.
+
 
 ```{r chunk setup, include = FALSE}
 # record all the packages you are using here
