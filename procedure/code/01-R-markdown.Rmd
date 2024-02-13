@@ -160,7 +160,7 @@ Treatment variables for ORIG-H1, H2, H3 were derived from the World Database on 
 
 Observations were matched based on propoensity scores of their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. Predictors in the mixed-effects linear regression models were forest canopy height, site accessibility, HDI, and treatment variables.
 
-We gathered data shared by Brodie et al. (2023). Tabular data of most model inputs were provided in a  [figshare](https://doi.org/10.6084/m9.figshare.22527298.v1). Raster files at 1-km resolution for GEDI derived metrics and circuit-based accessibility were shared through a  [weblink](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters).
+We gathered data shared by Brodie et al. (2023). Tabular data of most model inputs were provided in a  [figshare](https://doi.org/10.6084/m9.figshare.22527298.v1). Raster files at 1-km resolution for GEDI derived metrics and circuit-based accessibility were shared through a  [weblink](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters). Variable sources are presented in Table 1.
 
 *Table 1*. Variables used in Brodie et al. (2023)
 
@@ -169,12 +169,14 @@ We gathered data shared by Brodie et al. (2023). Tabular data of most model inpu
 | Biodiversity metrics - mammals| Authors | Outcome variable (ORIG-H1, H2, H3) |
 | Biodiversity metrics - birds | eBird | Outcome variable (ORIG-H1, H2, H3) |
 | Protected area boundaries | WDPA | Treatment variables (whether inside PAs: ORIG-H1, distance to PAs: ORIG-H2, and size of PAs: ORIG-H3) |
-| Elevation | NASA SRTM | Predictor - elevation and topography |
+| Ground elevation | NASA GEDI L2B | Predictor - elevation and topography |
 | Circuit-based site accessibility (log transformed) | Authors | Predictor - site accessibility |
-| Human Development Index | Human Development Report 2020 | Predictor - HDI |
-| GEDI metrics | NASA GEDI L2 | Predictor - forest structure |
+| Human Development Index | Human Development Report 2020 | Predictor - site accessibility |
+| Forest structure metrics | NASA GEDI L2A | Predictor - forest structure |
 
-### Bird observations
+### eBird
+
+The original study gathered bird observations from eBird.
 
 - `Title`: eBird.
 - `Abstract`: A community science platform for reporting bird sightings.
@@ -199,7 +201,11 @@ Variables constructed were as follows:
 | asymptPD | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
 
 
-### Protected area boundary
+### The World Database on Protected Areas
+
+The original study used protected area boundaries to derive the three treatment variables (Table 3). Brodie et al. (2023) did not specify how they cleaned up protected area boundary. We dissolved PAs and then converted them from multi-parts to single-parts to avoid double counting. For mammals, we excluded marine protected areas.
+
+// need to confirm with Lei.
 
 - `Title`: The World Database on Protected Areas (WDPA).
 - `Abstract`: A global database on protected areas (PAs) and other effective conservation measurers (OECM).
@@ -213,49 +219,61 @@ Variables constructed were as follows:
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Unknown.
 
-Brodie et al. (2023) did not specify how they cleaned up protected area boundary. We dissolved PAs and then converted them from multi-parts to single-parts to avoid double counting. For mammals, we excluded marine protected areas.
-
-// need to confirm with Lei.
-
 *Table 3* Variables created from protected area boundaries.
 
 | **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
 | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| PA | Within or outside PAs | Whether the point is inside a PA or not | binary | Not applicable | 1 for inside and 0 for outside | Not applicable | Unknown |
+| PA | Within or outside PAs | Whether the point is inside a PA or not | Binary | Not applicable | 1 for inside and 0 for outside | Not applicable | Unknown |
 | PA_size_km2 | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
 | dist_to_PA | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
-
-
-- `Variables`: SR.mean, FR, and PD
-  - `Label`: variable name as used in the data or code
-  - `Alias`: intuitive natural language name
-  - `Definition`: Short description or definition of the variable. Include measurement units in description.
-  - `Type`: data type, e.g. character string, integer, real
-  - `Accuracy`: e.g. uncertainty of measurements
-  - `Domain`: Range (Maximum and Minimum) of numerical data, or codes or categories of nominal data, or reference to a standard codebook
-  - `Missing Data Value(s)`: Values used to represent missing data and frequency of missing data observations
-  - `Missing Data Frequency`: Frequency of missing data observations
   
   
-  
-  
-  
-### Elevation
+### GEDI L2 metrics
 
-- `Variables`: SR.mean, FR, and PD
-  - `Label`: variable name as used in the data or code
-  - `Alias`: intuitive natural language name
-  - `Definition`: Short description or definition of the variable. Include measurement units in description.
-  - `Type`: data type, e.g. character string, integer, real
-  - `Accuracy`: e.g. uncertainty of measurements
-  - `Domain`: Range (Maximum and Minimum) of numerical data, or codes or categories of nominal data, or reference to a standard codebook
-  - `Missing Data Value(s)`: Values used to represent missing data and frequency of missing data observations
-  - `Missing Data Frequency`: Frequency of missing data observations
+The Global Ecosystem Dynamics Investigation (GEDI) is a spaceborne light detection and ranging (LiDAR) mission monitoring forest structure on earth. The original study derived both ground elevation and forest structure metrics from the Level 2 dataset of GEDI. Level 2 GEDI data are at footprint level so Brodie et al. (2023) used krigging interpolation to create wall-to-wall layers (1-km resolution).
 
+L2A includes elevation data. The original study computed slope and topographic position index (TPI) to represent topographic traits at each site. The original study used five L2B metrics, which were canopy height (relative height at 95%), plant area volume density (PAVD) between 0 and 5 m (represents understory density), cumulative plant area index from ground to canopy top, foliage height diversity of plant area index, and proportional cover. They found the five forest structure metrics to be highly correlated and only kept canopy height and understory density in models. 
 
-### Circuit-based accessibility
+- `Title`: The Global Ecosystem Dynamics Investigation Level 2 Elevation and Height Metrics.
+- `Abstract`: Global footprint level observations from GEDI on ground elevation and forest structure.
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Footprints are of 25-m resolution and extrapolated into 1-km resolution. 
+- `Spatial Reference System`: WGS 84.
+- `Temporal Coverage`: 2019/04/17 to 2022/04/12
+- `Temporal Resolution`: Not applicable.
+- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Distribution`: Original GEDI L2 metrics can be derived from [NASA website](https://cmr.earthdata.nasa.gov/search/concepts/C1908348134-LPDAAC_ECS.html) and Brodie et al. (2023) shared krigged results on a [ webpage](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters).
+- `Constraints`: Non-commercial use.
+- `Data Quality`: Original GEDI L2 metrics have quality and degrade flags and Brodie et al. (2023) kept only data points of satisfying quality.
+
+*Table 4* Variables derived from GEDI L2 metrics.
+
+| **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
+| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| elev | Elevation | Ground elevation at the site (krigged) | Integer | Unknown | Equal to or greater than 0 (terrestrial observations) | Unknown | Unknown |
+| slope | Slope | Slope of topography | Float | Unknown | 0 to 90 | Unknown | Unknown |
+| TPI | Topographic Position Index | Difference between the elevation of a focal raster cell with those of its neighbors (not mentioned in paper) | Float | Unknwon | Not bounded | Unknown | Unknown |
+| rh_95_a0.pred | Relative height at 95% | Roughly the top canopy height (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| pavd_0_5.pred | Plant area volume density from 0 to 5 m | A proxy of understory forest density (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| pai_a0.pred | Plant area index | Cumulative PAI from ground to canopy (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| fhd_pai_1m_a0.pred | Foliage height diversity | Shannon's diversity of PAI across heights (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| cover_a0.pred | Proportional coverage | Openness or closeness of canopy (krigged) | Float | Unknown | 0 to 1 | Unknown | Unknown |
+
 
 ### Human Development Index (HDI)
+
+- `Variables`: SR.mean, FR, and PD
+  - `Label`: variable name as used in the data or code
+  - `Alias`: intuitive natural language name
+  - `Definition`: Short description or definition of the variable. Include measurement units in description.
+  - `Type`: data type, e.g. character string, integer, real
+  - `Accuracy`: e.g. uncertainty of measurements
+  - `Domain`: Range (Maximum and Minimum) of numerical data, or codes or categories of nominal data, or reference to a standard codebook
+  - `Missing Data Value(s)`: Values used to represent missing data and frequency of missing data observations
+  - `Missing Data Frequency`: Frequency of missing data observations
+
+
+
 
 ### GEDI-based metrics
 | Label | Alias | Definition | Type | Accuracy | Domain | Missing Data Value(s) | Missing Data Frequency |
