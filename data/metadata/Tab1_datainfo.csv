@@ -1,0 +1,8 @@
+﻿Name,Source,Usage
+Biodiversity metrics - mammals,Authors,"Outcome variable (ORIG-H1, H2, H3)"
+Biodiversity metrics - birds,eBird,"Outcome variable (ORIG-H1, H2, H3)"
+Protected area boundaries,WDPA,"Treatment variables (whether inside PAs: ORIG-H1, distance to PAs: ORIG-H2, and size of PAs: ORIG-H3)"
+Elevation,NASA SRTM,Predictor - elevation and topography
+Circuit-based site accessibility (log transformed),Authors,Predictor - site accessibility
+GEDI metrics,NASA GEDI L2,Predictor - forest structure
+HDI,Human Development Report 2020,Predictor - HDI

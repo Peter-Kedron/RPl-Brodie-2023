@@ -12,76 +12,6 @@ editor_options:
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
-
-# Abstract {-}
-This study is a *replication* of:
-
-> Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). <https://doi.org/10.1038/s41586-023-06410-z>
-
-We replicate the analysis of Brodie et al. (2023) and introduce protected area (PA) connectivity as a statistical moderator of the effect PA status has on biodiversity.
-We find KEY FINDINGS.
-Using a causal framework that controls for X through matching, Brodie et al. (2023) find evidence that protected areas (PA) do preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
-Brodie et al. provides evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by network connectivity.
-
-# Study metadata
-This replication uses the data file provided by Brodie et al. (2023) at <https://doi.org/10.6084/m9.figshare.22527298.v1>. 
-We independently accessed the World Database on Protected Areas <https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA> to construct our site and PA connectivity measures. 
-
-- `Key words`: Biodiversity, Conservation, Protected Areas, Connectivity, 30x30
-- `Subject`: Ecology and Evolutionary Biology, Natural Resources and Conservation, 
-- `Date created`: November 8, 2023
-- `Date modified`: date of most recent revision
-- `Spatial Coverage`: Southeast Asia
-- `Spatial Resolution`: Species observations - GPS located point data, GEDI-derived forest structural covariates - 1 km raster, HDI - country-level, Protected Areas - PA Polygons 
-- `Spatial Reference System`: Specify the geographic or projected coordinate system for the study, e.g. EPSG:4326
-- `Temporal Coverage`: 01-2015 to 08-2021
-- `Temporal Resolution`: Specify the temporal resolution of your study---i.e. the duration of time for which each observation represents or the revisit period for repeated observations
-
-# Study design
-This study consists of a reproduction of the original work by Brodie et al. (2023) and a replication to analyze how connectivity influences protected area efficacy in preserving tropical biodiversity. We first implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. We then compute and add connectivity measures at the sample points to the original dataset to further examine the effect of connectivity.
-
-Brodie et al. (2023) formulated hypotheses to assess protected area effectiveness and tested them with structural causal modeling. Hypotheses concerned overall protected area effectiveness (H1) and PAs' size (H2) and closeness (H3) effects on biodiversity in unprotected lands to infer implications for spillover and leakage effects. 
-
-### Protected area effectiveness on overall biodiversity
-
-> H1: Biodiversity is higher within protected areas than outside (after removing effects of site accessbility and habitat condition).
-
-Debates exist on whether protected areas are effective because of their remote location and good habitat conditions or conservation status itself. Motivated by such, Brodie et al. (2023) estimated protected areas efficacy for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition (H1). Their outcome variables are various aspects of biodiversity. The treatment variable is whether the observation point is within or outside a reserve. If the treatment variable is significant in a causal model, it supports H1 and adds evidence for the effectiveness of protecting lands.
-
-To do so, they removed confounding effects and built causal models for birds vs mammals, and different biodiversity outcome metrics. Two major confounders identified were site accessibility and habitat quality. Site accessibility was proxied using Human Development Index (HDI), circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)], and an interaction term of the two variables. Habitat quality was proxied using three-dimensional habitat structure metrics derived from the Global Ecosystem Dynamics Investigation (GEDI) mission. Confounding effects were removed using statistical matching based on propensity scores. Biodiversity metrics used as outcome variables include species richness (SR), functional richness (FR), and phylogenetic diversity (PD). PA effects were estimated using separate mixed effects linear regression for different biodiversity metrics and for birds vs mammals.
- 
-Brodie et al. (2023) found protection status increased all facets of bird biodiversity but the effects were not significant for mammals.
-
-
-### Spillover and leakage effects on unprotected lands
-
-Spillover and leakage effects are two ways protected areas could have regional impacts on biodiversity beyond their boundaries. Spillover effect refers to enhanced biodiversity in unprotected lands near PAs whereas leakage effect refers to increased conservation pressure (e.g., unregulated hunting and displaced disturbances) in nearby unprotected lands because of PA establishment. Brodie et al. (2023) tested the effects of PA sizes (H2) and closeness (i.e., distance, H3) to neighboring unprotected lands.
-
-> H2: Biodiversity outside protected areas is higher when they are near large ones (size effect). 
-
-They built separate models for birds and mammals on three different diversity metrics and tested H2 using observations outside protected areas. The treatment variable was a binary variable indicating whether the observation point was close to a large (i.e., ≥ 500 km^2) reserve or small (i.e., < 500 km^2). They went through the same matching steps.
-
-Brodie et al. (2023) found that 
-
-> H3: Biodiversity outside protected areas is higher when they are closer (distance effect).
-
-They "assessed diversity outside PAs as a function of Euclidean distance to the nearest reserve" and did not find a significant correlation.
-Where did they test leakage effect?
-
-We ask the research question of whether protected areas moderate the efficacy of protection on tropical biodiversity. Our hypothesis is as follows:
-
-> H4: Connectivity mdoerates the efficacy of protection on biodiversity.
-
-We build upon the existing structural causal models by Brodie et al. (2023) to test the hypothesis. The original study archetype is quasi-experimental as it uses a matching strategy to perform causal analysis.
-
-# Materials and procedure
-
-
-## Computational environment
-
-Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics.
-
-
 ```{r chunk setup, include = FALSE}
 # record all the packages you are using here
 # this includes any calls to library(), require(),
@@ -94,6 +24,7 @@ packages <- c("tidyverse", "here")
 # disable at your own peril
 # https://conflicted.r-lib.org/
 require(conflicted)
+library(here)
 
 # load and install required packages
 # https://groundhogr.com/
@@ -104,15 +35,19 @@ if (!require(groundhog)) {
 
 # this date will be used to determine the versions of R and your packages
 # it is best practice to keep R and its packages up to date
-groundhog.day <- "2023-06-26"
-set.groundhog.folder("../../data/scratch/groundhog/")
+# groundhog.day <- "2023-06-26"
+# groundhog.day <- "2024-02-08"
+# set.groundhog.folder("../../data/scratch/groundhog/")
 
 # this replaces any library() or require() calls
-groundhog.library(packages, groundhog.day)
+#groundhog.library(packages, groundhog.day, 
+                  # tolerate.R.version='4.2.2'
+#                  )
 # you may need to install a correct version of R
 # you may need to respond OK in the console to permit groundhog to install packages
 # you may need to restart R and rerun this code to load installed packages
 # In RStudio, restart r with Session -> Restart Session
+# R version issue may or may not be resolved by adding the syntax: tolerate.R.version
 
 # record the R processing environment
 # alternatively, use devtools::session_info() for better results
@@ -134,31 +69,180 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Abstract {-}
+This study is a *reproduction* of:
+
+> Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). <https://doi.org/10.1038/s41586-023-06410-z>
+
+We replicate the analysis of Brodie et al. (2023) and introduce protected area (PA) connectivity as a statistical moderator of the effect PA status has on biodiversity.
+We find KEY FINDINGS.
+Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) do preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
+Brodie et al. provides evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by network connectivity.
+
+# Study metadata
+This replication uses the data file provided by Brodie et al. (2023) at <https://doi.org/10.6084/m9.figshare.22527298.v1>. 
+We independently accessed the World Database on Protected Areas <https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA> to construct our site and PA connectivity measures. 
+
+- `Key words`: Biodiversity, Conservation, Protected Areas, Connectivity, 30x30
+- `Subject`: Ecology and Evolutionary Biology, Natural Resources and Conservation, 
+- `Date created`: November 8, 2023
+- `Date modified`: date of most recent revision
+- `Spatial Coverage`: Southeast Asia
+- `Spatial Resolution`: Species observations - GPS located point data, GEDI-derived forest structural covariates - 1 km raster, HDI - country-level, Protected Areas - PA Polygons 
+- `Spatial Reference System`: Specify the geographic or projected coordinate system for the study, e.g. EPSG:4326
+- `Temporal Coverage`: 01-2015 to 08-2021
+- `Temporal Resolution`: Specify the temporal resolution of your study---i.e. the duration of time for which each observation represents or the revisit period for repeated observations
+
+# Study design
+This study consists of a reproduction of the original work by Brodie et al. (2023) and a replication to analyze how connectivity influences protected area efficacy in preserving tropical biodiversity. We first implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. We then compute and add connectivity measures at the sample points to the original dataset to further examine the effect of connectivity.
+
+Brodie et al. (2023) formulated hypotheses to assess protected area effectiveness and tested them with structural causal modeling. Hypotheses concerned overall protected area effectiveness (H1) and PAs' size (H2) and closeness (H3) effects on biodiversity in unprotected lands to infer implications for spillover and leakage effects. 
+
+## Protected area effectiveness on overall biodiversity
+
+> OR-H1: Biodiversity is higher within protected areas than outside (after removing effects of site accessbility and habitat condition).
+
+Debates exist on whether protected areas are effective because of their remote location and good habitat conditions or conservation status itself. Motivated by such, Brodie et al. (2023) estimated protected areas efficacy for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition (H1). Their outcome variables are various aspects of biodiversity. The treatment variable is whether the observation point is within or outside a reserve. If the treatment variable is significant in a causal model, it supports H1 and adds evidence for the effectiveness of protecting lands.
+
+To do so, they removed confounding effects and built causal models for birds vs mammals, and different biodiversity outcome metrics. Two major confounders identified were site accessibility and habitat quality. Site accessibility was proxied using Human Development Index (HDI), circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)], and an interaction term of the two variables. Habitat quality was proxied using three-dimensional habitat structure metrics derived from the Global Ecosystem Dynamics Investigation (GEDI) mission. Confounding effects were removed using statistical matching based on propensity scores. Biodiversity metrics used as outcome variables include species richness (SR), functional richness (FR), and phylogenetic diversity (PD). PA effects were estimated using separate mixed effects linear regression for different biodiversity metrics and for birds vs mammals.
+ 
+Brodie et al. (2023) found protection status increased all facets of bird biodiversity but the effects were not significant for mammals.
+
+
+## Spillover and leakage effects on unprotected lands
+
+Spillover and leakage effects are two ways protected areas could have regional impacts on biodiversity beyond their boundaries. Spillover effect refers to enhanced biodiversity in unprotected lands near PAs whereas leakage effect refers to increased conservation pressure (e.g., unregulated hunting and displaced disturbances) in nearby unprotected lands because of PA establishment. Brodie et al. (2023) tested the effects of PA sizes (H2) and closeness (i.e., distance, H3) to neighboring unprotected lands.
+
+> OR-H2: Biodiversity outside protected areas is higher when they are near large ones (size effect). 
+
+They built separate models for birds and mammals on three different diversity metrics and tested H2 using observations outside protected areas. They went through the same matching steps as above.
+
+Brodie et al. (2023) found that PA size is a significant predictor of all facets of birds and mammals diversity outside PAs in the study region. Effects for mammals were smaller than those for birds.
+
+> OR-H3: Biodiversity outside protected areas is higher when they are closer (distance effect).
+
+They tested the effect of proximity to PAs on biodiversity outside PAs. Distance was computed as the Euclidean distance to the nearest reserve. 
+
+In the original paper, the authors reported that no significant effects of distance were observed. However, regression summary for H3 was incomplete in Extended Data Table 1 so that a direct comparison could not be made.
+
+
+## Adding connectivity
+
+We ask the research question of whether protected areas moderate the efficacy of protection on tropical biodiversity. We formulate the hypothesis is as follows:
+
+> RPL-H1: Connectivity mdoerates the efficacy of protection on biodiversity.
+
+We build upon the existing structural causal models by Brodie et al. (2023) to test the hypothesis. The original study archetype is quasi-experimental as it uses a matching strategy to perform causal analysis.
+
+# Materials and procedure
+
+
+## Computational environment
+
+The reproduction of the original study is conducted in MacBook Pros. Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics. We built upon and annotated R scripts shared by the original study, and added missing information on HDI and GEDI metrics to the scripts.
+// Is this accurate?
+
+Required packages are as follows:
+
+```{r package setup, echo=T, results='hide', message=FALSE}
+# library(groundhog)
+pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
+          "MatchIt", "modelsummary", "optmatch", "nlme")
+# groundhog.library(pkgs, "2024-02-11")
+# I don't know why groundhog is not working
+lapply(pkgs, require, character.only=TRUE)
+```
 ## Data and variables
 
-Describe the **data sources** and **variables** to be used.
-Data sources may include plans for observing and recording **primary data** or descriptions of **secondary data**.
-For secondary data sources with numerous variables, the analysis plan authors may focus on documenting only the variables intended for use in the study.
+In the original study, outcome variables for the causal models are biodiversity metrics (i.e., species richness, functional richness, and phylogenetic diversity) derived from species observations. Mammal observations were assembled by the authors from camera traps in 65 study areas in the study region. Bird observations were gathered from eBird from 2015/01 to 2021/08 following a set of filtering procedures.
 
-Primary data sources for the study are to include ... .
-Secondary data sources for the study are to include ... .
+Treatment variables for ORIG-H1, H2, H3 were derived from the World Database on Protected Areas (WDPA) by UNEP-WCMC. Specifically, they are 1) a binary variable on whether the sampling point is within protected areas or not (H1), 2) relative size of the closest protected area (i.e., large or small, H2), and 3) euclidean distance to the closest protected area (H3). For H2, PAs equal to or larger than 500 km2 are considered large and otherwise small. The size threshold was determined by testing a series of values with the best model fits for birds and mammals (Extended Data Table 4 in Brodie et al. 2023).
 
-Each of the next subsections describes one data source.
+Observations were matched based on propoensity scores of their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. Predictors in the mixed-effects linear regression models were forest canopy height, site accessibility, HDI, and treatment variables.
 
-### Secondary data source1 name
+We gathered data shared by Brodie et al. (2023). Tabular data of most model inputs were provided in a  [figshare](https://doi.org/10.6084/m9.figshare.22527298.v1). Raster files at 1-km resolution for GEDI derived metrics and circuit-based accessibility were shared through a  [weblink](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters).
 
-- `Title`: Title of data source
-- `Abstract`: Brief description of the data source
-- `Spatial Coverage`: Specify the geographic extent of your study. This may be a place name and link to a feature in a gazetteer like GeoNames or OpenStreetMap, or a well known text (WKT) representation of a bounding box.
-- `Spatial Resolution`: Specify the spatial resolution as a scale factor, description of the level of detail of each unit of observation (including administrative level of administrative areas), and/or or distance of a raster GRID size
-- `Spatial Reference System`: Specify the geographic or projected coordinate system for the study
-- `Temporal Coverage`: Specify the temporal extent of your study---i.e. the range of time represented by the data observations.
-- `Temporal Resolution`: Specify the temporal resolution of your study---i.e. the duration of time for which each observation represents or the revisit period for repeated observations
-- `Lineage`: Describe and/or cite data sources and/or methodological steps used to create this data source
-- `Distribution`: Describe how the data is distributed, including any persistent identifier (e.g. DOI) or URL for data access
-- `Constraints`: Legal constraints for *access* or *use* to protect *privacy* or *intellectual property rights*
-- `Data Quality`: State result of quality assessment or state "Quality unknown"
-- `Variables`: For each variable, enter the following information. If you have two or more variables per data source, you may want to present this information in table form (shown below)
+*Table 1*. Variables used in Brodie et al. (2023)
+
+| **Name** | **Source** | **Usage** |
+| :--: | :--: | :--: |
+| Biodiversity metrics - mammals| Authors | Outcome variable (ORIG-H1, H2, H3) |
+| Biodiversity metrics - birds | eBird | Outcome variable (ORIG-H1, H2, H3) |
+| Protected area boundaries | WDPA | Treatment variables (whether inside PAs: ORIG-H1, distance to PAs: ORIG-H2, and size of PAs: ORIG-H3) |
+| Elevation | NASA SRTM | Predictor - elevation and topography |
+| Circuit-based site accessibility (log transformed) | Authors | Predictor - site accessibility |
+| Human Development Index | Human Development Report 2020 | Predictor - HDI |
+| GEDI metrics | NASA GEDI L2 | Predictor - forest structure |
+
+### Bird observations
+
+- `Title`: eBird.
+- `Abstract`: A community science platform for reporting bird sightings.
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Vector.
+- `Spatial Reference System`: Not specified.
+- `Temporal Coverage`: 2015/01 - 2021/08.
+- `Temporal Resolution`: Not applicable.
+- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Distribution`: [eBird webpage](https://ebird.org/home) and [other download methods](https://science.ebird.org/en/use-ebird-data/download-ebird-data-products).
+- `Constraints`: Non-commercial use.
+- `Data Quality`: Although a direct data quality layer is not associated, Brodie et al. (2023) followed recommendations from existing studies to filter out data points.
+
+Variables constructed were as follows:
+
+*Table 2* Variables created from bird observations via eBird.
+
+| **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
+| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| SR.mean | Species richness | Number of species | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| maxFRic | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| asymptPD | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+
+
+### Protected area boundary
+
+- `Title`: The World Database on Protected Areas (WDPA).
+- `Abstract`: A global database on protected areas (PAs) and other effective conservation measurers (OECM).
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Vector.
+- `Spatial Reference System`: WGS 84.
+- `Temporal Coverage`: Latest.
+- `Temporal Resolution`: Updated monthly.
+- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Distribution`: [WDPA webpage](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
+- `Constraints`: Non-commercial use.
+- `Data Quality`: Unknown.
+
+Brodie et al. (2023) did not specify how they cleaned up protected area boundary. We dissolved PAs and then converted them from multi-parts to single-parts to avoid double counting. For mammals, we excluded marine protected areas.
+
+// need to confirm with Lei.
+
+*Table 3* Variables created from protected area boundaries.
+
+| **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
+| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| PA | Within or outside PAs | Whether the point is inside a PA or not | binary | Not applicable | 1 for inside and 0 for outside | Not applicable | Unknown |
+| PA_size_km2 | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| dist_to_PA | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+
+
+- `Variables`: SR.mean, FR, and PD
+  - `Label`: variable name as used in the data or code
+  - `Alias`: intuitive natural language name
+  - `Definition`: Short description or definition of the variable. Include measurement units in description.
+  - `Type`: data type, e.g. character string, integer, real
+  - `Accuracy`: e.g. uncertainty of measurements
+  - `Domain`: Range (Maximum and Minimum) of numerical data, or codes or categories of nominal data, or reference to a standard codebook
+  - `Missing Data Value(s)`: Values used to represent missing data and frequency of missing data observations
+  - `Missing Data Frequency`: Frequency of missing data observations
+  
+  
+  
+  
+  
+### Elevation
+
+- `Variables`: SR.mean, FR, and PD
   - `Label`: variable name as used in the data or code
   - `Alias`: intuitive natural language name
   - `Definition`: Short description or definition of the variable. Include measurement units in description.
@@ -168,12 +252,16 @@ Each of the next subsections describes one data source.
   - `Missing Data Value(s)`: Values used to represent missing data and frequency of missing data observations
   - `Missing Data Frequency`: Frequency of missing data observations
 
+
+### Circuit-based accessibility
+
+### Human Development Index (HDI)
+
+### GEDI-based metrics
 | Label | Alias | Definition | Type | Accuracy | Domain | Missing Data Value(s) | Missing Data Frequency |
 | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
 | variable1 | ... | ... | ... | ... | ... | ... | ... |
 | variable2 | ... | ... | ... | ... | ... | ... | ... |
-
-### Secondary data source2 name
 
 ... same form as above...
 
