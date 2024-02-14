@@ -12,7 +12,7 @@ editor_options:
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
-```{r chunk setup, include = FALSE}
+```{r chunk setup, include = FALSE, message=FALSE}
 # record all the packages you are using here
 # this includes any calls to library(), require(),
 # and double colons such as here::i_am()
@@ -67,7 +67,12 @@ knitr::opts_chunk$set(
   fig.width = 8,
   fig.path = paste0(here("results", "figures"), "/")
 )
+
+# set working directory as the project folder
+knitr::opts_knit$set(root.dir = here(''))
+
 ```
+
 
 # Abstract {-}
 This study is a *reproduction* of:
@@ -431,8 +436,6 @@ adjustmentSets(dagBrodie)
 # something wrong with the path in rmd --> reset path
 # requires PhantomJS: webdriver::install_phantomjs()
 pkgs <- c("sf", "dplyr", "terra", "optparse", "wdpar", "here")
-setwd(here(''))
-print(getwd())
 sapply(pkgs, require, character.only = TRUE)
 sf_use_s2(FALSE) # deal with buffering odd
 
@@ -475,108 +478,348 @@ values(template) <- 1:ncell(template)
 ## 3. Separate or union polygons and re-index them.
 
 # Query and clean PAs
-raw_pas <- c("KHM", "CHN", "IDN", "LAO", "MYS", 
-             "SGP", "THA", "VNM", "BRN") %>%
-    lapply(wdpa_fetch, wait = TRUE,
-           download_dir = rappdirs::user_data_dir("wdpar")) %>%
-    bind_rows()
-raw_pas <- wdpa_clean(raw_pas, crs = "EPSG:32646",
-                      geometry_precision = 100000)
-raw_pas <- raw_pas %>% filter(MARINE != "marine")
+# skip these unless comments removed
+#raw_pas <- c("KHM", "CHN", "IDN", "LAO", "MYS", 
+#             "SGP", "THA", "VNM", "BRN") %>%
+#    lapply(wdpa_fetch, wait = TRUE,
+#           download_dir = rappdirs::user_data_dir("wdpar")) %>%
+#    bind_rows()
+#raw_pas <- wdpa_clean(raw_pas, crs = "EPSG:32646",
+#                      geometry_precision = 100000)
+#raw_pas <- raw_pas %>% filter(MARINE != "marine")
 ## Note: now the No is 1638
 
 # Trim the polygons to terrestrial only
 ## Clip all not marine polygons to administrative border.
 ## Use the same data source in examples of R package wdpar.
-raw_adm_bry <- lapply(
-    c("KHM", "CHN", "IDN", "LAO", "MYS", 
-      "SGP", "THA", "VNM", "BRN"), function(iso){
-          file_path <- tempfile(fileext = "rds")
-          lk <- "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf"
-          download.file(sprintf("%s/gadm36_%s_0_sf.rds", lk, iso), file_path)
-          readRDS(file_path)}) %>% bind_rows()
+# still skip this
+
+#raw_adm_bry <- lapply(
+#    c("KHM", "CHN", "IDN", "LAO", "MYS", 
+#      "SGP", "THA", "VNM", "BRN"), function(iso){
+#          file_path <- tempfile(fileext = "rds")
+#          lk <- "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf"
+#          download.file(sprintf("%s/gadm36_%s_0_sf.rds", lk, iso), file_path)
+#          readRDS(file_path)}) %>% bind_rows()
 
 ## Process the boundary a bit
-adm_bry <- raw_adm_bry %>%
-    st_set_precision(100000) %>%
-    sf::st_make_valid() %>%
-    st_set_precision(100000) %>%
-    st_combine() %>%
-    st_union() %>%
-    st_set_precision(100000) %>%
-    sf::st_make_valid() %>%
-    st_transform(st_crs(raw_pas)) %>%
-    sf::st_make_valid()
+# skipping
+#adm_bry <- raw_adm_bry %>%
+#    st_set_precision(100000) %>%
+#    sf::st_make_valid() %>%
+#    st_set_precision(100000) %>%
+#    st_combine() %>%
+#    st_union() %>%
+#    st_set_precision(100000) %>%
+#    sf::st_make_valid() %>%
+#    st_transform(st_crs(raw_pas)) %>%
+#    sf::st_make_valid()
 
 ## Clip it to boundary
-clean_pas <- raw_pas %>% st_intersection(adm_bry)
+# skipping
+
+#clean_pas <- raw_pas %>% st_intersection(adm_bry)
 ## No of PAs drop from 1638 to 1618
 
 # Crop it to extent
+# skipping
 ## WARNING: remember to re-run this step again after union/separate the polygons
-bbox <- st_as_sfc(st_bbox(template)) %>% st_transform(st_crs(clean_pas))
-clean_pas <- clean_pas %>% 
-    slice(unique(unlist(suppressMessages(st_intersects(bbox, .)))))
+
+#bbox <- st_as_sfc(st_bbox(template)) %>% st_transform(st_crs(clean_pas))
+#clean_pas <- clean_pas %>% 
+#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .)))))
 ## Note: No of PAs drop further to 1260
 
 # Union/separate polygons.
 # Have to drop the attributes. Shouldn't be a problem though.
-clean_pas <- st_cast(st_union(clean_pas), "POLYGON") %>% 
-    st_as_sf() %>% rename(geometry = x)
+# skipping
+
+#clean_pas <- st_cast(st_union(clean_pas), "POLYGON") %>% 
+#    st_as_sf() %>% rename(geometry = x)
 ## No of PAs change from 1260 to 4270 (lose administrative meaning)
 
 # Crop to extent again
-clean_pas <- clean_pas %>% 
-    slice(unique(unlist(suppressMessages(st_intersects(bbox, .))))) %>% 
-    mutate(index = 1:nrow(.))
+# skipping
+
+#clean_pas <- clean_pas %>% 
+#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .))))) %>% 
+#    mutate(index = 1:nrow(.))
 ## No of PAs change from 4270 to 4259
 
 # Re-calculate the area
-clean_pas <- clean_pas %>% 
-    mutate(REP_AREA = st_area(.) %>% units::set_units("km2"))
+# skipping
+
+#clean_pas <- clean_pas %>% 
+#    mutate(REP_AREA = st_area(.) %>% units::set_units("km2"))
 
 # Clean the tiny ones with "partial" marine type due to a high chance to be the
 # noisy remaining of the clip
-false_pas <- st_join(clean_pas, raw_pas %>% select(MARINE)) %>% 
-    filter(MARINE != "terrestrial" & REP_AREA < 0.01 %>% units::set_units("km2"))
+# skipping
 
-clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index))
+#false_pas <- st_join(clean_pas, raw_pas %>% select(MARINE)) %>% 
+#    filter(MARINE != "terrestrial" & REP_AREA < 0.01 %>% units::set_units("km2"))
+
+#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index))
 
 ######################### Cluster Protected areas (PAs) ########################
 ## 4. Cluster the PAs that are connected. 
 ## The assumption here is that it is difficult (if not possible) for mammals 
 ## to pass the ocean or huge waterbodies.
 ## Warning: this is only for mammal species
-adm_reorg <- raw_adm_bry %>% 
-    st_transform(st_crs(clean_pas)) %>% 
-    st_buffer(10) %>% st_union() %>% st_buffer(-10) %>% st_cast("POLYGON") %>% 
-    st_intersection(bbox) %>% st_as_sf() %>% mutate(group = 1:nrow(.)) %>% 
-    mutate(area = st_area(.) %>% units::set_units("km2"))
+# skipping
 
-clean_pas <- st_join(clean_pas, adm_reorg) # No is 2873
+#adm_reorg <- raw_adm_bry %>% 
+#    st_transform(st_crs(clean_pas)) %>% 
+#    st_buffer(10) %>% st_union() %>% st_buffer(-10) %>% st_cast("POLYGON") %>% 
+#    st_intersection(bbox) %>% st_as_sf() %>% mutate(group = 1:nrow(.)) %>% 
+#    mutate(area = st_area(.) %>% units::set_units("km2"))
+
+#clean_pas <- st_join(clean_pas, adm_reorg) # No is 2873
 
 ## Clean further
-false_pas <- clean_pas %>% 
-    filter(area > 5e+05 %>% units::set_units("km2") & 
-               REP_AREA < 1 %>% units::set_units("km2"))
-clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 2198
+# skipping
+#false_pas <- clean_pas %>% 
+#    filter(area > 5e+05 %>% units::set_units("km2") & 
+#               REP_AREA < 1 %>% units::set_units("km2"))
+#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 2198
 
 ## Re-index
-clean_pas <- clean_pas %>% mutate(index = 1:nrow(.)) %>% 
-    select(-area)
+# skipping
+#clean_pas <- clean_pas %>% mutate(index = 1:nrow(.)) %>% 
+#    select(-area)
 
-adm_reorg <- adm_reorg %>% filter(group %in% clean_pas$group) %>% 
-    rename(geometry = x) %>% select(group)
+#adm_reorg <- adm_reorg %>% filter(group %in% clean_pas$group) %>% 
+#    rename(geometry = x) %>% select(group)
 
 # Save out
+# skipping and reading existing ones
 # st_write(clean_pas, file.path(dst_dir, "clean_pas.geojson"))
 # st_write(adm_reorg, file.path(dst_dir, "pa_groups.shp"))
+
+clean_pas <- st_read(file.path(dst_dir, 'clean_pas.geojson'))
+adm_reorg <- file.path(dst_dir, 'pa_groups.shp')
+
 ```
 
 
-### Data preparation
+
+
+### Data preparation for bird models
+
+We first prepare data for the causal models for birds.
+
+```{r bird_prep, echo=T, message=FALSE}
+# rm(list = ls())
+
+# Load the data provided by Brodie et al. (2023)
+dat_brodie_bird <- data.frame(read.csv(
+                          here("data/raw/public/training/bird_data_230326.csv"), 
+                          header = T))
+
+# Simplify the variable names of site identifier and geographic coordinates
+names(dat_brodie_bird)[names(dat_brodie_bird) == "site"] <- "station"
+names(dat_brodie_bird)[names(dat_brodie_bird) == "lat_wgs84"] <- "lat"
+names(dat_brodie_bird)[names(dat_brodie_bird) == "long_wgs84"] <- "long"
+
+# Search for HDI in the column names 
+grep("hdi", names(dat_brodie_bird), value = TRUE)
+grep("HDI", names(dat_brodie_bird), value = TRUE)
+
+# Assign stations the HDI value of its country
+# Reference: Human Development Report 2020: The Next Frontier—Human Development 
+# and the Anthropocene (United Nations Development Programme, 2020).
+# https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
+# https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
+
+dat_HDI <- data.frame(
+    country = unique(dat_brodie_bird$country), 
+    HDI = c(0.593, 0.768, 0.705, 0.607, 0.803, 0.939, 0.800, 
+            0.703, 0.829))
+dat_brodie_bird <- left_join(dat_brodie_bird, dat_HDI, by = "country")
+
+# Create dataframe containing the subset of variable used in the analysis
+dat_bird <- dat_brodie_bird %>% select(station, country, PA, utm_east, utm_north, 
+                             Hansen_recentloss,access_log10, HDI, dist_to_PA, 
+                             PA_size_km2, rh_95_a0.pred, pavd_0_5.pred, 
+                             pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
+                             agbd_a0.pred,asymptPD, maxFRic, SR.mean)
+
+# Add the connectivity variables for each station calculated with 
+# calc_conn_metrics.R
+dat_conn_metrics_bird <- data.frame(read.csv(
+                                here("data/derived/public/conn_flux_bird_10_150.csv"), 
+                                header = T))
+dat_bird <- left_join(dat_bird, dat_conn_metrics_bird, by = "station")
+
+# Scale subset of continuous variables in dat
+# Peter - Need to add the connectivity measures to the scaling list when they 
+# are introduced
+dat_scale_bird <- data.frame(scale(subset(dat_bird, select = c("utm_east", "utm_north", 
+                                                     "HDI", "access_log10", 
+                                                     "PA_size_km2", 
+                                                     "dist_to_PA", 
+                                                     "rh_95_a0.pred", 
+                                                     "pavd_0_5.pred", 
+                                                     "pai_a0.pred", 
+                                                     "fhd_pai_1m_a0.pred", 
+                                                     "cover_a0.pred", 
+                                                     "agbd_a0.pred",
+                                                     "awf_ptg"), 
+                                     ), 
+                              center = TRUE, scale = TRUE))
+
+# Append scaled variables to data with .z suffixes
+dat_bird[paste0(names(dat_scale_bird), '.z')] <- dat_scale_bird
+
+# Rename scaled, predicted relative canopy height at 95% (rh_95_a0.pred.z) 
+# as forest_structure to match DAG 
+names(dat_bird)[names(dat_bird) == "rh_95_a0.pred.z"] <- "forest_structure"
+
+# Rename scaled, predicted plant area volume density between 0m and 5m 
+# (pavd_0_5.pred.z) as understory_density to match DAG
+names(dat_bird)[names(dat_bird) == "pavd_0_5.pred.z"] <- "understory_density"
+
+# Exclude stations that underwent recent forest loss as defined by 
+# Hansen et al. (2013)
+dat_clean_bird <- subset(dat_bird, Hansen_recentloss == 0)
+```
+### Bird models
+
+```{r bird_models}
+# ----------------- Analysis of phylogenetic diversity (PD) --------------------
+dat_PD_efficacy_bird <- subset(dat_clean_bird, med_dist == 150)
+
+# Remove high-leverage outliers identified by Brodie et al. 
+### Brodie et al. identified outlier using the hatvalue function. We should run 
+### the analysis with their outlier set removed, but also run the hatvalues 
+### analysis to identify the outliers for our particular specification thereby 
+### mirroring their procedure.
+
+PD_efficacy_outliers_bird <- c("L2422371", "L3776738", "L2521761", "L6127181", 
+                          "L3865754")
+dat_PD_efficacy_bird <- dat_PD_efficacy_bird[! dat_PD_efficacy_bird$station %in% 
+                                       PD_efficacy_outliers_bird, ]
+
+# Select variables for analysis and restrict to rows with complete values 
+# Peter - We need to add the eventual connectivity measures to this selection 
+# so they are in place for our extended analysis
+
+dat_PD_efficacy_bird <- dat_PD_efficacy_bird %>% select(asymptPD, PA, country, utm_east, 
+                          utm_north, utm_east.z, utm_north.z, forest_structure, 
+                          access_log10.z, HDI.z, awf_ptg.z)
+dat_PD_efficacy_bird <- dat_PD_efficacy_bird[complete.cases(dat_PD_efficacy_bird), ]
+
+# Perform propensity score matching following the DAG developed in the 
+# structural causal modeling  and retrieve the matched dataset
+match_PD_bird <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                        access_log10.z + HDI.z,	
+                    data = dat_PD_efficacy_bird, method = "full", 
+                    distance = "glm", link = "probit", replace = F)
+dat_matched_PD_bird <- match.data(match_PD_bird)
+
+# Run original Brodie linear mixed effects model with exponential spatial 
+# correlation structure for the residuals 
+mod_PD_efficacy_bird <- lme(asymptPD ~ forest_structure + access_log10.z 
+                       + HDI.z + PA, random = list(~1 | country), 
+                       data = dat_matched_PD_bird, weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                                            nugget = TRUE))
+# summary(mod_PD_efficacy_bird) 
+
+
+# ----------------- Analysis of Functional Richness (FR) -----------------------
+dat_FR_efficacy_bird <- subset(dat_clean_bird, med_dist == 100)
+
+# Remove high-leverage outliers identified by Brodie et al. 
+### Brodie et al. identified outlier using the hatvalue function. We should run 
+### the analysis with their outlier set removed, but also run the hatvalues 
+### analysis to identify the outliers for our particular specification thereby 
+### mirroring their procedure.
+
+FR_efficacy_outliers_bird <- c("L921125", "L2422371", "L4331944", "L13465594")
+dat_FR_efficacy_bird <- dat_FR_efficacy_bird[! dat_FR_efficacy_bird$station %in% 
+                                       FR_efficacy_outliers_bird, ]
+
+# Select variables for analysis and restrict to rows with complete values 
+# Peter - We need to add the eventual connectivity measures to this selection 
+# so they are in place for our extended analysis
+
+# No variable named maxFR in the csv, only maxFRic, not fully sure if they are the same
+dat_FR_efficacy_bird <- dat_FR_efficacy_bird %>% 
+    select(maxFRic, PA, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, forest_structure, 
+           access_log10.z, HDI.z, awf_ptg.z)
+dat_FR_efficacy_bird <- dat_FR_efficacy_bird[complete.cases(dat_FR_efficacy_bird), ]
+
+# Perform propensity score matching following the DAG developed in the 
+# structural causal modeling  and retrieve the matched dataset
+match_FR_bird <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                        access_log10.z + HDI.z,	
+                    data = dat_FR_efficacy_bird, method = "full", 
+                    distance = "glm", link = "probit", replace = F)
+dat_matched_FR_bird <- match.data(match_FR_bird)
+
+# Run original Brodie linear mixed effects model with exponential spatial 
+# correlation structure for the residuals 
+mod_FR_efficacy_bird <- lme(maxFRic ~ forest_structure + access_log10.z 
+                       + HDI.z + PA, random = list(~1 | country), 
+                       data = dat_matched_FR_bird, weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                                            nugget = TRUE))
+# summary(mod_FR_efficacy)
+
+# ------------------- Analysis of species richness (SR) ------------------------
+
+dat_SR_efficacy_bird <- subset(dat_clean_bird, med_dist == 100) # Wenxin: why is the med_dist different here? should we use the same distance for all measures?  It does not really matter for the reproduction though.
+
+# Remove high-leverage outliers identified by Brodie et al. 
+### Brodie et al. identified outlier using the hatvalue function. We should run 
+### the analysis with their outlier set removed, but also run the hatvalues 
+### analysis to identify the outliers for our particular specification thereby 
+### mirroring their procedure.
+
+SR_efficacy_outliers_bird <- c("L4789498", "L921125", "L1122096", 
+                          "L7010824", "L3865754", "L3776738")
+dat_SR_efficacy_bird <- dat_SR_efficacy_bird[! dat_SR_efficacy_bird$station %in% 
+                                       SR_efficacy_outliers_bird, ]
+
+# Select variables for analysis and restrict to rows with complete values 
+# Peter - We need to add the eventual connectivity measures to this selection 
+# so they are in place for our extended analysis
+
+dat_SR_efficacy_bird <- dat_SR_efficacy_bird %>% 
+    select(SR.mean, PA, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, forest_structure, 
+           access_log10.z, HDI.z, awf_ptg.z)
+dat_SR_efficacy_bird <- dat_SR_efficacy_bird[complete.cases(dat_SR_efficacy_bird), ]
+
+# Perform propensity score matching following the DAG developed in the 
+# structural causal modeling  and retrieve the matched dataset
+match_SR_bird <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                        access_log10.z + HDI.z,	
+                    data = dat_SR_efficacy_bird, method = "full", 
+                    distance = "glm", link = "probit", replace = F)
+dat_matched_SR_bird <- match.data(match_SR_bird)
+
+# Run original Brodie linear mixed effects model with exponential spatial 
+# correlation structure for the residuals 
+mod_SR_efficacy_bird <- lme(SR.mean ~ forest_structure + access_log10.z 
+                       + HDI.z + PA, random = list(~1 | country), 
+                       data = dat_matched_SR_bird, weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                                            nugget = TRUE))
+# summary(mod_SR_efficacy_bird) 
+
+# Summarize the two model outputs in a table
+msummary(list('Bird PD'=mod_PD_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird SR'=mod_SR_efficacy_bird))
+```
+
+### Data preparation for mammal models
 
 ### Model running
+
+
+
 
 # Results
 

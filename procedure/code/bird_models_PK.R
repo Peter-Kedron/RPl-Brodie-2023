@@ -33,9 +33,9 @@
 library(groundhog)
 pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
           "MatchIt", "modelsummary", "optmatch", "nlme")
-groundhog.library(pkgs, "2023-12-05")
+# groundhog.library(pkgs, "2023-12-05")
 
-# lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
+lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
 
 # Set folder hierarchy to data folder
 here('data/')
@@ -397,6 +397,9 @@ dat_FR_efficacy <- dat_FR_efficacy %>%
     select(maxFRic, PA, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
            access_log10.z, HDI.z, awf_rst_ptp2.z)
+# Wenxin: might be some error here --> awf_rst_ptp2.z not included in dat_clean
+# might need to change to awf_ptg.z
+
 dat_FR_efficacy <- dat_FR_efficacy[complete.cases(dat_FR_efficacy), ]
 
 # Perform propensity score matching following the DAG developed in the 
