@@ -42,7 +42,7 @@ fnames <- list.files(file.path(src_dir, "training"), full.names = TRUE)
 pts <- do.call(rbind, lapply(fnames, function(fname){
     read.csv(fname) %>% 
         select(all_of(names(.)[
-            str_detect(names(.), "station|country|lat|long")])) %>% 
+            stringr::str_detect(names(.), "station|country|lat|long")])) %>% 
         st_as_sf(coords = c(3, 2), crs = 4326)
 }))
 

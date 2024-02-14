@@ -78,4 +78,4 @@ isAdjustmentSet(dagBrodie, c("Connectivity"))
 ggdag_adjustment_set(dagBrodie, 
                      node_size = 20, 
                      text_col = "black"
-) + theme(legend.position = "bottom")
+) + ggplot2::theme(legend.position = "bottom")
