@@ -65,11 +65,16 @@ knitr::opts_chunk$set(
   echo = FALSE, # Run code, show outputs (don't show code)
   fig.retina = 4,
   fig.width = 8,
-  fig.path = paste0(here("results", "figures"), "/")
+  fig.path = paste0(here("results", "figures"), "/"),
+  warning = FALSE,
+  message = FALSE
 )
 
 # set working directory as the project folder
 knitr::opts_knit$set(root.dir = here(''))
+
+options(tinytex.verbose = TRUE) # not sure if this line is needed
+
 
 ```
 
@@ -350,7 +355,7 @@ Also explain any follow-up analyses or validations.
 
 ### Draw the causal diagram
 
-```{r 1_scm, echo=T} 
+```{r scm, echo=T} 
 # Load libraries
 # library(groundhog)
 pkgs <- c("dagitty", "ggdag")
@@ -431,7 +436,7 @@ adjustmentSets(dagBrodie)
 ### Clean protected areas (might take a while to run)
 
 
-```{r 2_cleanPAs, echo=T}
+```{r cleanPAs, echo=T}
 # Load libraries, easy to switch to use groundhog
 # something wrong with the path in rmd --> reset path
 # requires PhantomJS: webdriver::install_phantomjs()
@@ -597,11 +602,9 @@ values(template) <- 1:ncell(template)
 # st_write(adm_reorg, file.path(dst_dir, "pa_groups.shp"))
 
 clean_pas <- st_read(file.path(dst_dir, 'clean_pas.geojson'))
-adm_reorg <- file.path(dst_dir, 'pa_groups.shp')
+adm_reorg <- st_read(file.path(dst_dir, 'pa_groups.shp'))
 
 ```
-
-
 
 
 ### Data preparation for bird models
@@ -683,9 +686,12 @@ names(dat_bird)[names(dat_bird) == "pavd_0_5.pred.z"] <- "understory_density"
 # Hansen et al. (2013)
 dat_clean_bird <- subset(dat_bird, Hansen_recentloss == 0)
 ```
+
 ### Bird models
 
-```{r bird_models}
+Then we run the PD, FR, and SR models for birds.
+
+```{r bird_models, echo=T}
 # ----------------- Analysis of phylogenetic diversity (PD) --------------------
 dat_PD_efficacy_bird <- subset(dat_clean_bird, med_dist == 150)
 
@@ -810,20 +816,207 @@ mod_SR_efficacy_bird <- lme(SR.mean ~ forest_structure + access_log10.z
                                             nugget = TRUE))
 # summary(mod_SR_efficacy_bird) 
 
-# Summarize the two model outputs in a table
-msummary(list('Bird PD'=mod_PD_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird SR'=mod_SR_efficacy_bird))
+# Summarize the model outputs in a table
+msummary(list('Bird PD'=mod_PD_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird SR'=mod_SR_efficacy_bird), stars = TRUE)
+
+# Note: if rendering this part of the code returns errors for tex rendering
+# Please consider going through steps on this debugging page:
+# https://yihui.org/tinytex/r/#debugging
+ 
+# Also: https://github.com/travis-ci/travis-ci/issues/10166
+# sudo tlmgr install 
+# could be really helpful
 ```
+
 
 ### Data preparation for mammal models
 
-### Model running
+```{r mammal_prep, echo=T, message=FALSE}
+# Load the data provided by Brodie et al. (2023)
+dat_brodie_mam <- data.frame(read.csv(
+    here("data/raw/public/training/mammal_data_230326.csv"), header = T))
 
+# Simplify the variable names of site identifier and geographic coordinates
+names(dat_brodie_mam)[names(dat_brodie_mam) == "site"] <- "station"
+names(dat_brodie_mam)[names(dat_brodie_mam) == "lat_wgs84"] <- "lat"
+names(dat_brodie_mam)[names(dat_brodie_mam) == "long_wgs84"] <- "long"
+
+# Search for HDI in the column names 
+grep("hdi", names(dat_brodie_mam), value = TRUE)
+grep("HDI", names(dat_brodie_mam), value = TRUE)
+
+# Assign stations the HDI value of its country
+# Reference:
+# Human Development Report 2020: The Next Frontier—Human Development and the 
+# Anthropocene (United Nations Development Programme, 2020).
+# website: https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
+# https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
+dat_HDI <- data.frame(
+    country = unique(dat_brodie_mam$country), 
+    HDI = c(0.803, 0.768, 0.800, 0.705, 0.939,  0.703))
+dat_brodie_mam <- left_join(dat_brodie_mam, dat_HDI, by = "country")
+
+# Create dataframe containing the subset of variable used in the analysis
+dat_mam <- dat_brodie_mam %>% select(station, study_area, country, PA, utm_east, utm_north, 
+                             Hansen_recentloss,access_log10, HDI, dist_to_PA, 
+                             PA_size_km2, rh_95_a0.pred, pavd_0_5.pred, 
+                             pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
+                             agbd_a0.pred,asymptPD, maxFRic, SR.mean)
+
+# Add the connectivity variables for each station calculated with 
+# calc_conn_metrics.R
+dat_conn_metrics <- data.frame(read.csv(
+    here("data/derived/public/conn_flux.csv"), 
+    header = T))
+dat_mam <- left_join(dat_mam, dat_conn_metrics, by = "station")
+
+# Scale subset of continuous variables in dat
+# Peter - Need to add the connectivity measures to the scaling list when they 
+# are introduced
+dat_scale_mam <- data.frame(scale(subset(dat_mam, select = c("utm_east", "utm_north", 
+                                                     "HDI", "access_log10", 
+                                                     "PA_size_km2", 
+                                                     "dist_to_PA", 
+                                                     "rh_95_a0.pred", 
+                                                     "pavd_0_5.pred", 
+                                                     "pai_a0.pred", 
+                                                     "fhd_pai_1m_a0.pred", 
+                                                     "cover_a0.pred", 
+                                                     "agbd_a0.pred",
+                                                     "awf_rst_ptp2"), 
+), 
+center = TRUE, scale = TRUE))
+
+# Append scaled variables to data with .z suffixes
+dat_mam[paste0(names(dat_scale_mam), '.z')] <- dat_scale_mam
+
+# Rename scaled, predicted relative canopy height at 95% (rh_95_a0.pred.z) 
+# as forest_structure to match DAG 
+names(dat_mam)[names(dat_mam) == "rh_95_a0.pred.z"] <- "forest_structure"
+
+# Rename scaled, predicted plant area volume density between 0m and 5m 
+# (pavd_0_5.pred.z) as understory_density to match DAG
+names(dat_mam)[names(dat_mam) == "pavd_0_5.pred.z"] <- "understory_density"
+
+# Exclude stations that underwent recent forest loss as defined by 
+# Hansen et al. (2013)
+dat_clean_mam <- subset(dat_mam, Hansen_recentloss == 0)
+
+```
+
+
+### Mammal models
+
+```{r mammal_models, echo=T, message=FALSE}
+# ----------------- Analysis of phylogenetic diversity (PD) --------------------
+dat_PD_efficacy_mam <- subset(dat_clean_mam, med_dist == 100)
+
+# Select variables for analysis and restrict to rows with complete values 
+# Peter - We need to add the eventual connectivity measures to this selection 
+# so they are in place for our extended analysis
+
+dat_PD_efficacy_mam <- dat_PD_efficacy_mam %>% 
+    select(asymptPD, PA, study_area, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, forest_structure, 
+           access_log10.z, HDI.z, awf_rst_ptp2.z)
+dat_PD_efficacy_mam <- dat_PD_efficacy_mam[complete.cases(dat_PD_efficacy_mam), ]
+
+# Perform propensity score matching following the DAG developed in the 
+# structural causal modeling  and retrieve the matched dataset
+match_PD_mam <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                        access_log10.z + HDI.z,	
+                    data = dat_PD_efficacy_mam, method = "full", 
+                    distance = "glm", link = "probit", replace = F)
+dat_matched_PD_mam <- match.data(match_PD_mam)
+
+# Run original Brodie linear mixed effects model with exponential spatial 
+# correlation structure for the residuals 
+mod_PD_efficacy_mam <- lme(asymptPD ~ forest_structure + access_log10.z 
+                       + HDI.z + PA, random = list(~1 | country, ~1 | study_area), 
+                       data = dat_matched_PD_mam, weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                                            nugget = TRUE))
+# summary(mod_PD_efficacy_mam)
+
+
+# ----------------- Analysis of Functional Richness (FR) -----------------------
+
+dat_FR_efficacy_mam <- subset(dat_clean_mam, med_dist == 100)
+
+# Select variables for analysis and restrict to rows with complete values 
+# Peter - We need to add the eventual connectivity measures to this selection 
+# so they are in place for our extended analysis
+
+# No variable named maxFR in the csv, only maxFRic, not fully sure if they are the same
+dat_FR_efficacy_mam <- dat_FR_efficacy_mam %>% 
+    select(maxFRic, PA, study_area, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, forest_structure, 
+           access_log10.z, HDI.z, awf_rst_ptp2.z)
+dat_FR_efficacy_mam <- dat_FR_efficacy_mam[complete.cases(dat_FR_efficacy_mam), ]
+
+# Perform propensity score matching following the DAG developed in the 
+# structural causal modeling  and retrieve the matched dataset
+match_FR_mam <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                        access_log10.z + HDI.z,	
+                    data = dat_FR_efficacy_mam, method = "full", 
+                    distance = "glm", link = "probit", replace = F)
+dat_matched_FR_mam <- match.data(match_FR_mam)
+
+# Run original Brodie linear mixed effects model with exponential spatial 
+# correlation structure for the residuals 
+mod_FR_efficacy_mam <- lme(maxFRic ~ forest_structure + access_log10.z 
+                       + HDI.z + PA, random = list(~1 | country, ~1 | study_area), 
+                       data = dat_matched_FR_mam, weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                                            nugget = TRUE))
+# summary(mod_FR_efficacy_mam)
+
+# ------------------- Analysis of species richness (SR) ------------------------
+
+dat_SR_efficacy_mam <- subset(dat_clean_mam, med_dist == 100)
+
+# Select variables for analysis and restrict to rows with complete values 
+# Peter - We need to add the eventual connectivity measures to this selection 
+# so they are in place for our extended analysis
+
+dat_SR_efficacy_mam <- dat_SR_efficacy_mam %>% 
+    select(SR.mean, PA, study_area, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, forest_structure, 
+           access_log10.z, HDI.z, awf_rst_ptp2.z)
+dat_SR_efficacy_mam <- dat_SR_efficacy_mam[complete.cases(dat_SR_efficacy_mam), ]
+
+# Perform propensity score matching following the DAG developed in the 
+# structural causal modeling  and retrieve the matched dataset
+match_SR_mam <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                        access_log10.z + HDI.z,	
+                    data = dat_SR_efficacy_mam, method = "full", 
+                    distance = "glm", link = "probit", replace = F)
+dat_matched_SR_mam <- match.data(match_SR_mam)
+
+# Run original Brodie linear mixed effects model with exponential spatial 
+# correlation structure for the residuals 
+mod_SR_efficacy_mam <- lme(SR.mean ~ forest_structure + access_log10.z 
+                       + HDI.z + PA, random = list(~1 | country, ~1 | study_area), 
+                       data = dat_matched_SR_mam, weights = ~I(1/weights), 
+                       correlation = corExp(form = ~utm_east + utm_north, 
+                                            nugget = TRUE))
+#summary(mod_SR_efficacy_mam) 
+msummary(list('Mammal PD'=mod_PD_efficacy_mam, 'Mammal FR'=mod_FR_efficacy_mam, 'Mammal SR'=mod_SR_efficacy_mam),stars = TRUE)
+
+```
 
 
 
 # Results
 
-Describe how results are to be presented.
+We compare reproduction results with Extended Table 1 reported in the original paper.
+
+## Findings on birds
+
+## Findings on mammals
+
+
+
 
 # Discussion
 
