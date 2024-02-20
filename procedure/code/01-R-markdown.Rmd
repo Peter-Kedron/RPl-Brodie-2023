@@ -106,50 +106,32 @@ We independently accessed the World Database on Protected Areas <https://www.pro
 # Study design
 This study consists of a reproduction of the original work by Brodie et al. (2023) and a replication to analyze how connectivity influences protected area efficacy in preserving tropical biodiversity. We first implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. We then compute and add connectivity measures at the sample points to the original dataset to further examine the effect of connectivity.
 
-Brodie et al. (2023) formulated hypotheses to assess protected area effectiveness and tested them with structural causal modeling. Hypotheses concerned overall protected area effectiveness (H1) and PAs' size (H2) and closeness (H3) effects on biodiversity in unprotected lands to infer implications for spillover and leakage effects. 
+Brodie et al. (2023) formulated hypotheses to assess protected area effectiveness and tested them with structural causal modeling. The main focus of their paper was on the overall effectiveness of protected areas (OR-H1) on biodiversity after accounting potential confounders of site accessibiltiy and forest structure.
 
 ## Protected area effectiveness on overall biodiversity
 
 > OR-H1: Biodiversity is higher within protected areas than outside (after removing effects of site accessbility and habitat condition).
 
-Debates exist on whether protected areas are effective because of their remote location and good habitat conditions or conservation status itself. Motivated by such, Brodie et al. (2023) estimated protected areas efficacy for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition (H1). Their outcome variables are various aspects of biodiversity. The treatment variable is whether the observation point is within or outside a reserve. If the treatment variable is significant in a causal model, it supports H1 and adds evidence for the effectiveness of protecting lands.
+Debates exist on whether protected areas are effective because of their remote location and good habitat conditions or conservation status itself. Motivated by such, Brodie et al. (2023) estimated protected areas efficacy for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition (OR-H1). To test the hypothesis, Brodie et al. (2023) used various aspects of biodiversity as outcome variables (i.e., dependent variable). The treatment variable is a binary variable on whether the observation point is within or outside a reserve. If the treatment variable is significant in a causal model, it supports OR-H1 and adds evidence for the effectiveness of protecting lands.
 
-To do so, they removed confounding effects and built causal models for birds vs mammals, and different biodiversity outcome metrics. Two major confounders identified were site accessibility and habitat quality. Site accessibility was proxied using Human Development Index (HDI), circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)], and an interaction term of the two variables. Habitat quality was proxied using three-dimensional habitat structure metrics derived from the Global Ecosystem Dynamics Investigation (GEDI) mission. Confounding effects were removed using statistical matching based on propensity scores. Biodiversity metrics used as outcome variables include species richness (SR), functional richness (FR), and phylogenetic diversity (PD). PA effects were estimated using separate mixed effects linear regression for different biodiversity metrics and for birds vs mammals.
+To test OR-H1, the original study removed confounding effects and built separate causal models for birds and mammals, and different biodiversity outcome metrics. Two major confounders identified were site accessibility and habitat quality. Site accessibility was proxied using Human Development Index (HDI), circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)], and an interaction term of the two variables. Habitat quality was proxied using three-dimensional habitat structure metrics derived from the Global Ecosystem Dynamics Investigation (GEDI) mission. Confounding effects were removed using statistical matching based on propensity scores. Biodiversity metrics used as outcome variables include species richness (SR), functional richness (FR), and phylogenetic diversity (PD). PA effects were estimated using separate mixed effects linear regression for different biodiversity metrics and for birds vs mammals. The original study archetype is quasi-experimental as it uses a matching strategy to perform causal analysis.
  
 Brodie et al. (2023) found protection status increased all facets of bird biodiversity but the effects were not significant for mammals.
 
+## Testing the moderating effect of connectivity
 
-## Spillover and leakage effects on unprotected lands
-
-Spillover and leakage effects are two ways protected areas could have regional impacts on biodiversity beyond their boundaries. Spillover effect refers to enhanced biodiversity in unprotected lands near PAs whereas leakage effect refers to increased conservation pressure (e.g., unregulated hunting and displaced disturbances) in nearby unprotected lands because of PA establishment. Brodie et al. (2023) tested the effects of PA sizes (H2) and closeness (i.e., distance, H3) to neighboring unprotected lands.
-
-> OR-H2: Biodiversity outside protected areas is higher when they are near large ones (size effect). 
-
-They built separate models for birds and mammals on three different diversity metrics and tested H2 using observations outside protected areas. They went through the same matching steps as above.
-
-Brodie et al. (2023) found that PA size is a significant predictor of all facets of birds and mammals diversity outside PAs in the study region. Effects for mammals were smaller than those for birds.
-
-> OR-H3: Biodiversity outside protected areas is higher when they are closer (distance effect).
-
-They tested the effect of proximity to PAs on biodiversity outside PAs. Distance was computed as the Euclidean distance to the nearest reserve. 
-
-In the original paper, the authors reported that no significant effects of distance were observed. However, regression summary for H3 was incomplete in Extended Data Table 1 so that a direct comparison could not be made.
-
-
-## Adding connectivity
-
-We ask the research question of whether protected areas moderate the efficacy of protection on tropical biodiversity. We formulate the hypothesis is as follows:
+Connectivity of protected areas is essential for biodiversity conservation which supports species movement and facilitates energy transfer that is essential for species survival. Well-connected protected areas theoretically have higher effectiveness in conserving biodiversity, and moderate the effect of conservation status itself. It could potentially be an important contributing factor to high tropical bird and mammal biodiversity, but was not included in the original study. Therefore, we introduce connectivity measures in our replication work and develop the hypothesis (RPL-H1) as follows.
 
 > RPL-H1: Connectivity mdoerates the efficacy of protection on biodiversity.
 
-We build upon the existing structural causal models by Brodie et al. (2023) to test the hypothesis. The original study archetype is quasi-experimental as it uses a matching strategy to perform causal analysis.
+We ask the research question of whether connectivity moderates the efficacy of protection on tropical biodiversity and build upon the existing structural causal models by Brodie et al. (2023) to test the hypothesis. 
 
 # Materials and procedure
 
 
 ## Computational environment
 
-The reproduction of the original study is conducted in MacBook Pros. Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics. We built upon and annotated R scripts shared by the original study, and added missing information on HDI and GEDI metrics to the scripts.
+The reproduction of the original study was conducted in MacBook Pros using R programing language (Version 4.2.2). Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics. We built upon and annotated R scripts shared by them, and added missing information on HDI to the scripts.
 // Is this accurate?
 
 Required packages are as follows:
@@ -166,7 +148,7 @@ lapply(pkgs, require, character.only=TRUE)
 
 In the original study, outcome variables for the causal models are biodiversity metrics (i.e., species richness, functional richness, and phylogenetic diversity) derived from species observations. Mammal observations were assembled by the authors from camera traps in 65 study areas in the study region. Bird observations were gathered from eBird from 2015/01 to 2021/08 following a set of filtering procedures.
 
-Treatment variables for ORIG-H1, H2, H3 were derived from the World Database on Protected Areas (WDPA) by UNEP-WCMC. Specifically, they are 1) a binary variable on whether the sampling point is within protected areas or not (H1), 2) relative size of the closest protected area (i.e., large or small, H2), and 3) euclidean distance to the closest protected area (H3). For H2, PAs equal to or larger than 500 km2 are considered large and otherwise small. The size threshold was determined by testing a series of values with the best model fits for birds and mammals (Extended Data Table 4 in Brodie et al. 2023).
+The treatment variable for OR-H1 was derived from the World Database on Protected Areas (WDPA) by UNEP-WCMC, which is a binary variable on whether the sampling point is within protected areas or not.
 
 Observations were matched based on propoensity scores of their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. Predictors in the mixed-effects linear regression models were forest canopy height, site accessibility, HDI, and treatment variables.
 
@@ -176,9 +158,9 @@ We gathered data shared by Brodie et al. (2023). Tabular data of most model inpu
 
 | **Name** | **Source** | **Usage** |
 | :--: | :--: | :--: |
-| Biodiversity metrics - mammals| Authors | Outcome variable (ORIG-H1, H2, H3) |
-| Biodiversity metrics - birds | eBird | Outcome variable (ORIG-H1, H2, H3) |
-| Protected area boundaries | WDPA | Treatment variables (whether inside PAs: ORIG-H1, distance to PAs: ORIG-H2, and size of PAs: ORIG-H3) |
+| Biodiversity metrics - mammals| Authors | Outcome variable |
+| Biodiversity metrics - birds | eBird | Outcome variable |
+| Protected area boundaries | WDPA | Treatment variables (whether inside PAs) |
 | Ground elevation | NASA GEDI L2B | Predictor - elevation and topography |
 | Circuit-based site accessibility (log transformed) | Authors | Predictor - site accessibility |
 | Human Development Index | Human Development Report 2020 | Predictor - site accessibility |
@@ -301,59 +283,206 @@ Human Development Index for each country was included in the causal models as a 
 
 At the beginning of this analysis, we had observed the dataset provided by Brodie et al with their publication. We noticed the following caveats in the script and raw data shared by the original study.
 1) HDI was missing.
-2) The process of variable construction for biodiversity metrics and GEDI metrics were unclear.
+2) The process of computing biodiversity metrics and GEDI metrics was unclear.
 3) The procedure for preprocessing and cleaning PA boundaries was unclear.
 
 We did not manipulate the data before beginning our reproduction attempt. 
 
 ## Bias and threats to validity
 
-Given the research design and primary data to be collected and/or secondary data to be used, discuss common threats to validity and the approach to mitigating those threats, with an emphasis on geographic threats to validity.
+Given the research design as described in the original paper and primary data shared, we find that potential spatial autocorrelation of sample points were not addressed. In addition, uncertainty issues were not discussed thoroughly in the paper, which includes 1) the representativeness of biodiversity measures, 2) the validity of forest structure measures created through krigging, and 3) accessibility represented by country-level Human Development Index.
 
-Given the research design as described in the original paper and primary data shared, we identify potential spatial autocorrelation of sample points were not addressed.
 // should we add a map/moran's I result here?
 // other concerns to add?
-
-These include:
-  - uneven primary data collection due to geographic inaccessibility or other constraints
-  - multiple hypothesis testing
-  - edge or boundary effects
-  - the modifiable areal unit problem
-  - nonstationarity
-  - spatial dependence or autocorrelation
-  - temporal dependence or autocorrelation
-  - spatial scale dependency
-  - spatial anisotropies
-  - confusion of spatial and a-spatial causation
-  - ecological fallacy
-  - uncertainty e.g. from spatial disaggregation, anonymization, differential privacy
 
 ## Data transformations
 
 We did the following data transformations:
-1) 
+
+1) Cleaned up PAs
+
+### Clean protected areas (takes too long to run so I skipped many lines --> should discuss)
+
+As Brodie et al. did not specify how they pre-processed protected area boundaries, we did the following steps to remove issues such as overlapping and double counting areas.
+
+```{r cleanPAs1, echo=T}
+# Load libraries, easy to switch to use groundhog
+# something wrong with the path in rmd --> reset path
+# requires PhantomJS: webdriver::install_phantomjs()
+pkgs <- c("sf", "dplyr", "terra", "optparse", "wdpar", "here")
+sapply(pkgs, require, character.only = TRUE)
+sf_use_s2(FALSE) # deal with buffering odd
+
+# Command line inputs
+option_list <- list(
+    make_option(c("-s", "--src_dir"), 
+                action = "store", default = "data/raw/public", type = 'character',
+                help = "The source directory for reading data [default %default]."),
+    make_option(c("-d", "--dst_dir"), 
+                action = "store", default = 'data/derived/public', type = 'character',
+                help = paste0("The path to save the csv [default %default].")))
+opt <- parse_args(OptionParser(option_list = option_list))
+
+# Directories and paths
+src_dir <- opt$src_dir
+dst_dir <- opt$dst_dir
+```
+
+First, we assumed the geographic coordinate system adopted by the original paper from the field names of their variables (i.e., utm) and used UTM Zone 46 (EPSG:32646). We used the spatial extent of a GEDI metric layer provided to derive the study area, and added a 100 km buffer to avoid potential edge effects. // is it 100 km?
+
+```{r cleanPAs2, echo=T}
+# Read samples and raster template
+## According to the pairs of lat/lon and east/north, they used
+## UTM Zone 46 (EPSG:32646) for projection, so here we will use the same one.
+fnames <- list.files(file.path(src_dir, "training"), full.names = TRUE)
+print(file.path())
+pts <- do.call(rbind, lapply(fnames, function(fname){
+    read.csv(fname) %>% 
+        select(all_of(names(.)[
+            stringr::str_detect(names(.), "station|country|lat|long")])) %>% 
+        st_as_sf(coords = c(3, 2), crs = 4326)
+}))
+
+template <- rast(
+    file.path(src_dir, "GEDIv002_20190417to20220413_cover_krig.tiff")) %>% 
+    extend(c(100, 100)) # add a buffer
+# is the buffer 100 km?
+values(template) <- 1:ncell(template)
+
+########################## Query Protected areas (PAs) #########################
+## Within this part, most of the issues related to PAs are solved 
+## 1. Project the PAs or relevant layers to use precise distance.
+## 2. Trim the PAs to terrestrial only.
+## 3. Separate or union polygons and re-index them.
+
+# Query and clean PAs
+#raw_pas <- c("KHM", "CHN", "IDN", "LAO", "MYS", 
+#             "SGP", "THA", "VNM", "BRN") %>%
+#    lapply(wdpa_fetch, wait = TRUE,
+#           download_dir = rappdirs::user_data_dir("wdpar")) %>%
+#    bind_rows()
+#raw_pas <- wdpa_clean(raw_pas, crs = "EPSG:32646",
+#                      geometry_precision = 100000)
 
 
-Describe all data transformations planned to prepare data sources for analysis.
-This section should explain with the fullest detail possible how to transform data from the **raw** state at the time of acquisition or observation, to the pre-processed **derived** state ready for the main analysis.
-Including steps to check and mitigate sources of **bias** and **threats to validity**.
-The method may anticipate **contingencies**, e.g. tests for normality and alternative decisions to make based on the results of the test.
-More specifically, all the **geographic** and **variable** transformations required to prepare input data as described in the data and variables section above to match the study's spatio-temporal characteristics as described in the study metadata and study design sections.
-Visual workflow diagrams may help communicate the methodology in this section.
+```
 
-Examples of **geographic** transformations include coordinate system transformations, aggregation, disaggregation, spatial interpolation, distance calculations, zonal statistics, etc.
+Second, we removed marine protected areas and cleaned protected area boundaries by countries' administrative boundaries. We computed sizes of each protected areas after cleaning up PAs (e.g., issues such as overlap).
 
-Examples of **variable** transformations include standardization, normalization, constructed variables, imputation, classification, etc.
+```{r cleanPAs3, echo=T}
+#raw_pas <- raw_pas %>% filter(MARINE != "marine")
+## Note: now the No is 1638
 
-Be sure to include any steps planned to **exclude** observations with *missing* or *outlier* data, to **group** observations by *attribute* or *geographic* criteria, or to **impute** missing data or apply spatial or temporal **interpolation**.
+# Trim the polygons to terrestrial only
+## Clip all not marine polygons to administrative border.
+## Use the same data source in examples of R package wdpar.
 
-## Analysis
+#raw_adm_bry <- lapply(
+#    c("KHM", "CHN", "IDN", "LAO", "MYS", 
+#      "SGP", "THA", "VNM", "BRN"), function(iso){
+#          file_path <- tempfile(fileext = "rds")
+#          lk <- "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf"
+#          download.file(sprintf("%s/gadm36_%s_0_sf.rds", lk, iso), file_path)
+#          readRDS(file_path)}) %>% bind_rows()
 
-Describe the methods of analysis that will directly test the hypotheses or provide results to answer the research questions.
-This section should explicitly define any spatial / statistical *models* and their *parameters*, including *grouping* criteria, *weighting* criteria, and *significance thresholds*.
-Also explain any follow-up analyses or validations.
+## Process the boundary a bit
+#adm_bry <- raw_adm_bry %>%
+#    st_set_precision(100000) %>%
+#    sf::st_make_valid() %>%
+#    st_set_precision(100000) %>%
+#    st_combine() %>%
+#    st_union() %>%
+#    st_set_precision(100000) %>%
+#    sf::st_make_valid() %>%
+#    st_transform(st_crs(raw_pas)) %>%
+#    sf::st_make_valid()
 
-### Draw the causal diagram
+## Clip PAs to administrative boundary
+
+#clean_pas <- raw_pas %>% st_intersection(adm_bry)
+## No of PAs drop from 1638 to 1618
+
+# Crop PAs to extent (study region's bounding box)
+## WARNING: remember to re-run this step again after union/separate the polygons
+
+#bbox <- st_as_sfc(st_bbox(template)) %>% st_transform(st_crs(clean_pas))
+#clean_pas <- clean_pas %>% 
+#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .)))))
+## Note: No of PAs drop further to 1260
+
+# Union/separate polygons.
+# ^ Wenxin: not 100% sure what this mean?
+
+#clean_pas <- st_cast(st_union(clean_pas), "POLYGON") %>% 
+#    st_as_sf() %>% rename(geometry = x)
+## No of PAs change from 1260 to 4270 (lose administrative meaning)
+
+# Crop to extent again
+
+#clean_pas <- clean_pas %>% 
+#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .))))) %>% 
+#    mutate(index = 1:nrow(.))
+## No of PAs change from 4270 to 4259
+
+# Re-calculate the area
+
+#clean_pas <- clean_pas %>% 
+#    mutate(REP_AREA = st_area(.) %>% units::set_units("km2"))
+
+# Clean the tiny ones with "partial" marine type due to a high chance to be the
+# noisy remaining of the clip
+
+#false_pas <- st_join(clean_pas, raw_pas %>% select(MARINE)) %>% 
+#    filter(MARINE != "terrestrial" & REP_AREA < 0.01 %>% units::set_units("km2"))
+
+#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index))
+```
+
+Finally, we clustered contiguous PAs whose boundaries touch each other for computing connectivity of mammal species and saved cleaned PA outputs.
+
+
+```{r cleanPAs4, echo=T}
+######################### Cluster Protected areas (PAs) ########################
+## 4. Cluster the PAs that are connected. 
+## The assumption here is that it is difficult (if not possible) for mammals 
+## to pass the ocean or huge waterbodies.
+## Warning: this is only for mammal species
+# Wenxin: Was this (or the entire PA cleaning) done only for connectivity analysis? Should I still include them in the reproduction report?
+
+#adm_reorg <- raw_adm_bry %>% 
+#    st_transform(st_crs(clean_pas)) %>% 
+#    st_buffer(10) %>% st_union() %>% st_buffer(-10) %>% st_cast("POLYGON") %>% 
+#    st_intersection(bbox) %>% st_as_sf() %>% mutate(group = 1:nrow(.)) %>% 
+#    mutate(area = st_area(.) %>% units::set_units("km2"))
+
+#clean_pas <- st_join(clean_pas, adm_reorg) # No is 2873
+
+## Clean further
+#false_pas <- clean_pas %>% 
+#    filter(area > 5e+05 %>% units::set_units("km2") & 
+#               REP_AREA < 1 %>% units::set_units("km2"))
+#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 2198
+
+## Re-index
+#clean_pas <- clean_pas %>% mutate(index = 1:nrow(.)) %>% 
+#    select(-area)
+
+#adm_reorg <- adm_reorg %>% filter(group %in% clean_pas$group) %>% 
+#    rename(geometry = x) %>% select(group)
+
+# Save out
+# st_write(clean_pas, file.path(dst_dir, "clean_pas.geojson"))
+# st_write(adm_reorg, file.path(dst_dir, "pa_groups.shp"))
+
+# skipping and reading existing ones in case needed
+clean_pas <- st_read(file.path(dst_dir, 'clean_pas.geojson'))
+adm_reorg <- st_read(file.path(dst_dir, 'pa_groups.shp'))
+
+```
+
+### Conceptualization and causal diagram
+
+Before testing the hypotheses, we re-constructed the causal diagram for OR-H1.
 
 ```{r scm, echo=T} 
 # Load libraries
@@ -433,183 +562,9 @@ adjustmentSets(dagBrodie)
 
 ```
 
-### Clean protected areas (might take a while to run)
-
-
-```{r cleanPAs, echo=T}
-# Load libraries, easy to switch to use groundhog
-# something wrong with the path in rmd --> reset path
-# requires PhantomJS: webdriver::install_phantomjs()
-pkgs <- c("sf", "dplyr", "terra", "optparse", "wdpar", "here")
-sapply(pkgs, require, character.only = TRUE)
-sf_use_s2(FALSE) # deal with buffering odd
-
-# Command line inputs
-option_list <- list(
-    make_option(c("-s", "--src_dir"), 
-                action = "store", default = "data/raw/public", type = 'character',
-                help = "The source directory for reading data [default %default]."),
-    make_option(c("-d", "--dst_dir"), 
-                action = "store", default = 'data/derived/public', type = 'character',
-                help = paste0("The path to save the csv [default %default].")))
-opt <- parse_args(OptionParser(option_list = option_list))
-
-# Directories and paths
-src_dir <- opt$src_dir
-dst_dir <- opt$dst_dir
-
-# Read samples and raster template
-## According to the pairs of lat/lon and east/north, they used
-## UTM Zone 46 (EPSG:32646) for projection, so here we will use the same one.
-## (Not mean it is the most right one to use)
-fnames <- list.files(file.path(src_dir, "training"), full.names = TRUE)
-print(file.path())
-pts <- do.call(rbind, lapply(fnames, function(fname){
-    read.csv(fname) %>% 
-        select(all_of(names(.)[
-            stringr::str_detect(names(.), "station|country|lat|long")])) %>% 
-        st_as_sf(coords = c(3, 2), crs = 4326)
-}))
-
-template <- rast(
-    file.path(src_dir, "GEDIv002_20190417to20220413_cover_krig.tiff")) %>% 
-    extend(c(100, 100)) # add a buffer
-values(template) <- 1:ncell(template)
-
-########################## Query Protected areas (PAs) #########################
-## Within this part, most of the issues related to PAs are solved 
-## 1. Project the PAs or relevant layers to use precise distance.
-## 2. Trim the PAs to terrestrial only.
-## 3. Separate or union polygons and re-index them.
-
-# Query and clean PAs
-# skip these unless comments removed
-#raw_pas <- c("KHM", "CHN", "IDN", "LAO", "MYS", 
-#             "SGP", "THA", "VNM", "BRN") %>%
-#    lapply(wdpa_fetch, wait = TRUE,
-#           download_dir = rappdirs::user_data_dir("wdpar")) %>%
-#    bind_rows()
-#raw_pas <- wdpa_clean(raw_pas, crs = "EPSG:32646",
-#                      geometry_precision = 100000)
-#raw_pas <- raw_pas %>% filter(MARINE != "marine")
-## Note: now the No is 1638
-
-# Trim the polygons to terrestrial only
-## Clip all not marine polygons to administrative border.
-## Use the same data source in examples of R package wdpar.
-# still skip this
-
-#raw_adm_bry <- lapply(
-#    c("KHM", "CHN", "IDN", "LAO", "MYS", 
-#      "SGP", "THA", "VNM", "BRN"), function(iso){
-#          file_path <- tempfile(fileext = "rds")
-#          lk <- "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf"
-#          download.file(sprintf("%s/gadm36_%s_0_sf.rds", lk, iso), file_path)
-#          readRDS(file_path)}) %>% bind_rows()
-
-## Process the boundary a bit
-# skipping
-#adm_bry <- raw_adm_bry %>%
-#    st_set_precision(100000) %>%
-#    sf::st_make_valid() %>%
-#    st_set_precision(100000) %>%
-#    st_combine() %>%
-#    st_union() %>%
-#    st_set_precision(100000) %>%
-#    sf::st_make_valid() %>%
-#    st_transform(st_crs(raw_pas)) %>%
-#    sf::st_make_valid()
-
-## Clip it to boundary
-# skipping
-
-#clean_pas <- raw_pas %>% st_intersection(adm_bry)
-## No of PAs drop from 1638 to 1618
-
-# Crop it to extent
-# skipping
-## WARNING: remember to re-run this step again after union/separate the polygons
-
-#bbox <- st_as_sfc(st_bbox(template)) %>% st_transform(st_crs(clean_pas))
-#clean_pas <- clean_pas %>% 
-#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .)))))
-## Note: No of PAs drop further to 1260
-
-# Union/separate polygons.
-# Have to drop the attributes. Shouldn't be a problem though.
-# skipping
-
-#clean_pas <- st_cast(st_union(clean_pas), "POLYGON") %>% 
-#    st_as_sf() %>% rename(geometry = x)
-## No of PAs change from 1260 to 4270 (lose administrative meaning)
-
-# Crop to extent again
-# skipping
-
-#clean_pas <- clean_pas %>% 
-#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .))))) %>% 
-#    mutate(index = 1:nrow(.))
-## No of PAs change from 4270 to 4259
-
-# Re-calculate the area
-# skipping
-
-#clean_pas <- clean_pas %>% 
-#    mutate(REP_AREA = st_area(.) %>% units::set_units("km2"))
-
-# Clean the tiny ones with "partial" marine type due to a high chance to be the
-# noisy remaining of the clip
-# skipping
-
-#false_pas <- st_join(clean_pas, raw_pas %>% select(MARINE)) %>% 
-#    filter(MARINE != "terrestrial" & REP_AREA < 0.01 %>% units::set_units("km2"))
-
-#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index))
-
-######################### Cluster Protected areas (PAs) ########################
-## 4. Cluster the PAs that are connected. 
-## The assumption here is that it is difficult (if not possible) for mammals 
-## to pass the ocean or huge waterbodies.
-## Warning: this is only for mammal species
-# skipping
-
-#adm_reorg <- raw_adm_bry %>% 
-#    st_transform(st_crs(clean_pas)) %>% 
-#    st_buffer(10) %>% st_union() %>% st_buffer(-10) %>% st_cast("POLYGON") %>% 
-#    st_intersection(bbox) %>% st_as_sf() %>% mutate(group = 1:nrow(.)) %>% 
-#    mutate(area = st_area(.) %>% units::set_units("km2"))
-
-#clean_pas <- st_join(clean_pas, adm_reorg) # No is 2873
-
-## Clean further
-# skipping
-#false_pas <- clean_pas %>% 
-#    filter(area > 5e+05 %>% units::set_units("km2") & 
-#               REP_AREA < 1 %>% units::set_units("km2"))
-#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 2198
-
-## Re-index
-# skipping
-#clean_pas <- clean_pas %>% mutate(index = 1:nrow(.)) %>% 
-#    select(-area)
-
-#adm_reorg <- adm_reorg %>% filter(group %in% clean_pas$group) %>% 
-#    rename(geometry = x) %>% select(group)
-
-# Save out
-# skipping and reading existing ones
-# st_write(clean_pas, file.path(dst_dir, "clean_pas.geojson"))
-# st_write(adm_reorg, file.path(dst_dir, "pa_groups.shp"))
-
-clean_pas <- st_read(file.path(dst_dir, 'clean_pas.geojson'))
-adm_reorg <- st_read(file.path(dst_dir, 'pa_groups.shp'))
-
-```
-
-
 ### Data preparation for bird models
 
-We first prepare data for the causal models for birds.
+We performed a series of data preparation procedures based on scripts nad raw data shared by Brodie et al. (2023) for birds and mammals separately. Steps included 1) adding country-specific HDI values which were missing from the raw data, 2) standardizing variables, and 3) following the original script to discard different outliers for different models.
 
 ```{r bird_prep, echo=T, message=FALSE}
 # rm(list = ls())
@@ -686,6 +641,90 @@ names(dat_bird)[names(dat_bird) == "pavd_0_5.pred.z"] <- "understory_density"
 # Hansen et al. (2013)
 dat_clean_bird <- subset(dat_bird, Hansen_recentloss == 0)
 ```
+
+### Data preparation for mammal models
+
+We performed the same steps for mammals.
+
+```{r mammal_prep, echo=T, message=FALSE}
+# Load the data provided by Brodie et al. (2023)
+dat_brodie_mam <- data.frame(read.csv(
+    here("data/raw/public/training/mammal_data_230326.csv"), header = T))
+
+# Simplify the variable names of site identifier and geographic coordinates
+names(dat_brodie_mam)[names(dat_brodie_mam) == "site"] <- "station"
+names(dat_brodie_mam)[names(dat_brodie_mam) == "lat_wgs84"] <- "lat"
+names(dat_brodie_mam)[names(dat_brodie_mam) == "long_wgs84"] <- "long"
+
+# Search for HDI in the column names 
+grep("hdi", names(dat_brodie_mam), value = TRUE)
+grep("HDI", names(dat_brodie_mam), value = TRUE)
+
+# Assign stations the HDI value of its country
+# Reference:
+# Human Development Report 2020: The Next Frontier—Human Development and the 
+# Anthropocene (United Nations Development Programme, 2020).
+# website: https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
+# https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
+dat_HDI <- data.frame(
+    country = unique(dat_brodie_mam$country), 
+    HDI = c(0.803, 0.768, 0.800, 0.705, 0.939,  0.703))
+dat_brodie_mam <- left_join(dat_brodie_mam, dat_HDI, by = "country")
+
+# Create dataframe containing the subset of variable used in the analysis
+dat_mam <- dat_brodie_mam %>% select(station, study_area, country, PA, utm_east, utm_north, 
+                             Hansen_recentloss,access_log10, HDI, dist_to_PA, 
+                             PA_size_km2, rh_95_a0.pred, pavd_0_5.pred, 
+                             pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
+                             agbd_a0.pred,asymptPD, maxFRic, SR.mean)
+
+# Add the connectivity variables for each station calculated with 
+# calc_conn_metrics.R
+dat_conn_metrics <- data.frame(read.csv(
+    here("data/derived/public/conn_flux.csv"), 
+    header = T))
+dat_mam <- left_join(dat_mam, dat_conn_metrics, by = "station")
+
+# Scale subset of continuous variables in dat
+# Peter - Need to add the connectivity measures to the scaling list when they 
+# are introduced
+dat_scale_mam <- data.frame(scale(subset(dat_mam, select = c("utm_east", "utm_north", 
+                                                     "HDI", "access_log10", 
+                                                     "PA_size_km2", 
+                                                     "dist_to_PA", 
+                                                     "rh_95_a0.pred", 
+                                                     "pavd_0_5.pred", 
+                                                     "pai_a0.pred", 
+                                                     "fhd_pai_1m_a0.pred", 
+                                                     "cover_a0.pred", 
+                                                     "agbd_a0.pred",
+                                                     "awf_rst_ptp2"), 
+), 
+center = TRUE, scale = TRUE))
+
+# Append scaled variables to data with .z suffixes
+dat_mam[paste0(names(dat_scale_mam), '.z')] <- dat_scale_mam
+
+# Rename scaled, predicted relative canopy height at 95% (rh_95_a0.pred.z) 
+# as forest_structure to match DAG 
+names(dat_mam)[names(dat_mam) == "rh_95_a0.pred.z"] <- "forest_structure"
+
+# Rename scaled, predicted plant area volume density between 0m and 5m 
+# (pavd_0_5.pred.z) as understory_density to match DAG
+names(dat_mam)[names(dat_mam) == "pavd_0_5.pred.z"] <- "understory_density"
+
+# Exclude stations that underwent recent forest loss as defined by 
+# Hansen et al. (2013)
+dat_clean_mam <- subset(dat_mam, Hansen_recentloss == 0)
+
+```
+
+
+## Analysis
+
+After data preparation, we built separate linear mixed effects models for birds and mammals using species richness, functional richness, and phylogenetic diversity values. We showed significance of variables using p-values and set thresholds of 0.001 ( *** ), 0.01 ( ** ), and 0.05 ( * ).
+
+// do we add our follow-up analyses here?
 
 ### Bird models
 
@@ -817,91 +856,7 @@ mod_SR_efficacy_bird <- lme(SR.mean ~ forest_structure + access_log10.z
 # summary(mod_SR_efficacy_bird) 
 
 # Summarize the model outputs in a table
-msummary(list('Bird PD'=mod_PD_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird SR'=mod_SR_efficacy_bird), stars = TRUE)
-
-# Note: if rendering this part of the code returns errors for tex rendering
-# Please consider going through steps on this debugging page:
-# https://yihui.org/tinytex/r/#debugging
- 
-# Also: https://github.com/travis-ci/travis-ci/issues/10166
-# sudo tlmgr install 
-# could be really helpful
-```
-
-
-### Data preparation for mammal models
-
-```{r mammal_prep, echo=T, message=FALSE}
-# Load the data provided by Brodie et al. (2023)
-dat_brodie_mam <- data.frame(read.csv(
-    here("data/raw/public/training/mammal_data_230326.csv"), header = T))
-
-# Simplify the variable names of site identifier and geographic coordinates
-names(dat_brodie_mam)[names(dat_brodie_mam) == "site"] <- "station"
-names(dat_brodie_mam)[names(dat_brodie_mam) == "lat_wgs84"] <- "lat"
-names(dat_brodie_mam)[names(dat_brodie_mam) == "long_wgs84"] <- "long"
-
-# Search for HDI in the column names 
-grep("hdi", names(dat_brodie_mam), value = TRUE)
-grep("HDI", names(dat_brodie_mam), value = TRUE)
-
-# Assign stations the HDI value of its country
-# Reference:
-# Human Development Report 2020: The Next Frontier—Human Development and the 
-# Anthropocene (United Nations Development Programme, 2020).
-# website: https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
-# https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
-dat_HDI <- data.frame(
-    country = unique(dat_brodie_mam$country), 
-    HDI = c(0.803, 0.768, 0.800, 0.705, 0.939,  0.703))
-dat_brodie_mam <- left_join(dat_brodie_mam, dat_HDI, by = "country")
-
-# Create dataframe containing the subset of variable used in the analysis
-dat_mam <- dat_brodie_mam %>% select(station, study_area, country, PA, utm_east, utm_north, 
-                             Hansen_recentloss,access_log10, HDI, dist_to_PA, 
-                             PA_size_km2, rh_95_a0.pred, pavd_0_5.pred, 
-                             pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
-                             agbd_a0.pred,asymptPD, maxFRic, SR.mean)
-
-# Add the connectivity variables for each station calculated with 
-# calc_conn_metrics.R
-dat_conn_metrics <- data.frame(read.csv(
-    here("data/derived/public/conn_flux.csv"), 
-    header = T))
-dat_mam <- left_join(dat_mam, dat_conn_metrics, by = "station")
-
-# Scale subset of continuous variables in dat
-# Peter - Need to add the connectivity measures to the scaling list when they 
-# are introduced
-dat_scale_mam <- data.frame(scale(subset(dat_mam, select = c("utm_east", "utm_north", 
-                                                     "HDI", "access_log10", 
-                                                     "PA_size_km2", 
-                                                     "dist_to_PA", 
-                                                     "rh_95_a0.pred", 
-                                                     "pavd_0_5.pred", 
-                                                     "pai_a0.pred", 
-                                                     "fhd_pai_1m_a0.pred", 
-                                                     "cover_a0.pred", 
-                                                     "agbd_a0.pred",
-                                                     "awf_rst_ptp2"), 
-), 
-center = TRUE, scale = TRUE))
-
-# Append scaled variables to data with .z suffixes
-dat_mam[paste0(names(dat_scale_mam), '.z')] <- dat_scale_mam
-
-# Rename scaled, predicted relative canopy height at 95% (rh_95_a0.pred.z) 
-# as forest_structure to match DAG 
-names(dat_mam)[names(dat_mam) == "rh_95_a0.pred.z"] <- "forest_structure"
-
-# Rename scaled, predicted plant area volume density between 0m and 5m 
-# (pavd_0_5.pred.z) as understory_density to match DAG
-names(dat_mam)[names(dat_mam) == "pavd_0_5.pred.z"] <- "understory_density"
-
-# Exclude stations that underwent recent forest loss as defined by 
-# Hansen et al. (2013)
-dat_clean_mam <- subset(dat_mam, Hansen_recentloss == 0)
-
+# msummary(list('Bird PD'=mod_PD_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird SR'=mod_SR_efficacy_bird), stars = TRUE)
 ```
 
 
@@ -1000,32 +955,40 @@ mod_SR_efficacy_mam <- lme(SR.mean ~ forest_structure + access_log10.z
                        data = dat_matched_SR_mam, weights = ~I(1/weights), 
                        correlation = corExp(form = ~utm_east + utm_north, 
                                             nugget = TRUE))
-#summary(mod_SR_efficacy_mam) 
-msummary(list('Mammal PD'=mod_PD_efficacy_mam, 'Mammal FR'=mod_FR_efficacy_mam, 'Mammal SR'=mod_SR_efficacy_mam),stars = TRUE)
 
 ```
 
 
-
 # Results
 
-We compare reproduction results with Extended Table 1 reported in the original paper.
+```{r results, echo=T}
+#summary(mod_SR_efficacy_mam) 
+msummary(list('Bird SR'=mod_SR_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird PD'=mod_PD_efficacy_bird, 'Mammal SR'=mod_SR_efficacy_mam, 'Mammal FR'=mod_FR_efficacy_mam, 'Mammal PD'=mod_PD_efficacy_mam),stars = TRUE)
 
-## Findings on birds
+# Note: if rendering this part of the code returns errors for tex rendering
+# Please consider going through steps on this debugging page:
+# https://yihui.org/tinytex/r/#debugging
+ 
+# Also: https://github.com/travis-ci/travis-ci/issues/10166
+# sudo tlmgr install 
+# could be really helpful
 
-## Findings on mammals
+```
+
+We compared reproduction results with Extended Table 1 in Brodie et al. (2023) and found general similar results. We identified significant PA effects on bird species diversity and non significant effects on mammal species diversity as reported in the paper. PA effect sizes for SR (OR:27.04, RPR:31.6), FR (OR:24.02, RPR:25.52), PD (OR:0.38, RPR:0.37) from the reproduction are similar to those reported in Brodie et al. (2023). Significance of other variables and their coefficient values were also similar to the original study.
 
 
+# Discussion & Conclusion
 
+The goal of the report is to reproduce analysis and results from Brodie et al. (2023) on the effect of protected areas to preserve tropical bird and mammal biodiversity after removing confounding effects of site accessibility and forest structure. The original paper provided scripts and data which allowed for reproductions. The scripts were in general reproducible while missing data preprocessing steps such as cleaning protected area boundaries and computing secondary variables from raw data (e.g., GEDI metrics and circuit-based accessibiltiy metrics). The data file contained most information but did not include raw observation data, a meta data file, or include HDI.
 
-# Discussion
+While there are ways to improve the reproducibility of the original work, our reproduction found results that were consistent with the main findings of Brodie et al. (2023). We found supporting evidence for OR-H1 (i.e., similar coefficient values and significance) as the original study but were unable to reproduce exact results as Brodie et al. (2023). Reasons for the differences could be HDI values, data version issues, or computation environment.
 
-Describe how the results are to be interpreted *vis a vis* each hypothesis or research question.
+Through reconstructing the causal diagram and reproduction, we found that connectivity from sampling points to protected areas was not accounted for in the original study. We introduced hypothesis RPL-01 and tested it in our replication study.
 
 # Integrity Statement
 
-Include an integrity statement - The authors of this preregistration state that they completed this preregistration to the best of their knowledge and that no other preregistration exists pertaining to the same hypotheses and research.
-If a prior registration *does* exist, explain the rationale for revising the registration here.
+The authors of this preregistration state that they completed this preregistration to the best of their knowledge and that no other preregistration exists pertaining to the same hypotheses and research.
 
 # Acknowledgements
 
