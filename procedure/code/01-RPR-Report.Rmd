@@ -90,6 +90,8 @@ Using a causal framework that controls for forest structure, site accessibility,
 Brodie et al. provides evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by network connectivity.
 
 # Study metadata
+
+## Metadata of the original study
 This replication uses the data file provided by Brodie et al. (2023) at <https://doi.org/10.6084/m9.figshare.22527298.v1>. 
 We independently accessed the World Database on Protected Areas <https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA> to construct our site and PA connectivity measures. 
 
@@ -102,6 +104,103 @@ We independently accessed the World Database on Protected Areas <https://www.pro
 - `Spatial Reference System`: Specify the geographic or projected coordinate system for the study, e.g. EPSG:4326
 - `Temporal Coverage`: 01-2015 to 08-2021
 - `Temporal Resolution`: Specify the temporal resolution of your study---i.e. the duration of time for which each observation represents or the revisit period for repeated observations
+
+
+## Metadata of data sources used in the original study
+
+### eBird
+
+The original study gathered bird observations from eBird.
+
+- `Title`: eBird.
+- `Abstract`: A community science platform for reporting bird sightings.
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Vector.
+- `Spatial Reference System`: Not specified.
+- `Temporal Coverage`: 2015/01 - 2021/08.
+- `Temporal Resolution`: Not applicable.
+- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Distribution`: [eBird webpage](https://ebird.org/home) and [other download methods](https://science.ebird.org/en/use-ebird-data/download-ebird-data-products).
+- `Constraints`: Non-commercial use.
+- `Data Quality`: Although a direct data quality layer is not associated, Brodie et al. (2023) followed recommendations from existing studies to filter out data points.
+
+### The World Database on Protected Areas
+
+The original study used protected area boundaries to derive the three treatment variables (Table 3). Brodie et al. (2023) did not specify how they cleaned up protected area boundary. 
+
+- `Title`: The World Database on Protected Areas (WDPA).
+- `Abstract`: A global database on protected areas (PAs) and other effective conservation measurers (OECM).
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Vector.
+- `Spatial Reference System`: WGS 84.
+- `Temporal Coverage`: Latest.
+- `Temporal Resolution`: Updated monthly.
+- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Distribution`: [WDPA webpage](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
+- `Constraints`: Non-commercial use.
+- `Data Quality`: Unknown.
+
+### GEDI L2 metrics
+
+The Global Ecosystem Dynamics Investigation (GEDI) is a spaceborne light detection and ranging (LiDAR) mission monitoring forest structure on earth. The original study derived both ground elevation and forest structure metrics from the Level 2 dataset of GEDI. Level 2 GEDI data are at footprint level so Brodie et al. (2023) used krigging interpolation to create wall-to-wall layers (1-km resolution).
+
+L2A includes elevation data. The original study computed slope and topographic position index (TPI) to represent topographic traits at each site. The original study used five L2B metrics, which were canopy height (relative height at 95%), plant area volume density (PAVD) between 0 and 5 m (represents understory density), cumulative plant area index from ground to canopy top, foliage height diversity of plant area index, and proportional cover. They found the five forest structure metrics to be highly correlated and only kept canopy height and understory density in models. 
+
+- `Title`: The Global Ecosystem Dynamics Investigation Level 2 Elevation and Height Metrics.
+- `Abstract`: Global footprint level observations from GEDI on ground elevation and forest structure.
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Footprints are of 25-m resolution and extrapolated into 1-km resolution. 
+- `Spatial Reference System`: WGS 84.
+- `Temporal Coverage`: 2019/04/17 to 2022/04/12
+- `Temporal Resolution`: Not applicable.
+- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Distribution`: Original GEDI L2 metrics can be derived from [NASA website](https://cmr.earthdata.nasa.gov/search/concepts/C1908348134-LPDAAC_ECS.html) and Brodie et al. (2023) shared krigged results on a [ webpage](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters).
+- `Constraints`: Non-commercial use.
+- `Data Quality`: Original GEDI L2 metrics have quality and degrade flags and Brodie et al. (2023) kept only data points of satisfying quality.
+
+### Human Development Index (HDI)
+
+Human Development Index for each country was included in the causal models as a simple metric of level of socioeconomic development.
+
+- `Title`: Human Development Index
+- `Abstract`: An index on the level of human development by country.
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Not applicable.
+- `Spatial Reference System`: Not applicable.
+- `Temporal Coverage`: 2020.
+- `Temporal Resolution`: Not applicable.
+- `Lineage`: Direct query thourgh the official website.
+- `Distribution`: Acquired directly through [Human Development Report 2020](https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx).
+- `Constraints`: Non-commercial use.
+- `Data Quality`: Unknown.
+
+
+*Table 1* Secondary variables created from data sources.
+
+| **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
+| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| **eBird** |
+| SR.mean | Species richness | Number of species | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| maxFRic | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| asymptPD | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| **WDPA** |
+| PA | Within or outside PAs | Whether the point is inside a PA or not | Binary | Not applicable | 1 for inside and 0 for outside | Not applicable | Unknown |
+| PA_size_km2 | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| dist_to_PA | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| **GEDI L2 Metrics** |
+| elev | Elevation | Ground elevation at the site (krigged) | Integer | Unknown | Equal to or greater than 0 (terrestrial observations) | Unknown | Unknown |
+| slope | Slope | Slope of topography | Float | Unknown | 0 to 90 | Unknown | Unknown |
+| TPI | Topographic Position Index | Difference between the elevation of a focal raster cell with those of its neighbors (not mentioned in paper) | Float | Unknwon | Not bounded | Unknown | Unknown |
+| rh_95_a0.pred | Relative height at 95% | Roughly the top canopy height (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| pavd_0_5.pred | Plant area volume density from 0 to 5 m | A proxy of understory forest density (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| pai_a0.pred | Plant area index | Cumulative PAI from ground to canopy (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| fhd_pai_1m_a0.pred | Foliage height diversity | Shannon's diversity of PAI across heights (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| cover_a0.pred | Proportional coverage | Openness or closeness of canopy (krigged) | Float | Unknown | 0 to 1 | Unknown | Unknown |
+| **HDI** |
+| HDI | Human Development Index | Level of human development | Float | Unknown | 0 to 1 | Not applicable | Not applicable |
+
+Note: HDI was not included in the data file shared by the orignal study. We gathered HDI values for each country from the Human Development Report 2020.
+
 
 # Study design
 This study consists of a reproduction of the original work by Brodie et al. (2023) and a replication to analyze how connectivity influences protected area efficacy in preserving tropical biodiversity. We first implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. We then compute and add connectivity measures at the sample points to the original dataset to further examine the effect of connectivity.
@@ -166,118 +265,6 @@ We gathered data shared by Brodie et al. (2023). Tabular data of most model inpu
 | Human Development Index | Human Development Report 2020 | Predictor - site accessibility |
 | Forest structure metrics | NASA GEDI L2A | Predictor - forest structure |
 
-### eBird
-
-The original study gathered bird observations from eBird.
-
-- `Title`: eBird.
-- `Abstract`: A community science platform for reporting bird sightings.
-- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
-- `Spatial Resolution`: Vector.
-- `Spatial Reference System`: Not specified.
-- `Temporal Coverage`: 2015/01 - 2021/08.
-- `Temporal Resolution`: Not applicable.
-- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
-- `Distribution`: [eBird webpage](https://ebird.org/home) and [other download methods](https://science.ebird.org/en/use-ebird-data/download-ebird-data-products).
-- `Constraints`: Non-commercial use.
-- `Data Quality`: Although a direct data quality layer is not associated, Brodie et al. (2023) followed recommendations from existing studies to filter out data points.
-
-Variables constructed were as follows:
-
-*Table 2* Variables created from bird observations via eBird.
-
-| **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
-| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| SR.mean | Species richness | Number of species | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
-| maxFRic | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
-| asymptPD | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
-
-
-### The World Database on Protected Areas
-
-The original study used protected area boundaries to derive the three treatment variables (Table 3). Brodie et al. (2023) did not specify how they cleaned up protected area boundary. We dissolved PAs and then converted them from multi-parts to single-parts to avoid double counting. For mammals, we excluded marine protected areas.
-
-// need to confirm with Lei.
-
-- `Title`: The World Database on Protected Areas (WDPA).
-- `Abstract`: A global database on protected areas (PAs) and other effective conservation measurers (OECM).
-- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
-- `Spatial Resolution`: Vector.
-- `Spatial Reference System`: WGS 84.
-- `Temporal Coverage`: Latest.
-- `Temporal Resolution`: Updated monthly.
-- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
-- `Distribution`: [WDPA webpage](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
-- `Constraints`: Non-commercial use.
-- `Data Quality`: Unknown.
-
-*Table 3* Variables created from protected area boundaries.
-
-| **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
-| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| PA | Within or outside PAs | Whether the point is inside a PA or not | Binary | Not applicable | 1 for inside and 0 for outside | Not applicable | Unknown |
-| PA_size_km2 | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
-| dist_to_PA | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
-  
-  
-### GEDI L2 metrics
-
-The Global Ecosystem Dynamics Investigation (GEDI) is a spaceborne light detection and ranging (LiDAR) mission monitoring forest structure on earth. The original study derived both ground elevation and forest structure metrics from the Level 2 dataset of GEDI. Level 2 GEDI data are at footprint level so Brodie et al. (2023) used krigging interpolation to create wall-to-wall layers (1-km resolution).
-
-L2A includes elevation data. The original study computed slope and topographic position index (TPI) to represent topographic traits at each site. The original study used five L2B metrics, which were canopy height (relative height at 95%), plant area volume density (PAVD) between 0 and 5 m (represents understory density), cumulative plant area index from ground to canopy top, foliage height diversity of plant area index, and proportional cover. They found the five forest structure metrics to be highly correlated and only kept canopy height and understory density in models. 
-
-- `Title`: The Global Ecosystem Dynamics Investigation Level 2 Elevation and Height Metrics.
-- `Abstract`: Global footprint level observations from GEDI on ground elevation and forest structure.
-- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
-- `Spatial Resolution`: Footprints are of 25-m resolution and extrapolated into 1-km resolution. 
-- `Spatial Reference System`: WGS 84.
-- `Temporal Coverage`: 2019/04/17 to 2022/04/12
-- `Temporal Resolution`: Not applicable.
-- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
-- `Distribution`: Original GEDI L2 metrics can be derived from [NASA website](https://cmr.earthdata.nasa.gov/search/concepts/C1908348134-LPDAAC_ECS.html) and Brodie et al. (2023) shared krigged results on a [ webpage](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters).
-- `Constraints`: Non-commercial use.
-- `Data Quality`: Original GEDI L2 metrics have quality and degrade flags and Brodie et al. (2023) kept only data points of satisfying quality.
-
-*Table 4* Variables derived from GEDI L2 metrics.
-
-| **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
-| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| elev | Elevation | Ground elevation at the site (krigged) | Integer | Unknown | Equal to or greater than 0 (terrestrial observations) | Unknown | Unknown |
-| slope | Slope | Slope of topography | Float | Unknown | 0 to 90 | Unknown | Unknown |
-| TPI | Topographic Position Index | Difference between the elevation of a focal raster cell with those of its neighbors (not mentioned in paper) | Float | Unknwon | Not bounded | Unknown | Unknown |
-| rh_95_a0.pred | Relative height at 95% | Roughly the top canopy height (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
-| pavd_0_5.pred | Plant area volume density from 0 to 5 m | A proxy of understory forest density (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
-| pai_a0.pred | Plant area index | Cumulative PAI from ground to canopy (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
-| fhd_pai_1m_a0.pred | Foliage height diversity | Shannon's diversity of PAI across heights (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
-| cover_a0.pred | Proportional coverage | Openness or closeness of canopy (krigged) | Float | Unknown | 0 to 1 | Unknown | Unknown |
-
-
-### Human Development Index (HDI)
-
-Human Development Index for each country was included in the causal models as a simple metric of socioeconomic level.
-
-- `Title`: Human Development Index
-- `Abstract`: An index on the level of human development by country.
-- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
-- `Spatial Resolution`: Not applicable.
-- `Spatial Reference System`: Not applicable.
-- `Temporal Coverage`: 2020.
-- `Temporal Resolution`: Not applicable.
-- `Lineage`: Direct query thourgh the official website.
-- `Distribution`: Acquired directly through [Human Development Report 2020](https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx).
-- `Constraints`: Non-commercial use.
-- `Data Quality`: Unknown.
-
-- `Variables`: HDI
-  - `Label`: Not included in the files shared by the original study, we added HDI values and labeled as 'HDI'.
-  - `Alias`: Human Development Index
-  - `Definition`: A metric on the level of human development.
-  - `Type`: Float
-  - `Accuracy`: Unknown
-  - `Domain`: 0 to 1
-  - `Missing Data Value(s)`: Not applicable
-  - `Missing Data Frequency`: Not applicable
-
 
 ## Prior observations  
 
@@ -297,186 +284,8 @@ Given the research design as described in the original paper and primary data sh
 
 ## Data transformations
 
-We performed a series of data pre-processing steps before building the causal models, which include 1) cleaning protected area boundaries, 2) re-construcitng the causla diagram, and 3) cleeaning up data files produced by Brodie et al. (2023).
+We performed a series of data pre-processing steps before building the causal models, which include 1) re-construcitng the causla diagram, and 2) cleaning up data files produced by Brodie et al. (2023).
 
-### Clean protected areas (takes too long to run so I skipped many lines --> should discuss)
-
-As Brodie et al. did not specify how they pre-processed protected area boundaries, we did the following steps to remove issues such as overlapping and double counting areas.
-
-```{r cleanPAs1, echo=T}
-# Load libraries, easy to switch to use groundhog
-# something wrong with the path in rmd --> reset path
-# requires PhantomJS: webdriver::install_phantomjs()
-pkgs <- c("sf", "dplyr", "terra", "optparse", "wdpar", "here")
-sapply(pkgs, require, character.only = TRUE)
-sf_use_s2(FALSE) # deal with buffering odd
-
-# Command line inputs
-option_list <- list(
-    make_option(c("-s", "--src_dir"), 
-                action = "store", default = "data/raw/public", type = 'character',
-                help = "The source directory for reading data [default %default]."),
-    make_option(c("-d", "--dst_dir"), 
-                action = "store", default = 'data/derived/public', type = 'character',
-                help = paste0("The path to save the csv [default %default].")))
-opt <- parse_args(OptionParser(option_list = option_list))
-
-# Directories and paths
-src_dir <- opt$src_dir
-dst_dir <- opt$dst_dir
-```
-
-First, we assumed the geographic coordinate system adopted by the original paper from the field names of their variables (i.e., utm) and used UTM Zone 46 (EPSG:32646). We used the spatial extent of a GEDI metric layer provided to derive the study area, and added a 100 km buffer to avoid potential edge effects. // is it 100 km?
-
-```{r cleanPAs2, echo=T}
-# Read samples and raster template
-## According to the pairs of lat/lon and east/north, they used
-## UTM Zone 46 (EPSG:32646) for projection, so here we will use the same one.
-fnames <- list.files(file.path(src_dir, "training"), full.names = TRUE)
-print(file.path())
-pts <- do.call(rbind, lapply(fnames, function(fname){
-    read.csv(fname) %>% 
-        select(all_of(names(.)[
-            stringr::str_detect(names(.), "station|country|lat|long")])) %>% 
-        st_as_sf(coords = c(3, 2), crs = 4326)
-}))
-
-template <- rast(
-    file.path(src_dir, "GEDIv002_20190417to20220413_cover_krig.tiff")) %>% 
-    extend(c(100, 100)) # add a buffer
-# is the buffer 100 km?
-values(template) <- 1:ncell(template)
-
-########################## Query Protected areas (PAs) #########################
-## Within this part, most of the issues related to PAs are solved 
-## 1. Project the PAs or relevant layers to use precise distance.
-## 2. Trim the PAs to terrestrial only.
-## 3. Separate or union polygons and re-index them.
-
-# Query and clean PAs
-#raw_pas <- c("KHM", "CHN", "IDN", "LAO", "MYS", 
-#             "SGP", "THA", "VNM", "BRN") %>%
-#    lapply(wdpa_fetch, wait = TRUE,
-#           download_dir = rappdirs::user_data_dir("wdpar")) %>%
-#    bind_rows()
-#raw_pas <- wdpa_clean(raw_pas, crs = "EPSG:32646",
-#                      geometry_precision = 100000)
-
-
-```
-
-Second, we removed marine protected areas and cleaned protected area boundaries by countries' administrative boundaries. We computed sizes of each protected areas after cleaning up PAs (e.g., issues such as overlap).
-
-```{r cleanPAs3, echo=T}
-#raw_pas <- raw_pas %>% filter(MARINE != "marine")
-## Note: now the No is 1638
-
-# Trim the polygons to terrestrial only
-## Clip all not marine polygons to administrative border.
-## Use the same data source in examples of R package wdpar.
-
-#raw_adm_bry <- lapply(
-#    c("KHM", "CHN", "IDN", "LAO", "MYS", 
-#      "SGP", "THA", "VNM", "BRN"), function(iso){
-#          file_path <- tempfile(fileext = "rds")
-#          lk <- "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf"
-#          download.file(sprintf("%s/gadm36_%s_0_sf.rds", lk, iso), file_path)
-#          readRDS(file_path)}) %>% bind_rows()
-
-## Process the boundary a bit
-#adm_bry <- raw_adm_bry %>%
-#    st_set_precision(100000) %>%
-#    sf::st_make_valid() %>%
-#    st_set_precision(100000) %>%
-#    st_combine() %>%
-#    st_union() %>%
-#    st_set_precision(100000) %>%
-#    sf::st_make_valid() %>%
-#    st_transform(st_crs(raw_pas)) %>%
-#    sf::st_make_valid()
-
-## Clip PAs to administrative boundary
-
-#clean_pas <- raw_pas %>% st_intersection(adm_bry)
-## No of PAs drop from 1638 to 1618
-
-# Crop PAs to extent (study region's bounding box)
-## WARNING: remember to re-run this step again after union/separate the polygons
-
-#bbox <- st_as_sfc(st_bbox(template)) %>% st_transform(st_crs(clean_pas))
-#clean_pas <- clean_pas %>% 
-#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .)))))
-## Note: No of PAs drop further to 1260
-
-# Union/separate polygons.
-# ^ Wenxin: not 100% sure what this mean?
-
-#clean_pas <- st_cast(st_union(clean_pas), "POLYGON") %>% 
-#    st_as_sf() %>% rename(geometry = x)
-## No of PAs change from 1260 to 4270 (lose administrative meaning)
-
-# Crop to extent again
-
-#clean_pas <- clean_pas %>% 
-#    slice(unique(unlist(suppressMessages(st_intersects(bbox, .))))) %>% 
-#    mutate(index = 1:nrow(.))
-## No of PAs change from 4270 to 4259
-
-# Re-calculate the area
-
-#clean_pas <- clean_pas %>% 
-#    mutate(REP_AREA = st_area(.) %>% units::set_units("km2"))
-
-# Clean the tiny ones with "partial" marine type due to a high chance to be the
-# noisy remaining of the clip
-
-#false_pas <- st_join(clean_pas, raw_pas %>% select(MARINE)) %>% 
-#    filter(MARINE != "terrestrial" & REP_AREA < 0.01 %>% units::set_units("km2"))
-
-#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index))
-```
-
-Finally, we clustered contiguous PAs whose boundaries touch each other for computing connectivity of mammal species and saved cleaned PA outputs.
-
-
-```{r cleanPAs4, echo=T}
-######################### Cluster Protected areas (PAs) ########################
-## 4. Cluster the PAs that are connected. 
-## The assumption here is that it is difficult (if not possible) for mammals 
-## to pass the ocean or huge waterbodies.
-## Warning: this is only for mammal species
-# Wenxin: Was this (or the entire PA cleaning) done only for connectivity analysis? Should I still include them in the reproduction report?
-
-#adm_reorg <- raw_adm_bry %>% 
-#    st_transform(st_crs(clean_pas)) %>% 
-#    st_buffer(10) %>% st_union() %>% st_buffer(-10) %>% st_cast("POLYGON") %>% 
-#    st_intersection(bbox) %>% st_as_sf() %>% mutate(group = 1:nrow(.)) %>% 
-#    mutate(area = st_area(.) %>% units::set_units("km2"))
-
-#clean_pas <- st_join(clean_pas, adm_reorg) # No is 2873
-
-## Clean further
-#false_pas <- clean_pas %>% 
-#    filter(area > 5e+05 %>% units::set_units("km2") & 
-#               REP_AREA < 1 %>% units::set_units("km2"))
-#clean_pas <- clean_pas %>% filter(!index %in% unique(false_pas$index)) # 2198
-
-## Re-index
-#clean_pas <- clean_pas %>% mutate(index = 1:nrow(.)) %>% 
-#    select(-area)
-
-#adm_reorg <- adm_reorg %>% filter(group %in% clean_pas$group) %>% 
-#    rename(geometry = x) %>% select(group)
-
-# Save out
-# st_write(clean_pas, file.path(dst_dir, "clean_pas.geojson"))
-# st_write(adm_reorg, file.path(dst_dir, "pa_groups.shp"))
-
-# skipping and reading existing ones in case needed
-clean_pas <- st_read(file.path(dst_dir, 'clean_pas.geojson'))
-adm_reorg <- st_read(file.path(dst_dir, 'pa_groups.shp'))
-
-```
 
 ### Conceptualization and causal diagram
 
