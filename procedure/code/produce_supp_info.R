@@ -495,6 +495,8 @@ allbird <- merge(allbird, inddf, by=c("ind"))
 
 allbird %>%
     # reorder the coefficients so that the largest is at the top of the plot
+    # PJK - Wenxin please reorder the variables in the following order top to bottom 
+    # - PA, Forest, Access, HDI, Intercept. We want the PA on the top because it is the main effect
     mutate(term = fct_reorder(term, order, .desc = TRUE)) %>%
     ggplot(aes(estimate, term, col=group)) +
     # geom_point() +
@@ -506,14 +508,16 @@ allbird %>%
     labs(
         x = "Estimate of effect",
         y = NULL, 
-        title = "Computational Reproduction Matching Effect Estimates Observed Across Studies",
+        title = "Computational Reproduction",
+        subtitle = "Matching effect estimates observed across studies"
         colour = "Group",
     )+
     facet_wrap(~indname, scales = "free_x")+# scales='free_x' allows xlim to differ by subplot
     theme_tufte()+
     theme(strip.text.x = element_text(angle = 0, hjust = 0),
           panel.border = element_rect(colour='white', fill=NA))+
-    title_theme
+    title_theme +
+    guides(fill = FALSE) # I believe this will remove the legend on the right
 
 
 # adding a geom_rangeframe() is weird
