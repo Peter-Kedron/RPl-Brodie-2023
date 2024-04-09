@@ -8,12 +8,12 @@
 pkgs <- c('sf', 'dplyr', 'terra', 'ggplot2', 'units', 'cowplot', 'nngeo',
           'tidyverse', 'hrbrthemes', 'viridis', 'here', 'spdep', 'tmap',
           'data.table', 'stringr', 'broom', 'haven', 'extrafont', 'nlme',
-          'broom', 'broom.mixed')
+          'broom', 'broom.mixed', 'showtext', 'ggthemes')
 
 
 lapply(pkgs, library, character.only=TRUE)
 sf_use_s2(FALSE) # deal with buffering odd
-theme_set(theme_light())
+theme_set(theme_bw())
 dir_pa <- '/Users/wenxinyang/Desktop/Dissertation/DATA'
 
 
@@ -337,6 +337,22 @@ plot(geom_birdresid, "sr10lcMoranI")
 
 # ====== 4) tie fighter pie plot =====
 # PD for birds and mammals: PA estimates and awf_ptg.z estimates
+loadfonts(device=c("all"))
+import_econ_sans() # you will have to install the font before calling it
+title_theme <- theme(
+    plot.title = element_text(
+        family = "Econ Sans Cnd",
+        face = "bold",
+        size = 12
+    ),
+    plot.subtitle = element_text(
+        family = "Econ Sans Cnd",
+        size = 10,
+    ),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank()
+)
+
 birds_pd_models = load_object(file.path(modelfolder, 'bird_pd_models.rda'))
 mammals_pd_models = load_object(file.path(modelfolder, 'mammal_pd_models.rda'))
 
@@ -363,13 +379,17 @@ getAllMod <- function(species, ind, vars){
         
     }
     rownames(dfplot) <- seq(1:nrow(dfplot))
+    if(ind=='pd'){
+        ind == 'Phylogenetic Diversity'
+    }
     dfplot$ind <- toupper(ind)
     return(dfplot)
     
 }
 
 
-getFightPiePlot <- function(species, inds, vars, varnames){
+getFightPiePlot <- function(species, inds, vars, varnames, 
+                            title_string, subtitle_string){
     dftmp <- data.frame(matrix(ncol=6, nrow=0))
     for (i in inds){
         dftmp <- rbind(dftmp, getAllMod(species, i, vars))
@@ -380,23 +400,39 @@ getFightPiePlot <- function(species, inds, vars, varnames){
     dftmp <- merge(dftmp, dfvarnames, by='var')
     
     dftmp %>% ggplot(aes(x=dist, y=est.))+
-        geom_point(position=position_dodge(width=2))+
-        geom_errorbar(aes(ymin=lower, ymax=upper),
+        # geom_point(position=position_dodge(width=2))+
+        geom_pointrange(
+            size=0.2,
+            aes(ymin=lower, ymax=upper),
                       position=position_dodge(width=2), width=1.5)+
         scale_x_continuous(breaks=seq(10, 150, by=10))+
         # ggtitle(paste('Plot for', species, ind, sep=' '))+
         xlab('Dispersal distance (km)') +
-        ylab('Eestimated effect size')+
+        ylab('Eestimated effect')+
+        labs(
+            title=title_string,
+            subtitle=subtitle_string
+        )+
+        # geom_hline(yintercept=0.38, linetype='dashed', color = "red")+
         # ylab(paste(var, 'effect', sep=' '))+
-        facet_wrap(~ind+varname, scales = 'free_y')
+        # facet_wrap(~ind+varname, scales = 'free_y')+
+        theme_tufte()+
+        theme(
+            #strip.text.x = element_text(angle = 0, vjust = 0),
+              panel.border = element_rect(colour='white', fill=NA))+
+        title_theme
 }
 
 
 
+ttstr <- 'Replication Outcome'
+subttstr <- 'Connectivity moderates the effect of PA on Phylogenetic Diversity'
+getFightPiePlot('bird', c('pd'), c('PA:awf_ptg.z'), c('Interaction'),
+                ttstr, subttstr)
+
 li_vars <- c('PA', 'awf_ptg.z', 'PA:awf_ptg.z')
 li_inds <- c('sr', 'fr', 'pd')
 li_varnames <- c('PA', 'Connectivity', 'Interaction')
-getFightPiePlot('bird', li_inds, li_vars, li_varnames)
 
 # ====== 5) dot whisker plots for beta estimates for the three bird models =====
 # 04/05/2024
@@ -446,22 +482,38 @@ bird_fr_fn <- cleanModOutput(modelfolder, 'bird_fr_model_orig.rda', 'fr', brodie
 
 allbird <- rbind(bird_sr_fn, bird_fr_fn, bird_pd_fn)
 
+unique(allbird$term)
+termname <- c("Forest Canopy Height", "Site Accessibility", "HDI", "PA", "Intercept")
+termorder <- c(1, 2, 3, 4, 5)
+termdf <- data.frame(termname, termorder)
+colnames(termdf) <- c("term", "order")
+allbird <- merge(allbird, termdf, by=c("term"))
+
+inddf <- data.frame(c("SR", "PD", "FR"), c("Species Richness", "Phylogenetic Diversity", "Functional Richness"))
+colnames(inddf) <- c("ind", "indname")
+allbird <- merge(allbird, inddf, by=c("ind"))
 
 allbird %>%
     # reorder the coefficients so that the largest is at the top of the plot
-    mutate(term = fct_reorder(term, estimate)) %>%
+    mutate(term = fct_reorder(term, order, .desc = TRUE)) %>%
     ggplot(aes(estimate, term, col=group)) +
-    geom_point() +
+    # geom_point() +
     scale_colour_manual(values=c("black", "red"))+
-    geom_errorbarh(aes(xmin = conf.low, xmax = conf.high)) +
+    geom_pointrange(size=0.2, aes(xmin = conf.low, xmax = conf.high), height=0) +
+    # errorbar has ends
     # add in a dotted line at zero
     geom_vline(xintercept = 0, lty = 2) +
     labs(
         x = "Estimate of effect",
         y = NULL, 
-        title = "A comparison of coefficient estimates",
-        colour = "Group"
+        title = "Computational Reproduction Matching Effect Estimates Observed Across Studies",
+        colour = "Group",
     )+
-    facet_wrap(~ind, scales = "free_x") # scales='free_x' allows xlim to differ by subplot
+    facet_wrap(~indname, scales = "free_x")+# scales='free_x' allows xlim to differ by subplot
+    theme_tufte()+
+    theme(strip.text.x = element_text(angle = 0, hjust = 0),
+          panel.border = element_rect(colour='white', fill=NA))+
+    title_theme
 
 
+# adding a geom_rangeframe() is weird
