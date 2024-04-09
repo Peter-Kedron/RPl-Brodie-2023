@@ -34,7 +34,7 @@ dst_dir <- opt$dst_dir
 taxon <- opt$taxon
 
 # Load PAs and groups
-fnames <- file.path(dst_dir, c("clean_pas.geojson", "pa_groups.geojson"))
+fnames <- file.path(dst_dir, c("clean_pas.geojson", "pa_groups.shp"))
 if (!all(file.exists(fnames))){
     stop("No cleaned pas and groups found, run clean_pas.R to get them.")
 } else {
@@ -65,7 +65,7 @@ values(template) <- 1:ncell(template)
 # Now it is near perfect to calculate the flux and area weighted flux
 ## Get cell ids, NOTE that one cell could have multiple points
 ## Also remove points outside of study area
-pts_clean <- extract(template, pts, cells = TRUE, bind = TRUE) %>% 
+pts_clean <- terra::extract(template, pts, cells = TRUE, bind = TRUE) %>% 
     st_as_sf() %>% 
     filter(!is.na(cell)) %>% 
     select(station, country)
@@ -78,7 +78,7 @@ pas_conn <- function(pas, pts, template,
                      pa_groups = NULL,
                      med_dist = 10,
                      # 5 times, the flux is around 0.0#
-                     buffer_size = 5 * med_dist,
+                     buffer_size = 5 * med_dist * 1000,
                      dst_path = NULL){
     # pas has two layers: first is the index of PAs, the second is the area
     # pts is a sf of points to process, at least have column station
@@ -136,7 +136,7 @@ pas_conn <- function(pas, pts, template,
                 ## Remove the point from the raster
                 pas_included_grid <- rasterize(
                     pas_included, template, touches = TRUE) %>% trim()
-                cell_pts <- extract(
+                cell_pts <- terra::extract(
                     pas_included_grid, pts_this, cells = TRUE) %>% pull(cell)
                 pas_included_grid[cell_pts] <- NA
                 
@@ -221,8 +221,9 @@ pas_conn <- function(pas, pts, template,
 conn_metrics <- do.call(
     rbind, lapply(seq(10, 150, 10), function(med_dist){
         message(sprintf("Calculate flux for median dispersal distance: %s", med_dist))
-        pas_conn(pas, pts, pa_groups, 
-                 template, med_dist = med_dist)
+        dst_path <- file.path(dst_dir, sprintf("conn_flux_%s_%s.csv", taxon, med_dist))
+        pas_conn(pas = clean_pas, pts = pts_clean, template = template, 
+                 pa_groups = pa_groups, med_dist = med_dist, dst_path = dst_path)
     }))
 dst_path <- file.path(dst_dir, sprintf("conn_flux_%s.csv", taxon))
 write.csv(conn_metrics, dst_path, row.names = FALSE)

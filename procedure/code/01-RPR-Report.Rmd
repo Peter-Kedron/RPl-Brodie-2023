@@ -84,7 +84,6 @@ This study is a *reproduction* of:
 
 > Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). <https://doi.org/10.1038/s41586-023-06410-z>
 
-We replicate the analysis of Brodie et al. (2023) and introduce protected area (PA) connectivity as a statistical moderator of the effect PA status has on biodiversity.
 We find KEY FINDINGS.
 Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) do preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
 Brodie et al. provides evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by network connectivity.
@@ -203,7 +202,7 @@ Note: HDI was not included in the data file shared by the orignal study. We gath
 
 
 # Study design
-This study consists of a reproduction of the original work by Brodie et al. (2023) and a replication to analyze how connectivity influences protected area efficacy in preserving tropical biodiversity. We first implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. We then compute and add connectivity measures at the sample points to the original dataset to further examine the effect of connectivity.
+This study consists of a reproduction of the original work by Brodie et al. (2023) to analyze protected area efficacy in preserving tropical biodiversity. We implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. 
 
 Brodie et al. (2023) formulated hypotheses to assess protected area effectiveness and tested them with structural causal modeling. The main focus of their paper was on the overall effectiveness of protected areas (OR-H1) on biodiversity after accounting potential confounders of site accessibiltiy and forest structure.
 
@@ -217,13 +216,6 @@ To test OR-H1, the original study removed confounding effects and built separate
  
 Brodie et al. (2023) found protection status increased all facets of bird biodiversity but the effects were not significant for mammals.
 
-## Testing the moderating effect of connectivity
-
-Connectivity of protected areas is essential for biodiversity conservation which supports species movement and facilitates energy transfer that is essential for species survival. Well-connected protected areas theoretically have higher effectiveness in conserving biodiversity, and moderate the effect of conservation status itself. It could potentially be an important contributing factor to high tropical bird and mammal biodiversity, but was not included in the original study. Therefore, we introduce connectivity measures in our replication work and develop the hypothesis (RPL-H1) as follows.
-
-> RPL-H1: Connectivity mdoerates the efficacy of protection on biodiversity.
-
-We ask the research question of whether connectivity moderates the efficacy of protection on tropical biodiversity and build upon the existing structural causal models by Brodie et al. (2023) to test the hypothesis. 
 
 # Materials and procedure
 
@@ -302,10 +294,8 @@ lapply(pkgs, require, character.only=TRUE)
 # Structural Causal Modelling  
 # ------------------------------------------------------------------------------
 
-# Create the directed acyclic graph (DAG) of potential causal pathways with the 
-# addition of connectivity as a moderator of the PA effect. Assign PA as 
-# the exposure and diversity as the outcome.
-# Connectivity -> Diversity
+# Create the directed acyclic graph (DAG) of potential causal 
+# Assign PA as the exposure and diversity as the outcome.
 dagBrodie <- dagitty("dag {
   PA -> Diversity
   ForestStructure -> PA
@@ -337,7 +327,6 @@ coordinates( dagBrodie ) <-  list(x = c(Diversity = 3,
                                         Bioclimate = 2, 
                                         Elevation = 3, 
                                         Topography = 4
-                                        #, Connectivity = 6
                                         ),
                                   y = c(Diversity = 3, 
                                         UnderstoryDensity = 2, 
@@ -348,28 +337,97 @@ coordinates( dagBrodie ) <-  list(x = c(Diversity = 3,
                                         Bioclimate = 1, 
                                         Elevation = 1, 
                                         Topography = 1
-                                    #    , Connectivity = 2
                                         ))
 
 # Plot the DAG to confirm the visual structure and exposure
 ggdag_status(dagBrodie) + theme_dag()
 
 # Identify the set of adjustment variables needed to identify 
-# the effect of PA on biodiversity and Test whether connectivity fulfills the 
-# adjustment criterion
+# the effect of PA on biodiversity 
 adjustmentSets(dagBrodie)
-# isAdjustmentSet(dagBrodie, c("Connectivity"))
-
-# Plot the alternative adjustment sets
-# ggdag_adjustment_set(dagBrodie, 
-#                      node_size = 20, 
-#                      text_col = "black"
-# ) + ggplot2::theme(legend.position = "bottom")
-
 
 ```
 
-### Data preparation for bird models
+### Original study
+
+#### Data preparation for bird models
+
+
+```{r OR_bird_prep, echo=T, message=FALSE}
+# rm(list = ls())
+
+# Load the data provided by Brodie et al. (2023)
+dat_brodie_bird <- data.frame(read.csv(
+                          here("data/raw/public/training/bird_data_230326.csv"), 
+                          header = T))
+
+# Simplify the variable names of site identifier and geographic coordinates
+names(dat_brodie_bird)[names(dat_brodie_bird) == "site"] <- "station"
+names(dat_brodie_bird)[names(dat_brodie_bird) == "lat_wgs84"] <- "lat"
+names(dat_brodie_bird)[names(dat_brodie_bird) == "long_wgs84"] <- "long"
+
+
+# Search for HDI in the column names 
+grep("hdi", names(dat_brodie_bird), value = TRUE)
+grep("HDI", names(dat_brodie_bird), value = TRUE)
+
+# Assign stations the HDI value of its country
+# Reference: Human Development Report 2020: The Next Frontier—Human Development 
+# and the Anthropocene (United Nations Development Programme, 2020).
+# https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
+# https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
+
+dat_HDI <- data.frame(
+    country = unique(dat_brodie_bird$country), 
+    HDI = c(0.593, 0.768, 0.705, 0.607, 0.803, 0.939, 0.800, 
+            0.703, 0.829))
+dat_brodie_bird <- left_join(dat_brodie_bird, dat_HDI, by = "country")
+
+# Create dataframe containing the subset of variable used in the analysis
+dat_bird <- dat_brodie_bird %>% select(station, country, PA, utm_east, utm_north, 
+                             Hansen_recentloss,access_log10, HDI, dist_to_PA, 
+                             PA_size_km2, rh_95_a0.pred, pavd_0_5.pred, 
+                             pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
+                             agbd_a0.pred,asymptPD, maxFRic, SR.mean)
+
+
+# Scale subset of continuous variables in dat
+# Peter - Need to add the connectivity measures to the scaling list when they 
+# are introduced
+dat_scale_bird <- data.frame(scale(subset(dat_bird, select = c("utm_east", "utm_north", 
+                                                     "HDI", "access_log10", 
+                                                     "PA_size_km2", 
+                                                     "dist_to_PA", 
+                                                     "rh_95_a0.pred", 
+                                                     "pavd_0_5.pred", 
+                                                     "pai_a0.pred", 
+                                                     "fhd_pai_1m_a0.pred", 
+                                                     "cover_a0.pred", 
+                                                     "agbd_a0.pred"), 
+                                     ), 
+                              center = TRUE, scale = TRUE))
+
+# Append scaled variables to data with .z suffixes
+dat_bird[paste0(names(dat_scale_bird), '.z')] <- dat_scale_bird
+
+# Rename scaled, predicted relative canopy height at 95% (rh_95_a0.pred.z) 
+# as forest_structure to match DAG 
+names(dat_bird)[names(dat_bird) == "rh_95_a0.pred.z"] <- "forest_structure"
+
+# Rename scaled, predicted plant area volume density between 0m and 5m 
+# (pavd_0_5.pred.z) as understory_density to match DAG
+names(dat_bird)[names(dat_bird) == "pavd_0_5.pred.z"] <- "understory_density"
+
+# Exclude stations that underwent recent forest loss as defined by 
+# Hansen et al. (2013)
+dat_clean_bird <- subset(dat_bird, Hansen_recentloss == 0)
+```
+
+
+
+
+### Updated study
+#### Data preparation for bird models
 
 We performed a series of data preparation procedures based on scripts nad raw data shared by Brodie et al. (2023) for birds and mammals separately. Steps included 1) adding country-specific HDI values which were missing from the raw data, 2) standardizing variables, and 3) following the original script to discard different outliers for different models.
 
@@ -409,16 +467,8 @@ dat_bird <- dat_brodie_bird %>% select(station, country, PA, utm_east, utm_north
                              pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
                              agbd_a0.pred,asymptPD, maxFRic, SR.mean)
 
-# Add the connectivity variables for each station calculated with 
-# calc_conn_metrics.R
-dat_conn_metrics_bird <- data.frame(read.csv(
-                                here("data/derived/public/conn_flux_bird_10_150.csv"), 
-                                header = T))
-dat_bird <- left_join(dat_bird, dat_conn_metrics_bird, by = "station")
 
-# Scale subset of continuous variables in dat
-# Peter - Need to add the connectivity measures to the scaling list when they 
-# are introduced
+# Scale subset of continuous variables in data frame
 dat_scale_bird <- data.frame(scale(subset(dat_bird, select = c("utm_east", "utm_north", 
                                                      "HDI", "access_log10", 
                                                      "PA_size_km2", 
@@ -428,8 +478,7 @@ dat_scale_bird <- data.frame(scale(subset(dat_bird, select = c("utm_east", "utm_
                                                      "pai_a0.pred", 
                                                      "fhd_pai_1m_a0.pred", 
                                                      "cover_a0.pred", 
-                                                     "agbd_a0.pred",
-                                                     "awf_ptg"), 
+                                                     "agbd_a0.pred"), 
                                      ), 
                               center = TRUE, scale = TRUE))
 
@@ -485,16 +534,8 @@ dat_mam <- dat_brodie_mam %>% select(station, study_area, country, PA, utm_east,
                              pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
                              agbd_a0.pred,asymptPD, maxFRic, SR.mean)
 
-# Add the connectivity variables for each station calculated with 
-# calc_conn_metrics.R
-dat_conn_metrics <- data.frame(read.csv(
-    here("data/derived/public/conn_flux.csv"), 
-    header = T))
-dat_mam <- left_join(dat_mam, dat_conn_metrics, by = "station")
 
-# Scale subset of continuous variables in dat
-# Peter - Need to add the connectivity measures to the scaling list when they 
-# are introduced
+# Scale subset of continuous variables in data frame
 dat_scale_mam <- data.frame(scale(subset(dat_mam, select = c("utm_east", "utm_north", 
                                                      "HDI", "access_log10", 
                                                      "PA_size_km2", 
@@ -531,15 +572,14 @@ dat_clean_mam <- subset(dat_mam, Hansen_recentloss == 0)
 
 After data preparation, we built separate linear mixed effects models for birds and mammals using species richness, functional richness, and phylogenetic diversity values. We showed significance of variables using p-values and set thresholds of 0.001 ( *** ), 0.01 ( ** ), and 0.05 ( * ).
 
-// do we add our follow-up analyses here?
-
 ### Bird models
 
 Then we run the PD, FR, and SR models for birds.
 
 ```{r bird_models, echo=T}
 # ----------------- Analysis of phylogenetic diversity (PD) --------------------
-dat_PD_efficacy_bird <- subset(dat_clean_bird, med_dist == 150)
+# dat_PD_efficacy_bird <- subset(dat_clean_bird, med_dist == 150)
+dat_PD_efficacy_bird <- dat_clean_bird
 
 # Remove high-leverage outliers identified by Brodie et al. 
 ### Brodie et al. identified outlier using the hatvalue function. We should run 
@@ -558,7 +598,7 @@ dat_PD_efficacy_bird <- dat_PD_efficacy_bird[! dat_PD_efficacy_bird$station %in%
 
 dat_PD_efficacy_bird <- dat_PD_efficacy_bird %>% select(asymptPD, PA, country, utm_east, 
                           utm_north, utm_east.z, utm_north.z, forest_structure, 
-                          access_log10.z, HDI.z, awf_ptg.z)
+                          access_log10.z, HDI.z)
 dat_PD_efficacy_bird <- dat_PD_efficacy_bird[complete.cases(dat_PD_efficacy_bird), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -580,7 +620,7 @@ mod_PD_efficacy_bird <- lme(asymptPD ~ forest_structure + access_log10.z
 
 
 # ----------------- Analysis of Functional Richness (FR) -----------------------
-dat_FR_efficacy_bird <- subset(dat_clean_bird, med_dist == 100)
+dat_FR_efficacy_bird <- dat_clean_bird
 
 # Remove high-leverage outliers identified by Brodie et al. 
 ### Brodie et al. identified outlier using the hatvalue function. We should run 
@@ -600,7 +640,7 @@ dat_FR_efficacy_bird <- dat_FR_efficacy_bird[! dat_FR_efficacy_bird$station %in%
 dat_FR_efficacy_bird <- dat_FR_efficacy_bird %>% 
     select(maxFRic, PA, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
-           access_log10.z, HDI.z, awf_ptg.z)
+           access_log10.z, HDI.z)
 dat_FR_efficacy_bird <- dat_FR_efficacy_bird[complete.cases(dat_FR_efficacy_bird), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -622,7 +662,9 @@ mod_FR_efficacy_bird <- lme(maxFRic ~ forest_structure + access_log10.z
 
 # ------------------- Analysis of species richness (SR) ------------------------
 
-dat_SR_efficacy_bird <- subset(dat_clean_bird, med_dist == 100) # Wenxin: why is the med_dist different here? should we use the same distance for all measures?  It does not really matter for the reproduction though.
+# dat_SR_efficacy_bird <- subset(dat_clean_bird, med_dist == 100) 
+dat_SR_efficacy_bird <- dat_clean_bird
+# Wenxin: why is the med_dist different here? should we use the same distance for all measures?  It does not really matter for the reproduction though.
 
 # Remove high-leverage outliers identified by Brodie et al. 
 ### Brodie et al. identified outlier using the hatvalue function. We should run 
@@ -642,7 +684,7 @@ dat_SR_efficacy_bird <- dat_SR_efficacy_bird[! dat_SR_efficacy_bird$station %in%
 dat_SR_efficacy_bird <- dat_SR_efficacy_bird %>% 
     select(SR.mean, PA, country, utm_east, 
            utm_north, utm_east.z, utm_north.z, forest_structure, 
-           access_log10.z, HDI.z, awf_ptg.z)
+           access_log10.z, HDI.z)
 dat_SR_efficacy_bird <- dat_SR_efficacy_bird[complete.cases(dat_SR_efficacy_bird), ]
 
 # Perform propensity score matching following the DAG developed in the 
@@ -660,6 +702,7 @@ mod_SR_efficacy_bird <- lme(SR.mean ~ forest_structure + access_log10.z
                        data = dat_matched_SR_bird, weights = ~I(1/weights), 
                        correlation = corExp(form = ~utm_east + utm_north, 
                                             nugget = TRUE))
+
 # summary(mod_SR_efficacy_bird) 
 
 # Summarize the model outputs in a table
@@ -676,8 +719,6 @@ We run PD, FR, and SR models for mammals.
 dat_PD_efficacy_mam <- subset(dat_clean_mam, med_dist == 100)
 
 # Select variables for analysis and restrict to rows with complete values 
-# Peter - We need to add the eventual connectivity measures to this selection 
-# so they are in place for our extended analysis
 
 dat_PD_efficacy_mam <- dat_PD_efficacy_mam %>% 
     select(asymptPD, PA, study_area, country, utm_east, 
@@ -708,8 +749,6 @@ mod_PD_efficacy_mam <- lme(asymptPD ~ forest_structure + access_log10.z
 dat_FR_efficacy_mam <- subset(dat_clean_mam, med_dist == 100)
 
 # Select variables for analysis and restrict to rows with complete values 
-# Peter - We need to add the eventual connectivity measures to this selection 
-# so they are in place for our extended analysis
 
 # No variable named maxFR in the csv, only maxFRic, not fully sure if they are the same
 dat_FR_efficacy_mam <- dat_FR_efficacy_mam %>% 
@@ -740,8 +779,6 @@ mod_FR_efficacy_mam <- lme(maxFRic ~ forest_structure + access_log10.z
 dat_SR_efficacy_mam <- subset(dat_clean_mam, med_dist == 100)
 
 # Select variables for analysis and restrict to rows with complete values 
-# Peter - We need to add the eventual connectivity measures to this selection 
-# so they are in place for our extended analysis
 
 dat_SR_efficacy_mam <- dat_SR_efficacy_mam %>% 
     select(SR.mean, PA, study_area, country, utm_east, 
@@ -772,7 +809,8 @@ mod_SR_efficacy_mam <- lme(SR.mean ~ forest_structure + access_log10.z
 
 ```{r results, echo=T}
 #summary(mod_SR_efficacy_mam) 
-msummary(list('Bird SR'=mod_SR_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird PD'=mod_PD_efficacy_bird, 'Mammal SR'=mod_SR_efficacy_mam, 'Mammal FR'=mod_FR_efficacy_mam, 'Mammal PD'=mod_PD_efficacy_mam),stars = TRUE)
+msummary(list('Bird SR'=mod_SR_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird PD'=mod_PD_efficacy_bird,'Mammal SR'=mod_SR_efficacy_mam, 'Mammal FR'=mod_FR_efficacy_mam, 'Mammal PD'=mod_PD_efficacy_mam
+              ),stars = TRUE)
 
 # Note: if rendering this part of the code returns errors for tex rendering
 # Please consider going through steps on this debugging page:

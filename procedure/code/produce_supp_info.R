@@ -2,18 +2,30 @@
 # Task of the script: produce supplemental information
 # Author: Wenxin Yang
 # Date created: 01/19/2024
+# Updated: 04/05/2024
 
 # ======= load packages & set up dir =======
 pkgs <- c('sf', 'dplyr', 'terra', 'ggplot2', 'units', 'cowplot', 'nngeo',
           'tidyverse', 'hrbrthemes', 'viridis', 'here', 'spdep', 'tmap',
-          'data.table', 'stringr', 'broom', 'haven', 'extrafont', 'nlme')
+          'data.table', 'stringr', 'broom', 'haven', 'extrafont', 'nlme',
+          'broom', 'broom.mixed', 'showtext', 'ggthemes')
+
+
 lapply(pkgs, library, character.only=TRUE)
 sf_use_s2(FALSE) # deal with buffering odd
-
+theme_set(theme_bw())
 dir_pa <- '/Users/wenxinyang/Desktop/Dissertation/DATA'
 
-# ======= prep ======
+
+load_object <- function(file) {
+    tmp <- new.env()
+    load(file = file, envir = tmp)
+    tmp[[ls(tmp)[1]]]
+}
+
 modelfolder <- '/Users/wenxinyang/Desktop/Dissertation/DATA/BrodieData/model_data'
+# ======= prep ======
+
 clean_pas <- st_read(file.path(modelfolder, "clean_pas.geojson"))
 pas <- clean_pas
 
@@ -112,12 +124,6 @@ ggplot()+
 # ======= 1) spatial patterns of Brodie residuals =========
 models <- list.files(path=modelfolder, pattern = "\\.rda$")
 # rdmodels <- lapply(models, function(x) load(file=file.path(modelfolder, x)))
-
-load_object <- function(file) {
-    tmp <- new.env()
-    load(file = file, envir = tmp)
-    tmp[[ls(tmp)[1]]]
-}
 
 getBrodieDf <- function(species, ind){
     
@@ -329,51 +335,185 @@ plot(geom_birdresid, "brodsrlcMoranI")
 geom_birdresid$sr10lcMoranI <- autocor(geom_birdresid$bird_sr_connec_10, df.dist.inv, "locmor")
 plot(geom_birdresid, "sr10lcMoranI")
 
-# ====== tie fighter pie plot =====
+# ====== 4) tie fighter pie plot =====
 # PD for birds and mammals: PA estimates and awf_ptg.z estimates
+loadfonts(device=c("all"))
+import_econ_sans() # you will have to install the font before calling it
+title_theme <- theme(
+    plot.title = element_text(
+        family = "Econ Sans Cnd",
+        face = "bold",
+        size = 12
+    ),
+    plot.subtitle = element_text(
+        family = "Econ Sans Cnd",
+        size = 10,
+    ),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank()
+)
+
 birds_pd_models = load_object(file.path(modelfolder, 'bird_pd_models.rda'))
 mammals_pd_models = load_object(file.path(modelfolder, 'mammal_pd_models.rda'))
 
-getEachRowPiePlot <- function(mod, var, modname){
-    modinfo <- data.frame(intervals(mod)$fixed)[var, ]
+getEachMod <- function(mod, vars, modname){
+    modinfo <- broom.mixed::tidy(mod, effects='fixed',conf.int = TRUE)
+    modinfo <- modinfo[modinfo$term %in% vars,]
+    modinfo <- modinfo[c('conf.low', 'estimate', 'conf.high', 'term')]
+    colnames(modinfo) <- c('lower', 'est.', 'upper', 'var')
     modinfo$model <- modname
-    modinfo$var <- var
     modinfo$dist <- as.integer(strsplit(modname, '_')[[1]][2])
     
     return(modinfo)
 }
 
-getAllRowPiePlot <- function(species, ind, var){
+getAllMod <- function(species, ind, vars){
     mods <- load_object(file.path(modelfolder, paste(species, ind, 'models.rda', sep='_')))
     li_modnames <- names(mods)
-    
     dfplot <- data.frame(matrix(ncol=6, nrow=0))
+    
     for(i in 2:length(li_modnames)){ # removing brodie model
         mod <- mods[[i]]
         modname <- li_modnames[i]
+        dfplot <- rbind(dfplot, getEachMod(mod, vars, modname))
         
-        dfplot <- rbind(dfplot, getEachRowPiePlot(mod, var, modname))
     }
-    rownames(dfplot) <- seq(1:(length(li_modnames)-1))
+    rownames(dfplot) <- seq(1:nrow(dfplot))
+    if(ind=='pd'){
+        ind == 'Phylogenetic Diversity'
+    }
+    dfplot$ind <- toupper(ind)
     return(dfplot)
+    
 }
 
-getFightPiePlot <- function(species, ind, var){
-    dftmp <- getAllRowPiePlot(species, ind, var)
+
+getFightPiePlot <- function(species, inds, vars, varnames, 
+                            title_string, subtitle_string){
+    dftmp <- data.frame(matrix(ncol=6, nrow=0))
+    for (i in inds){
+        dftmp <- rbind(dftmp, getAllMod(species, i, vars))
+    }
+    
+    dfvarnames <- data.frame(vars, varnames)
+    colnames(dfvarnames) <- c('var', 'varname')
+    dftmp <- merge(dftmp, dfvarnames, by='var')
+    
     dftmp %>% ggplot(aes(x=dist, y=est.))+
-        geom_point(position=position_dodge(width=2))+
-        geom_errorbar(aes(ymin=lower, ymax=upper),
+        # geom_point(position=position_dodge(width=2))+
+        geom_pointrange(
+            size=0.2,
+            aes(ymin=lower, ymax=upper),
                       position=position_dodge(width=2), width=1.5)+
         scale_x_continuous(breaks=seq(10, 150, by=10))+
-        ggtitle(paste('Plot for', species, ind, sep=' '))+
-        xlab('dispersal distance (km)')+
-        ylab(paste(var, 'effect', sep=' '))
+        # ggtitle(paste('Plot for', species, ind, sep=' '))+
+        xlab('Dispersal distance (km)') +
+        ylab('Eestimated effect')+
+        labs(
+            title=title_string,
+            subtitle=subtitle_string
+        )+
+        # geom_hline(yintercept=0.38, linetype='dashed', color = "red")+
+        # ylab(paste(var, 'effect', sep=' '))+
+        # facet_wrap(~ind+varname, scales = 'free_y')+
+        theme_tufte()+
+        theme(
+            #strip.text.x = element_text(angle = 0, vjust = 0),
+              panel.border = element_rect(colour='white', fill=NA))+
+        title_theme
 }
 
-getFightPiePlot('bird', 'pd', 'PA')
-getFightPiePlot('bird', 'pd', 'awf_ptg.z')
 
-getFightPiePlot('mammal', 'pd', 'PA')
-getFightPiePlot('mammal', 'pd', 'awf_ptg.z')
 
-getFightPiePlot('mammal', 'fr', 'awf_ptg.z')
+ttstr <- 'Replication Outcome'
+subttstr <- 'Connectivity moderates the effect of PA on Phylogenetic Diversity'
+getFightPiePlot('bird', c('pd'), c('PA:awf_ptg.z'), c('Interaction'),
+                ttstr, subttstr)
+
+li_vars <- c('PA', 'awf_ptg.z', 'PA:awf_ptg.z')
+li_inds <- c('sr', 'fr', 'pd')
+li_varnames <- c('PA', 'Connectivity', 'Interaction')
+
+# ====== 5) dot whisker plots for beta estimates for the three bird models =====
+# 04/05/2024
+# use the broom.mixed package to tidy model results up
+# Note: the R package is computing confidence interval using a different way from estimate+2*std.err but they are close
+# for consistency I'm using estimate+2*std.err for both
+getConfInt <- function(df){
+    df$conf.low = df$estimate-2*df$std.error
+    df$conf.high = df$estimate+2*df$std.error
+    
+    return(df)
+}
+
+cleanModOutput <- function(modfolder, modname, biodivind, rawtab){
+    # read in the raw model
+    rawmod <- load_object(file.path(modfolder, modname))
+    # clean up model results
+    df <- broom.mixed::tidy(rawmod, conf.int=FALSE)# if all results were saved as models, we can set this to TRUE and get the error bars automatically
+    
+    # further clean up to match with Brodie's reported table
+    group_rpr <- paste0("rpr-", biodivind, sep='')
+    df$term <- c('Intercept', 'Forest Canopy Height', 'Site Accessibility',
+                 'HDI', 'PA', 'sd_int', 'sd_obs')
+    df <- df[df$effect=='fixed', ]
+    df <- getConfInt(df)
+    df$df <- NULL
+    df$statistic <- NULL
+    df$p.value <- NULL
+    df$group <- "Reproduction"
+    
+    # merging brodie's reported table
+    group_raw <- paste0("raw-", biodivind, sep='')
+    rawtabind <- rawtab[rawtab$group==group_raw, ]
+    rawtabind$group <- "Brodie"
+    tabind <- getConfInt(rawtabind)
+    
+    df <- rbind(df, tabind)
+    df$ind <- toupper(biodivind)
+    
+    return(df)
+}
+
+brodietable <- read.csv('data/derived/public/Brodietable.csv')
+bird_pd_fn <- cleanModOutput(modelfolder, 'bird_pd_model_orig.rda', 'pd', brodietable)
+bird_sr_fn <- cleanModOutput(modelfolder, 'bird_sr_model_orig.rda', 'sr', brodietable)
+bird_fr_fn <- cleanModOutput(modelfolder, 'bird_fr_model_orig.rda', 'fr', brodietable)
+
+allbird <- rbind(bird_sr_fn, bird_fr_fn, bird_pd_fn)
+
+unique(allbird$term)
+termname <- c("Forest Canopy Height", "Site Accessibility", "HDI", "PA", "Intercept")
+termorder <- c(1, 2, 3, 4, 5)
+termdf <- data.frame(termname, termorder)
+colnames(termdf) <- c("term", "order")
+allbird <- merge(allbird, termdf, by=c("term"))
+
+inddf <- data.frame(c("SR", "PD", "FR"), c("Species Richness", "Phylogenetic Diversity", "Functional Richness"))
+colnames(inddf) <- c("ind", "indname")
+allbird <- merge(allbird, inddf, by=c("ind"))
+
+allbird %>%
+    # reorder the coefficients so that the largest is at the top of the plot
+    mutate(term = fct_reorder(term, order, .desc = TRUE)) %>%
+    ggplot(aes(estimate, term, col=group)) +
+    # geom_point() +
+    scale_colour_manual(values=c("black", "red"))+
+    geom_pointrange(size=0.2, aes(xmin = conf.low, xmax = conf.high), height=0) +
+    # errorbar has ends
+    # add in a dotted line at zero
+    geom_vline(xintercept = 0, lty = 2) +
+    labs(
+        x = "Estimate of effect",
+        y = NULL, 
+        title = "Computational Reproduction Matching Effect Estimates Observed Across Studies",
+        colour = "Group",
+    )+
+    facet_wrap(~indname, scales = "free_x")+# scales='free_x' allows xlim to differ by subplot
+    theme_tufte()+
+    theme(strip.text.x = element_text(angle = 0, hjust = 0),
+          panel.border = element_rect(colour='white', fill=NA))+
+    title_theme
+
+
+# adding a geom_rangeframe() is weird

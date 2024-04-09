@@ -54,7 +54,6 @@ source(here("procedure/code/modeling_functions.R"))
 # ---------------------------------- Bird --------------------------------------
 
 # Clear the work space
-rm(list = ls())
 dst_dir <- here("data/derived/public")
 
 # Load and process dataset
