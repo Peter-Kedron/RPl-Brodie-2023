@@ -24,6 +24,7 @@ load_object <- function(file) {
 }
 
 modelfolder <- '/Users/wenxinyang/Desktop/Dissertation/DATA/BrodieData/model_data'
+modelfolder <- 'C:/Users/peterkedron/Desktop/Brodie_models'
 # ======= prep ======
 
 clean_pas <- st_read(file.path(modelfolder, "clean_pas.geojson"))
@@ -434,6 +435,7 @@ li_vars <- c('PA', 'awf_ptg.z', 'PA:awf_ptg.z')
 li_inds <- c('sr', 'fr', 'pd')
 li_varnames <- c('PA', 'Connectivity', 'Interaction')
 
+
 # ====== 5) dot whisker plots for beta estimates for the three bird models =====
 # 04/05/2024
 # use the broom.mixed package to tidy model results up
@@ -483,7 +485,7 @@ bird_fr_fn <- cleanModOutput(modelfolder, 'bird_fr_model_orig.rda', 'fr', brodie
 allbird <- rbind(bird_sr_fn, bird_fr_fn, bird_pd_fn)
 
 unique(allbird$term)
-termname <- c("Forest Canopy Height", "Site Accessibility", "HDI", "PA", "Intercept")
+termname <- c("PA", "Forest Canopy Height", "Site Accessibility", "HDI", "Intercept")
 termorder <- c(1, 2, 3, 4, 5)
 termdf <- data.frame(termname, termorder)
 colnames(termdf) <- c("term", "order")
@@ -521,7 +523,7 @@ allbird %>%
     title_theme +
     guides(fill = FALSE) # I believe this will remove the legend on the right
 
-ggsave(here("path/compare.png"), width = 8, height = 6, bg = "white")
+ggsave(here("results/figures/comp_repo_compare.png"), width = 8, height = 6.5, bg = "white")
 
 # adding a geom_rangeframe() is weird
 
@@ -567,11 +569,12 @@ ggplot(data = dat_clean) +
     geom_abline(slope = B_connPA, intercept = intercept, 
                 color = "#009E73", lwd = 0.8) +
     geom_rangeframe() +
+    ylim(1.5, 6) +
     labs( x = "Connectivity",
           y = "Phylogenetic Diversity",
           title = "Connectivity Moderates PA Efficacy",
           subtitle = "On phylogenetic diversity, at a dispersal distance of 100km") +
     theme_tufte() + title_theme
 
-ggsave(here("path/PD_conn.png"), width = 5, height = 4, bg = "white")
+ggsave(here("results/figures/PD_conn2.png"), width = 7, height = 5, bg = "white")
 
