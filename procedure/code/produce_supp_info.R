@@ -594,3 +594,49 @@ ggplot(data = dat_matched) +
 
 ggsave(here("results/figures/PD_conn2.png"), width = 8, height = 5, bg = "white")
 
+# Figure of comparison between new model and brodie model
+conn_mod <- coef(summary(bird_pd_models$connec_100)) %>% 
+    as.data.frame() %>% 
+    mutate(item = rownames(.)) %>% 
+    select(item, Value, Std.Error) %>% 
+    mutate(group = "Conn")
+
+rep_mod <- coef(summary(bird_pd_models$brodie)) %>% 
+    as.data.frame() %>% 
+    mutate(item = rownames(.)) %>% 
+    select(item, Value, Std.Error) %>% 
+    mutate(group = "Rep")
+
+items <- c("PA", "awf_ptg.z", "PA:awf_ptg.z", "forest_structure", 
+           "access_log10.z", "HDI.z", "(Intercept)")
+labels <- c("PA", "Connectivity", "PA | Connectivity", "Forest Canopy Height",
+            "Site Accessibility", "HDI", "Intercept")
+dat <- rbind(conn_mod, rep_mod) %>% 
+    mutate(item = factor(
+        item, levels = rev(items), labels = rev(labels)))
+
+
+ggplot(dat, aes(Value, item, col=group)) +
+    # add in a dotted line at zero
+    geom_vline(xintercept = 0, lty = 2) +
+    # geom_point() +
+    scale_colour_manual(values=c("#009E73", "black"))+
+    geom_pointrange(size=0.2, aes(xmin = Value - 2 * Std.Error, 
+                                  xmax = Value + 2 * Std.Error), 
+                    position = position_dodge(width = .2)) +
+    # errorbar has ends
+    labs(
+        x = "Estimate of effect",
+        y = NULL, 
+        title = "Title",
+        subtitle = "Subtitle"
+    )+
+    theme_tufte()+
+    theme(strip.text.x = element_text(angle = 0, hjust = 0),
+          panel.border = element_rect(colour='white', fill=NA),
+          legend.position = "none")+
+    title_theme
+
+ggsave(here("results/figures/Conn100_rep_compare.png"), width = 2.5, height = 6.5, bg = "white")
+
+
