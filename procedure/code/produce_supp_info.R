@@ -541,7 +541,24 @@ B_connPA <- B_conn + bird_pd_models$connec_100$coefficients$fixed["PA:awf_ptg.z"
 ## Reproduce the same data for the target model
 dat_clean <- prepare_data("bird", here("data/raw/public"),
                           here("data/derived/public"))
-dat_clean <- dat_clean %>% filter(med_dist == 100) %>% 
+
+# Recreate the matched dataset (we actually could simply grab it from model result)
+med_dispersal_dist <- 100
+outliers <- c("L921125", "L2422371", "L4331944", "L13465594")
+dat_clean <- subset(dat_clean, med_dist == med_dispersal_dist)
+dat_clean <- dat_clean[!dat_clean$station %in% outliers, ]
+dat_clean <- dat_clean %>% 
+    select(asymptPD, PA, country, utm_east, 
+           utm_north, utm_east.z, utm_north.z, forest_structure, 
+           access_log10.z, HDI.z, awf_ptg.z)
+dat_clean <- dat_clean[complete.cases(dat_clean), ]
+match_mod <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                         access_log10.z + HDI.z,	
+                     data = dat_clean, method = "full", 
+                     distance = "glm", link = "probit", replace = F)
+dat_matched <- match.data(match_mod)
+
+dat_matched <- dat_matched %>%  
     arrange(PA) %>% # make sure the PA points show front
     mutate(PA = factor(PA, levels = c(0, 1), labels = c(0, 1)))
 
@@ -559,11 +576,10 @@ title_theme <- theme(
     legend.position="none"
 )
 
-ggplot(data = dat_clean) +
+ggplot(data = dat_matched) +
     geom_point(aes(x = awf_ptg.z, y = asymptPD, 
-                   color = PA, size = PA)) +
+                   color = PA, size = weights)) +
     scale_color_manual(values = c("grey80", "#009E73")) +
-    scale_size_manual(values = c(0.6, 1.0)) +
     geom_abline(slope = B_conn, intercept = intercept, 
                 color = "grey80", lwd = 0.8) +
     geom_abline(slope = B_connPA, intercept = intercept, 
@@ -576,5 +592,5 @@ ggplot(data = dat_clean) +
           subtitle = "On phylogenetic diversity, at a dispersal distance of 100km") +
     theme_tufte() + title_theme
 
-ggsave(here("results/figures/PD_conn2.png"), width = 7, height = 5, bg = "white")
+ggsave(here("results/figures/PD_conn2.png"), width = 8, height = 5, bg = "white")
 
