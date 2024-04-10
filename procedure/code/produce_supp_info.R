@@ -499,25 +499,79 @@ allbird %>%
     # - PA, Forest, Access, HDI, Intercept. We want the PA on the top because it is the main effect
     mutate(term = fct_reorder(term, order, .desc = TRUE)) %>%
     ggplot(aes(estimate, term, col=group)) +
-    # geom_point() +
-    scale_colour_manual(values=c("black", "red"))+
-    geom_pointrange(size=0.2, aes(xmin = conf.low, xmax = conf.high), height=0) +
-    # errorbar has ends
     # add in a dotted line at zero
     geom_vline(xintercept = 0, lty = 2) +
+    # geom_point() +
+    scale_colour_manual(values=c("black", "red"))+
+    geom_pointrange(size=0.2, aes(xmin = conf.low, xmax = conf.high), 
+                    position = position_dodge(width = .1)) +
+    # errorbar has ends
     labs(
         x = "Estimate of effect",
         y = NULL, 
         title = "Computational Reproduction",
-        subtitle = "Matching effect estimates observed across studies"
+        subtitle = "Matching effect estimates observed across studies",
         colour = "Group",
     )+
     facet_wrap(~indname, scales = "free_x")+# scales='free_x' allows xlim to differ by subplot
     theme_tufte()+
     theme(strip.text.x = element_text(angle = 0, hjust = 0),
-          panel.border = element_rect(colour='white', fill=NA))+
+          panel.border = element_rect(colour='white', fill=NA),
+          legend.position = "none")+
     title_theme +
     guides(fill = FALSE) # I believe this will remove the legend on the right
 
+ggsave(here("path/compare.png"), width = 8, height = 6, bg = "white")
 
 # adding a geom_rangeframe() is weird
+
+# Figure of Connectivity Moderates PA Efficacy
+## Note: use 100 km dispersal distance, a bit hardcoded
+## Load function, or you can function prepare_data load manually
+source(here("procedure/code/modeling_functions.R"))
+
+## Load models
+load(here("data/derived/public/bird_pd_models.rda"))
+intercept <- bird_pd_models$connec_100$coefficients$fixed["(Intercept)"]
+B_conn <- bird_pd_models$connec_100$coefficients$fixed["awf_ptg.z"]
+B_connPA <- B_conn + bird_pd_models$connec_100$coefficients$fixed["PA:awf_ptg.z"]
+
+## Reproduce the same data for the target model
+dat_clean <- prepare_data("bird", here("data/raw/public"),
+                          here("data/derived/public"))
+dat_clean <- dat_clean %>% filter(med_dist == 100) %>% 
+    arrange(PA) %>% # make sure the PA points show front
+    mutate(PA = factor(PA, levels = c(0, 1), labels = c(0, 1)))
+
+# Making a Economist inspired theme for the plot title
+title_theme <- theme(
+    plot.title = element_text(
+        family = "Econ Sans Cnd", 
+        face = "bold",
+        size = 12
+    ),
+    plot.subtitle = element_text(
+        family = "Econ Sans Cnd",
+        size = 10,
+    ),
+    legend.position="none"
+)
+
+ggplot(data = dat_clean) +
+    geom_point(aes(x = awf_ptg.z, y = asymptPD, 
+                   color = PA, size = PA)) +
+    scale_color_manual(values = c("grey80", "#009E73")) +
+    scale_size_manual(values = c(0.6, 1.0)) +
+    geom_abline(slope = B_conn, intercept = intercept, 
+                color = "grey80", lwd = 0.8) +
+    geom_abline(slope = B_connPA, intercept = intercept, 
+                color = "#009E73", lwd = 0.8) +
+    geom_rangeframe() +
+    labs( x = "Connectivity",
+          y = "Phylogenetic Diversity",
+          title = "Connectivity Moderates PA Efficacy",
+          subtitle = "On phylogenetic diversity, at a dispersal distance of 100km") +
+    theme_tufte() + title_theme
+
+ggsave(here("path/PD_conn.png"), width = 5, height = 4, bg = "white")
+
