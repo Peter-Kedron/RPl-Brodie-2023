@@ -623,7 +623,7 @@ ggplot(dat, aes(Value, item, col=group)) +
     scale_colour_manual(values=c("#009E73", "black"))+
     geom_pointrange(size=0.2, aes(xmin = Value - 2 * Std.Error, 
                                   xmax = Value + 2 * Std.Error), 
-                    position = position_dodge(width = .2)) +
+                    position = position_dodge(width = .1)) +
     # errorbar has ends
     labs(
         x = "Estimate of effect",
