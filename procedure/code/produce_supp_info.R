@@ -601,15 +601,15 @@ conn_mod <- coef(summary(bird_pd_models$connec_100)) %>%
     select(item, Value, Std.Error) %>% 
     mutate(group = "Conn")
 
-rep_mod <- coef(summary(bird_pd_models$brodie)) %>% 
-    as.data.frame() %>% 
-    mutate(item = rownames(.)) %>% 
+rep_mod <- brodietable %>% filter(group == "raw-pd") %>% 
+    rename(item = term, Value = estimate, Std.Error = std.error) %>% 
     select(item, Value, Std.Error) %>% 
     mutate(group = "Rep")
+rep_mod$item <- c("(Intercept)", "forest_structure", "access_log10.z", "HDI.z", "PA")
 
 items <- c("PA", "awf_ptg.z", "PA:awf_ptg.z", "forest_structure", 
            "access_log10.z", "HDI.z", "(Intercept)")
-labels <- c("PA", "Connectivity", "PA | Connectivity", "Forest Canopy Height",
+labels <- c("Protected Area (PA)", "Connectivity", "PA | Connectivity", "Forest Canopy Height",
             "Site Accessibility", "HDI", "Intercept")
 dat <- rbind(conn_mod, rep_mod) %>% 
     mutate(item = factor(
@@ -628,8 +628,6 @@ ggplot(dat, aes(Value, item, col=group)) +
     labs(
         x = "Estimate of effect",
         y = NULL, 
-        title = "Title",
-        subtitle = "Subtitle"
     )+
     theme_tufte()+
     theme(strip.text.x = element_text(angle = 0, hjust = 0),
@@ -637,6 +635,48 @@ ggplot(dat, aes(Value, item, col=group)) +
           legend.position = "none")+
     title_theme
 
-ggsave(here("results/figures/Conn100_rep_compare.png"), width = 2.5, height = 6.5, bg = "white")
+ggsave(here("results/figures/Conn100_rep_compare.png"), width = 3, height = 6.5, bg = "white")
 
+# Study area figure
+library(rnaturalearth)
+pas <- st_read("data/derived/public/clean_pas.geojson") %>% rmapshaper::ms_simplify()
+pts <- st_read("data/derived/public/pts_bird.geojson") %>% 
+    left_join(dat_clean %>% select(station, awf_ptg.z), by = "station")
 
+bry <- ne_countries(scale = 10, continent = "asia", returnclass = "sf") %>% select(name) %>% 
+    st_transform(st_crs(pas)) %>% 
+    st_intersection(st_as_sfc(st_bbox(pas)))
+
+highlight <- st_as_sf(data.frame(x = 107.5, y = 12.5), 
+                          coords = c("x", "y"),
+                          crs = 4326) %>% 
+    st_transform(st_crs(pas)) %>% st_buffer(2 * 1e5)
+
+pas_hl <- st_intersection(pas, highlight)
+pts_hl <- st_intersection(pts, highlight)
+
+g_highlight <- ggplotGrob(ggplot() + 
+    geom_sf(data = highlight, color = "#009E73", fill = "cornsilk", linewidth = 0.6) +
+    geom_sf(data = pas_hl, color = "grey20", fill = "transparent", linewidth = 0.5) +
+    geom_sf(data = pts_hl, aes(fill = awf_ptg.z), size = 2, shape = 21, color = "white") +
+    ggsci::scale_fill_material(name = 'Connectivity', "deep-orange", limit = c(-1, 3)) +
+    coord_sf() + theme_map() + theme(legend.position = "none"))
+
+ggplot() + 
+    geom_sf(data = bry, color = "cornsilk", fill = "cornsilk") +
+    geom_sf(data = pas, color = "grey20", fill = "transparent", linewidth = 0.5) +
+    geom_sf(data = pts, aes(fill = awf_ptg.z), size = 1, 
+            shape = 21, color = "white", alpha = 0.3) +
+    geom_sf(data = highlight, color = '#009E73', 
+            fill = "transparent", linewidth = 0.6) +
+    xlim(st_bbox(pas)[1], st_bbox(pas)[3]) +
+    ylim(st_bbox(pas)[2], st_bbox(pas)[4]) +
+    ggsci::scale_fill_material(name = 'Connectivity', "deep-orange", limit = c(-1, 3)) +
+    annotation_custom(grob = g_highlight,
+                      xmin = 2173181, xmax = 3602136,
+                      ymin = 906978, ymax = 2704781) +
+    coord_sf() + theme_linedraw() +
+    theme(legend.position = "none",
+          text = element_text(size = 12))
+
+ggsave(here("results/figures/study_area.png"), width = 6.5, height = 6.5, bg = "white")
