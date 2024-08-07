@@ -78,43 +78,109 @@ options(tinytex.verbose = TRUE) # not sure if this line is needed
 
 ```
 
-
 # Abstract {-}
-This study is a *reproduction* of:
 
-> Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). <https://doi.org/10.1038/s41586-023-06410-z>
 
-We find KEY FINDINGS.
-Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) do preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
-Brodie et al. provides evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by network connectivity.
+# Introduction
+This study is a *replication* of:
+
+> Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). [https://doi.org/10.1038/s41586-023-06410-z](https://doi.org/10.1038/s41586-023-06410-z)
+
+Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
+While Brodie et al. provide evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by the connectedness of the protected area network.
+PA connectivity is widely recognized as a component of effective conservation, a guiding principle of the 30x30 initiative, and a possible confound of the effect of protection on biodiversity. 
+Ecologically, the connectedness of a PA network may affect biodiversity by facilitating gene flow across locations, which may moderate the effect of protection on biodiversity.
+
+To adjust for effect of connectivity on PA efficacy, we computationally reproduced the findings of Brodie et al. using the data shared by the authors, and extended the original analysis by introducing habitat connectivity as an independent predictor of bird biodiversity and a moderator of the PA effect.
+We find that ...
+
+MAYBE ADD - Debates exist on whether protected areas are effective because of their remote location and good habitat conditions or conservation status itself. Motivated by such, Brodie et al. (2023) estimated protected areas efficacy for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition (OR-H1). To test the hypothesis, Brodie et al. (2023) used various aspects of biodiversity as outcome variables (i.e., dependent variable). 
+
+
+# Study design
+
+This study is a replication of the original statistical analysis of Brodie et al. (2023).
+We conduct two related analyses to evaluate and extend the work of the original authors. 
+First, we attempt to reproduce the statistical results of the original authors by implementing their workflow as identically as possible. 
+This effort allows us to assess study design and conclusion validity of the original study. 
+Second, we extend the work of the original authors by introducing PA connectivity as a predictor of avian biodiversity and a potential moderator of PA efficacy.
+Our primary hypotheses are:
+
+> Ha-1: 
+
+> Ha-2:
+
+The spatial extent of this study is Southeast Asia, matching the area studied by the original authors. 
+The spatial scale of our statistical analysis is the observation site level with national scale adjustments for human development levels.
+Our primary data source is the data file publicly shared by Brodie et al. (2023). 
+All data acquisition from original sources followed the procedures presented by the authors. 
+The original study and our replication attempts were conducted in R. 
+The DAGITTY package was used for structural causal modeling.
+The NLME package used for statistical estimation. 
+
+
+## Original Study Design
+
+The original study uses a quasi-experimental design with the objective of identifying the causal effect of PAs on tropical biodiversity in Southeast Asia while deconfounding for the influence of site accessibility and habitat quality.
+The response variable examined in the study were three measures of biodiversity measured for both mammals and birds - Species richness (SR), Functional richness (FR), and Phylogenetic diversity (PD).
+The response variables were derived from 1,079 sampling locations in the eBird database and 1,365 camera stations deployed across the region. 
+Predictor variables measuring PA status, site accessibility, forest structure, understory density, and human development pressure were derived from the World Database of Protected Areas, the NASA Global Ecosystem Dynamics Investigation (GEDI) mission, and the UN Development program Human Development Index.
+The primary variable of interest was binary measure indicating whether a observation site was located inside or outside a PA. 
+Site accessibility was proxied using circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)]. 
+Habitat quality was measured as the three-dimensional forest structure derived from GEDI mission.
+
+Using propensity score matching to control for the confounds of location, site accessibility, and forest structure, Brodie et al. fit a linear mixed-effects model to measure the effect of PA status on bird and mammal biodiversity. 
+In total, the authors fit six separate regression models - two response types (birds, mammals) by three biodiversity measures (SR, FR, PD) - testing the null hypothesis that:
+
+> OR-Ho-1: The protected area status of a site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+
+Brodie et al. find evidence that the legal designation of PAs provides substantial and significant benefits to Southeast Asian bird biodiversity.
+The authors did not find the same effect for mammals. 
+None of the three measures of mammalian biodiversity was significantly different inside v. outside or PAs.
+
+As a complementary analysis, Brodie et al. also tested whether the biodiversity preserving effects of PAs have positive (spillover) or negative (leakage) effects on the biodiversity of unprotected areas surrounding PAs. 
+Within the subset of observation sites outside PA, the authors tested for these effects using the same propensity score matching procedure and statistical framework presented above, but replaced the binary PA status predictor with the size of the nearest PA or the distance to the nearest PA in separate models.
+The authors fit 12 separate regression models - two response types (birds, mammals), by three biodiversity measures (SR, FR, PD), by two PA measures (area, distance). 
+The null hypothesis tested was:
+
+> OR-Ho-2a: The total area of the protected area located closest to an unprotected observation site has not effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+
+> OR-Ho-2b: The distance to the protected area located closest to an unprotected observation site has not effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+
+Brodie et al find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, that the effects for birds are smaller than those for mammals.
+The authors found that distance to the nearest PA was significantly associated with only mammal FR.
+
 
 # Study metadata
 
-## Metadata of the original study
-This replication uses the data file provided by Brodie et al. (2023) at <https://doi.org/10.6084/m9.figshare.22527298.v1>. 
-We independently accessed the World Database on Protected Areas <https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA> to construct our site and PA connectivity measures. 
+## Brodie et al. (2023) Study Metadata
 
 - `Key words`: Biodiversity, Conservation, Protected Areas, Connectivity, 30x30
 - `Subject`: Ecology and Evolutionary Biology, Natural Resources and Conservation, 
-- `Date created`: November 8, 2023
-- `Date modified`: date of most recent revision
+- `Date created`: August 23, 2023
+- `Date modified`: August 23, 2023
 - `Spatial Coverage`: Southeast Asia
-- `Spatial Resolution`: Species observations - GPS located point data, GEDI-derived forest structural covariates - 1 km raster, HDI - country-level, Protected Areas - PA Polygons 
-- `Spatial Reference System`: Specify the geographic or projected coordinate system for the study, e.g. EPSG:4326
+- `Spatial Resolution`: Species observations - GPS located point data, GEDI - derived forest structural covariates - 1 km raster, HDI - country-level, Protected Areas - PA Polygons 
+- `Spatial Reference System`: WGS84, UTM
 - `Temporal Coverage`: 01-2015 to 08-2021
-- `Temporal Resolution`: Specify the temporal resolution of your study---i.e. the duration of time for which each observation represents or the revisit period for repeated observations
+- `Temporal Resolution`: Varies with data set
 
 
-## Metadata of data sources used in the original study
+## Brodie et al. (2023) Dataset Metadata
+We use the dataset provided by Brodie et al. (2023) at [https://doi.org/10.6084/m9.figshare.22527298.v1](https://doi.org/10.6084/m9.figshare.22527298.v1) to replicate and extend the work of the original authors.
+However, the publicly available dataset is missing the country-level measure of the Human Development Index used in biodiversity modeling.
+We gather this data from the United Nations Development program and merge it with the authors' original dataset.
+To construct our site and PA connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas [https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
+Metadata on the datasets used by the original authors and our own additions are presented below.
 
 ### eBird
 
-The original study gathered bird observations from eBird.
+The original authors gathered bird observations from eBird.
 
 - `Title`: eBird.
 - `Abstract`: A community science platform for reporting bird sightings.
 - `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
-- `Spatial Resolution`: Vector.
+- `Spatial Resolution`: Vector data model with point observations of species occurrence
 - `Spatial Reference System`: Not specified.
 - `Temporal Coverage`: 2015/01 - 2021/08.
 - `Temporal Resolution`: Not applicable.
@@ -125,25 +191,31 @@ The original study gathered bird observations from eBird.
 
 ### The World Database on Protected Areas
 
-The original study used protected area boundaries to derive the three treatment variables (Table 3). Brodie et al. (2023) did not specify how they cleaned up protected area boundary. 
+The original study used protected area boundaries to derive the three treatment variables (Table 3). 
+Brodie et al. (2023) did not specify a data processing procedure or provide code from the preparation of protected area boundaries. 
 
 - `Title`: The World Database on Protected Areas (WDPA).
 - `Abstract`: A global database on protected areas (PAs) and other effective conservation measurers (OECM).
 - `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
 - `Spatial Resolution`: Vector.
 - `Spatial Reference System`: WGS 84.
-- `Temporal Coverage`: Latest.
+- `Temporal Coverage`: Accessed sometime in 2023
 - `Temporal Resolution`: Updated monthly.
-- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Lineage`: Brodie et al. (2023) subset from the dataset, but procedures are unknown.
 - `Distribution`: [WDPA webpage](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Unknown.
 
 ### GEDI L2 metrics
 
-The Global Ecosystem Dynamics Investigation (GEDI) is a spaceborne light detection and ranging (LiDAR) mission monitoring forest structure on earth. The original study derived both ground elevation and forest structure metrics from the Level 2 dataset of GEDI. Level 2 GEDI data are at footprint level so Brodie et al. (2023) used krigging interpolation to create wall-to-wall layers (1-km resolution).
+The Global Ecosystem Dynamics Investigation (GEDI) is a spaceborne light detection and ranging (LiDAR) mission monitoring forest structure on earth. 
+The original study derived both ground elevation and forest structure metrics from the Level 2 dataset of GEDI. 
+Level 2 GEDI data are at footprint level so Brodie et al. (2023) used kriging interpolation to create wall-to-wall layers at 1-km resolution.
 
-L2A includes elevation data. The original study computed slope and topographic position index (TPI) to represent topographic traits at each site. The original study used five L2B metrics, which were canopy height (relative height at 95%), plant area volume density (PAVD) between 0 and 5 m (represents understory density), cumulative plant area index from ground to canopy top, foliage height diversity of plant area index, and proportional cover. They found the five forest structure metrics to be highly correlated and only kept canopy height and understory density in models. 
+L2A includes elevation data. 
+Brodie et al. computed slope and topographic position index (TPI) to represent topographic traits at each site. 
+The authors used five L2B metrics, which were canopy height (relative height at 95%), plant area volume density (PAVD) between 0 and 5 m (represents understory density), cumulative plant area index from ground to canopy top, foliage height diversity of plant area index, and proportional cover. 
+The authors found the five forest structure metrics to be highly correlated and only kept canopy height and understory density in models. 
 
 - `Title`: The Global Ecosystem Dynamics Investigation Level 2 Elevation and Height Metrics.
 - `Abstract`: Global footprint level observations from GEDI on ground elevation and forest structure.
@@ -159,7 +231,8 @@ L2A includes elevation data. The original study computed slope and topographic p
 
 ### Human Development Index (HDI)
 
-Human Development Index for each country was included in the causal models as a simple metric of level of socioeconomic development.
+Human Development Index for each country was included in the causal models to measure socioeconomic development.
+Data on this measure are missing from the dataset publicly shared by Brodie et al.
 
 - `Title`: Human Development Index
 - `Abstract`: An index on the level of human development by country.
@@ -168,7 +241,7 @@ Human Development Index for each country was included in the causal models as a 
 - `Spatial Reference System`: Not applicable.
 - `Temporal Coverage`: 2020.
 - `Temporal Resolution`: Not applicable.
-- `Lineage`: Direct query thourgh the official website.
+- `Lineage`: Direct query though the official website.
 - `Distribution`: Acquired directly through [Human Development Report 2020](https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx).
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Unknown.
@@ -201,20 +274,7 @@ Human Development Index for each country was included in the causal models as a 
 Note: HDI was not included in the data file shared by the orignal study. We gathered HDI values for each country from the Human Development Report 2020.
 
 
-# Study design
-This study consists of a reproduction of the original work by Brodie et al. (2023) to analyze protected area efficacy in preserving tropical biodiversity. We implement the workflow as described and shared in Brodie et al. (2023) as identically as possible to reproduce the original study. 
 
-Brodie et al. (2023) formulated hypotheses to assess protected area effectiveness and tested them with structural causal modeling. The main focus of their paper was on the overall effectiveness of protected areas (OR-H1) on biodiversity after accounting potential confounders of site accessibiltiy and forest structure.
-
-## Protected area effectiveness on overall biodiversity
-
-> OR-H1: Biodiversity is higher within protected areas than outside (after removing effects of site accessbility and habitat condition).
-
-Debates exist on whether protected areas are effective because of their remote location and good habitat conditions or conservation status itself. Motivated by such, Brodie et al. (2023) estimated protected areas efficacy for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition (OR-H1). To test the hypothesis, Brodie et al. (2023) used various aspects of biodiversity as outcome variables (i.e., dependent variable). The treatment variable is a binary variable on whether the observation point is within or outside a reserve. If the treatment variable is significant in a causal model, it supports OR-H1 and adds evidence for the effectiveness of protecting lands.
-
-To test OR-H1, the original study removed confounding effects and built separate causal models for birds and mammals, and different biodiversity outcome metrics. Two major confounders identified were site accessibility and habitat quality. Site accessibility was proxied using Human Development Index (HDI), circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)], and an interaction term of the two variables. Habitat quality was proxied using three-dimensional habitat structure metrics derived from the Global Ecosystem Dynamics Investigation (GEDI) mission. Confounding effects were removed using statistical matching based on propensity scores. Biodiversity metrics used as outcome variables include species richness (SR), functional richness (FR), and phylogenetic diversity (PD). PA effects were estimated using separate mixed effects linear regression for different biodiversity metrics and for birds vs mammals. The original study archetype is quasi-experimental as it uses a matching strategy to perform causal analysis.
- 
-Brodie et al. (2023) found protection status increased all facets of bird biodiversity but the effects were not significant for mammals.
 
 
 # Materials and procedure
