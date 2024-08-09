@@ -72,8 +72,7 @@ knitr::opts_chunk$set(
 
 # set working directory as the project folder
 knitr::opts_knit$set(root.dir = here(''))
-
-options(tinytex.verbose = TRUE) # not sure if this line is needed
+options(tinytex.verbose = TRUE)
 
 
 ```
@@ -103,7 +102,8 @@ This study is a replication of the original statistical analysis of Brodie et al
 We conduct two related analyses to evaluate and extend the work of the original authors. 
 First, we attempt to reproduce the statistical results of the original authors by implementing their workflow as identically as possible. 
 This effort allows us to assess study design and conclusion validity of the original study. 
-Second, we extend the work of the original authors by introducing PA connectivity as a predictor of avian biodiversity and a potential moderator of PA efficacy.
+Second, we extend the work of the original authors by introducing PA connectivity as a predictor of bird and mammal biodiversity and a potential moderator of PA efficacy.
+We also examine whether the beneficial spillover effects observed around protected areas persist when adjusting for PA connectivity.
 Our primary hypotheses are:
 
 > Ha-1: 
@@ -195,8 +195,8 @@ The original study used protected area boundaries to derive the three treatment 
 Brodie et al. (2023) did not specify a data processing procedure or provide code from the preparation of protected area boundaries. 
 
 - `Title`: The World Database on Protected Areas (WDPA).
-- `Abstract`: A global database on protected areas (PAs) and other effective conservation measurers (OECM).
-- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Abstract`: A global database on protected areas (PAs) and other effective conservation measures (OECM).
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodia, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
 - `Spatial Resolution`: Vector.
 - `Spatial Reference System`: WGS 84.
 - `Temporal Coverage`: Accessed sometime in 2023
@@ -292,7 +292,6 @@ Required packages are as follows:
 pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
           "MatchIt", "modelsummary", "optmatch", "nlme")
 # groundhog.library(pkgs, "2024-02-11")
-# I don't know why groundhog is not working
 lapply(pkgs, require, character.only=TRUE)
 ```
 ## Data and variables
