@@ -27,15 +27,15 @@
 ## Variables are: station, study_area (only mammal), country, PA, utm_east, 
 ## utm_north, dist_to_PA, PA_size_km2, asymptPD, maxFRic, SR.mean, med_dist, 
 ## utm_east.z, utm_north.z, HDI.z, access_log10.z, PA_size_km2.z, dist_to_PA.z,
-## forest_structure, awf_ptg.z
+## forest_structure, connectivity
 
 ## Usage example:
-# taxon <- "bird"
-# conn_metrics <- 'awf_ptg'
-# src_dir <- "data/raw/public"
-# conn_dir <- "data/derived/public"
-# dst_dir <- "data/derived/public"
-# dat_clean <- clean_data(taxon, conn_metrics, src_dir, conn_dir, dst_dir)
+taxon <- "bird"
+conn_metrics <- 'awf_ptg'
+src_dir <- "data/raw/public"
+conn_dir <- "data/derived/public"
+dst_dir <- "data/derived/public"
+dat_clean <- clean_data(taxon, conn_metrics, src_dir, conn_dir, dst_dir)
 ## -------------------------------------------------------------------
 
 clean_data <- function(taxon, 
@@ -61,17 +61,13 @@ clean_data <- function(taxon,
   # Create data.frame containing the subset of variable used in the analysis
   ## Difference between bird and mammal is that using country and study_area 
   ## to match for mammals, but only use country for bird.
-  if (taxon == "bird"){
-    dat <- dat_brodie %>% 
-      select(station, country, PA, utm_east, utm_north, 
-             Hansen_recentloss, access_log10, HDI, dist_to_PA, 
-             PA_size_km2, rh_95_a0.pred, asymptPD, maxFRic, SR.mean)
-  } else {
-    dat <- dat_brodie %>% 
-      select(station, study_area, country, PA, utm_east, utm_north, 
-             Hansen_recentloss,access_log10, HDI, dist_to_PA, 
-             PA_size_km2, rh_95_a0.pred, asymptPD, maxFRic, SR.mean)
-  }
+  nms <- c('station', 'country', 'PA', 'utm_east', 'utm_north', 
+          'Hansen_recentloss', 'access_log10', 'HDI', 'dist_to_PA', 
+          'PA_size_km2', 'rh_95_a0.pred', 'asymptPD', 'maxFRic', 'SR.mean')
+  if(taxon == "mammal"){
+      nms <- append(nms, "study_area", after = 1)} else {nms <- nms}
+  
+  dat <- dat_brodie %>% select(all_of(nms))
   
   # Add the connectivity variables for each station calculated with 
   # calc_conn_metrics.R
@@ -108,6 +104,10 @@ clean_data <- function(taxon,
   dat_clean <- dat_clean %>% 
     select(-all_of(c("Hansen_recentloss", "access_log10", "HDI", 
               "rh_95_a0.pred", conn_metrics)))
+  
+  # Rename the selected connectivity measure to a common name
+  conn_nm <- sprintf("%s.z", conn_metrics)
+  names(dat_clean)[names(dat_clean) == conn_nm] <- "connectivity"
   
   # Save out
   fname <- file.path(dst_dir, sprintf("dat_analysis_%s.csv", taxon))
