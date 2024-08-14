@@ -2,7 +2,7 @@
 ## Script name: clean_pa
 ## Purpose of script: Clean the Protected areas.
 ## Author: Lei Song
-## Date Created: 2023-12-14
+## Date Created: 2024-08-13
 ## Email: lsong@ucsb.edu
 
 ## Import from package:

@@ -3,7 +3,7 @@
 ## Purpose of script: The main function to load inputs and calculate 
 ## connectivity metrics of flux and area weighted flux.
 ## Author: Lei Song
-## Date Created: 2023-12-14
+## Date Created: 2024-08-13
 ## Email: lsong@ucsb.edu
 
 ## Import from package:

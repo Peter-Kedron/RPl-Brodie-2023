@@ -3,8 +3,8 @@
 ## Purpose of script: Clean the training data: join original data with 
 ## landscape meatures, scale the relevant variables, and subset the data
 ## for relevant variables only.
-## Author: Lei Song
-## Date Created: 2023-12-14
+## Author: Lei Song, Peter Kedron
+## Date Created: 2024-08-13
 ## Email: lsong@ucsb.edu
 
 ## Import from package:
@@ -30,12 +30,12 @@
 ## forest_structure, connectivity
 
 ## Usage example:
-taxon <- "bird"
-conn_metrics <- 'awf_ptg'
-src_dir <- "data/raw/public"
-conn_dir <- "data/derived/public"
-dst_dir <- "data/derived/public"
-dat_clean <- clean_data(taxon, conn_metrics, src_dir, conn_dir, dst_dir)
+# taxon <- "bird"
+# conn_metrics <- 'awf_ptg'
+# src_dir <- "data/raw/public"
+# conn_dir <- "data/derived/public"
+# dst_dir <- "data/derived/public"
+# dat_clean <- clean_data(taxon, conn_metrics, src_dir, conn_dir, dst_dir)
 ## -------------------------------------------------------------------
 
 clean_data <- function(taxon, 
@@ -107,7 +107,7 @@ clean_data <- function(taxon,
   
   # Rename the selected connectivity measure to a common name
   conn_nm <- sprintf("%s.z", conn_metrics)
-  names(dat_clean)[names(dat_clean) == conn_nm] <- "connectivity"
+  names(dat_clean)[names(dat_clean) == conn_nm] <- "connectivity.z" # match others
   
   # Save out
   fname <- file.path(dst_dir, sprintf("dat_analysis_%s.csv", taxon))

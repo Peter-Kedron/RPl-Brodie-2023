@@ -3,7 +3,7 @@
 ## Purpose of script: Prepare data model. Calculate connectivity metrics
 ## of flux and area weighted flux for a set of points based on four assumptions.
 ## Author: Lei Song
-## Date Created: 2023-12-14
+## Date Created: 2024-08-13
 ## Email: lsong@ucsb.edu
 
 ## Import from package:
