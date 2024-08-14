@@ -1,6 +1,7 @@
 # Ignore contents of derived private folder, with the exception of its readme file
 data/derived/private/**
 !readme.md
+# Remove the file bigger than 100M.
 data/derived/public/pa_groups.*
 
 # Ignore contents of raw private folder, with the exception of its readme file
