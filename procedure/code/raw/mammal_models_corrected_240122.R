@@ -13,11 +13,12 @@ library(lmerTest)
 
 setwd('')
 
-
+dst_dir <- "results/brodie"
+dir.create(dst_dir)
 
 #--------------------------- LOAD DATA ---------------------------------------------------
 rm(list = ls())
-dat <- data.frame(read.csv("mammal_data_corrected_240122.csv", header = T))
+dat <- data.frame(read.csv("data/raw/public/training/mammal_data_corrected_240122.csv", header = T))
 
 
 
@@ -97,12 +98,12 @@ match2 <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + acces
 	PA_size_km2.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
 dmatch <- match.data(match2)
-mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | study_area),
+mm02d <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | study_area),
 	data = dmatch, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
 
-
+pd_models <- list(pd_efficacy = mm02, pd_size_spillover = mm02b, pd_dist_spillover = mm02d)
 
 
 #####################################################################################################
@@ -148,12 +149,12 @@ match2 <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + acces
 	PA_size_km2.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
 dmatch <- match.data(match2)
-mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country, ~1 | study_area),
+mm02d <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country, ~1 | study_area),
 	data = dmatch, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
 
-
+fr_models <- list(fr_efficacy = mm02, fr_size_spillover = mm02b, fr_dist_spillover = mm02d)
 
 
 
@@ -203,18 +204,18 @@ match2 <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + acces
 	PA_size_km2.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
 dmatch <- match.data(match2)
-mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country, ~1 | study_area),
+mm02d <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country, ~1 | study_area),
 	data = dmatch, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
+sr_models <- list(sr_efficacy = mm02, sr_size_spillover = mm02b, sr_dist_spillover = mm02d)
 
 
 
+models <- c(pd_models, fr_models, sr_models)
 
 
-
-
-
+save(models, file = "results/models_mammal_brodie_orig.rda")
 
 
 

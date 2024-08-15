@@ -18,8 +18,7 @@ setwd('')
 
 #--------------------------- LOAD DATA ---------------------------------------------------
 rm(list = ls())
-dat <- data.frame(read.csv("bird_data_corrected_240122.csv", header = T))
-
+dat <- data.frame(read.csv("data/raw/public/training/bird_data_corrected_240122.csv", header = T))
 
 
 #--------------------------- CLEAN DATA ---------------------------------------------------
@@ -67,7 +66,7 @@ d1b <- subset(d1b, station != "L3865754")
 matchb <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
 	data = d1b, method = "full", distance = "glm", link = "probit", replace = F)
 dmatchb <- match.data(matchb)
-mm02b <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb, weights = ~I(1/weights), 
+mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb, weights = ~I(1/weights), 
 	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
@@ -101,11 +100,11 @@ match2 <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + acces
 	PA_size_km2.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
 dmatch <- match.data(match2)
-mm02b <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
+mm02d <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
 	data = dmatch, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
-
+pd_models <- list(pd_efficacy = mm02, pd_size_spillover = mm02b, pd_dist_spillover = mm02d)
 
 
 ############################################################################################################
@@ -122,7 +121,7 @@ d1b <- subset(d1b, station != "L13465594")
 matchb <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
 	data = d1b, method = "full", distance = "glm", link = "probit", replace = F)
 dmatchb <- match.data(matchb)
-mm02b <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb, weights = ~I(1/weights), 
+mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb, weights = ~I(1/weights), 
 	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
@@ -157,12 +156,12 @@ match2 <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + acces
 	PA_size_km2.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
 dmatch <- match.data(match2)
-mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
+mm02d <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
 	data = dmatch, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
 
-
+fr_models <- list(fr_efficacy = mm02, fr_size_spillover = mm02b, fr_dist_spillover = mm02d)
 
 
 
@@ -185,7 +184,7 @@ d1b <- subset(d1b, station != "L3776738")
 matchb <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
 	data = d1b, method = "full", distance = "glm", link = "probit", replace = F)
 dmatchb <- match.data(matchb)
-mm02b <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb, weights = ~I(1/weights), 
+mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb, weights = ~I(1/weights), 
 	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
@@ -218,11 +217,18 @@ match2 <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + acces
 	PA_size_km2.z, data = d3b, method = "full", distance = "glm",
 	link = "probit", replace = F)
 dmatch <- match.data(match2)
-mm02 <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
+mm02d <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
 	data = dmatch, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 
+sr_models <- list(sr_efficacy = mm02, sr_size_spillover = mm02b, sr_dist_spillover = mm02d)
 
+
+
+models <- c(pd_models, fr_models, sr_models)
+
+
+save(models, file = "results/models_bird_brodie_orig.rda")
 
 
 

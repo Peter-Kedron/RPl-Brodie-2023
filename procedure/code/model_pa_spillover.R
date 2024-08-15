@@ -22,8 +22,9 @@
 ## independent_variable (character): The independent variable to read. It is one
 ## of ["asymptPD", "maxFRic", "SR.mean"] for [phylogenetic diversity, 
 ## Functional Richness, species richness]. The default is "asymptPD".
-## med_dp_dist (integer): The median dispersal distance in km to use.
-## The default is 100.
+## outliers (character or vector): The user could pass a vector of outliers to
+## remove or set "auto" to call function identify_outliers to automatically
+## detect outliers and remove them.
 
 ## Outputs:
 ## The lme model object.
@@ -35,11 +36,11 @@
 # conn_dir <- "data/derived/public"
 # dst_dir <- "data/derived/public"
 # dat_clean <- clean_data(taxon, conn_metrics, src_dir, conn_dir, dst_dir)
-## Some steps to remove outliers in dat_clean
+## outliers <- NULL
 ## Create model for phylogenetic diversity of bird with connectivity calculated
 ## with the median dispersal distance of 100 km.
 # mod <- model_pa_spillover(dat_clean, "connec", "bird", "BigPA", 
-#                           "asymptPD", 100)
+#                           "asymptPD", outliers)
 ## -------------------------------------------------------------------
 
 model_pa_spillover <- function(dat, # leave outliers removal outside of function
@@ -47,7 +48,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                                taxon = "bird", # 2T
                                binary_var = "BigPA", # 2M 
                                independent_variable = "asymptPD", # 3RV
-                               med_dp_dist = 100){
+                               outliers){
     # Check inputs
     if (!taxon %in% c("bird", "mammal")){
         stop("Taxon must be either bird or mammal.")
@@ -63,14 +64,13 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
     }
     
     # Subset the modeling data
-    dat <- subset(dat, med_dist == med_dp_dist)
     dat <- subset(dat, PA == 0)
     
     # Rename the dependent variable to have a common name
     dat <- dat %>% rename(y = all_of(independent_variable))
     
     ## select the variables
-    nms <- c('y', 'country', 'utm_east', 'utm_north', 
+    nms <- c("station", 'y', 'country', 'utm_east', 'utm_north', 
              'utm_east.z', 'utm_north.z', 'forest_structure', 
              'access_log10.z', 'HDI.z', "connectivity.z")
     if("study_area" %in% names(dat)){
@@ -85,6 +85,13 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
     
     # Remove NAs
     dat <- dat[complete.cases(dat), ]
+    
+    # Remove outliers
+    if (length(outliers) == 1 & "auto" %in% outliers){
+        outliers <- identify_outliers()
+    }
+    dat <- dat %>% filter(!station %in% outliers)
+    dat <- dat %>% select(-station)
     
     # Internal note: 2M
     if (binary_var == "BigPA"){
