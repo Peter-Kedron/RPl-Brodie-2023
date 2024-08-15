@@ -59,7 +59,7 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
     # Rename the dependent variable to have a common name
     dat <- dat %>% rename(y = all_of(independent_variable))
     
-    ## select the variables
+    ## Select the variables
     nms <- c('y', 'PA', 'country', 'utm_east', 'utm_north', 
              'utm_east.z', 'utm_north.z', 'forest_structure', 
              'access_log10.z', 'HDI.z', "connectivity.z")
@@ -70,15 +70,15 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
     # Remove NAs
     dat <- dat[complete.cases(dat), ]
     
-    # Perform propensity score matching following the DAG developed in the 
-    # structural causal modeling and retrieve the matched dataset
-    match_mod <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
-                             access_log10.z + HDI.z,
-                         data = dat, method = "full", 
-                         distance = "glm", link = "probit", replace = F)
-    dat_matched <- match.data(match_mod)
-    
     if (mod_type == "brodie"){
+        # Perform propensity score matching following the DAG developed in the 
+        # structural causal modeling and retrieve the matched dataset
+        match_mod <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                                 access_log10.z + HDI.z,
+                             data = dat, method = "full", 
+                             distance = "glm", link = "probit", replace = F)
+        dat_matched <- match.data(match_mod)
+        
         # Run original Brodie linear mixed effects model with exponential spatial 
         # correlation structure for the residuals 
         if (taxon == "bird"){
@@ -95,11 +95,17 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
                 data = dat_matched, weights = ~I(1/weights), 
                 correlation = corExp(form = ~utm_east + utm_north, 
                                      nugget = TRUE))
-        } else {
-            stop("No such taxon, mammal or bird.")
         }
         
     } else {
+        # Perform propensity score matching following the DAG developed in the 
+        # structural causal modeling and retrieve the matched dataset
+        match_mod <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
+                                 access_log10.z + HDI.z + connectivity.z,
+                             data = dat, method = "full", 
+                             distance = "glm", link = "probit", replace = F)
+        dat_matched <- match.data(match_mod)
+        
         # Run linear mixed effect model with the addition of connectivity moderator 
         # + conn + conn:PA
         if (taxon == "bird"){
@@ -118,8 +124,6 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
                 data = dat_matched, weights = ~I(1/weights), 
                 correlation = corExp(form = ~utm_east + utm_north, 
                                      nugget = TRUE))
-        } else {
-            stop("No such taxon, mammal or bird.")
         }
     }
     

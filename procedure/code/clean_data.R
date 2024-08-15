@@ -27,7 +27,7 @@
 ## Variables are: station, study_area (only mammal), country, PA, utm_east, 
 ## utm_north, dist_to_PA, PA_size_km2, asymptPD, maxFRic, SR.mean, med_dist, 
 ## utm_east.z, utm_north.z, HDI.z, access_log10.z, PA_size_km2.z, dist_to_PA.z,
-## forest_structure, connectivity
+## forest_structure, connectivity.z, BigPA, CloseToPA
 
 ## Usage example:
 # taxon <- "bird"
@@ -108,6 +108,17 @@ clean_data <- function(taxon,
   # Rename the selected connectivity measure to a common name
   conn_nm <- sprintf("%s.z", conn_metrics)
   names(dat_clean)[names(dat_clean) == conn_nm] <- "connectivity.z" # match others
+  
+  # Add spillover variables
+  ## PA size
+  dat_clean$BigPA <- NA
+  dat_clean[dat_clean$PA == 0, "BigPA"] <- 
+      ifelse(dat_clean[dat_clean$PA == 0, "PA_size_km2"] < 500, 0, 1)
+  
+  ## Distance to PA
+  dat_clean$CloseToPA <- NA
+  dat_clean[dat_clean$PA == 0, "CloseToPA"] <- 
+      ifelse(dat_clean[dat_clean$PA == 0, "dist_to_PA"] > 2, 0, 1)
   
   # Save out
   fname <- file.path(dst_dir, sprintf("dat_analysis_%s.csv", taxon))
