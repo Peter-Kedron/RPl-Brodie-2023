@@ -147,7 +147,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
@@ -155,7 +156,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country, ~1 | study_area), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 }
             } else {
                 # Run original Brodie linear mixed effects model with exponential spatial 
@@ -169,7 +171,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
@@ -178,7 +181,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country, ~1 | study_area), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 }
             }
         }
@@ -235,7 +239,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
@@ -243,7 +248,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country, ~1 | study_area), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 }
             } else {
                 # Run original Brodie linear mixed effects model with exponential spatial 
@@ -257,7 +263,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
@@ -266,7 +273,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country, ~1 | study_area), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE))
+                                             nugget = TRUE),
+                        control =list(msMaxIter = 1000, msMaxEval = 1000))
                 }
             }
         }
