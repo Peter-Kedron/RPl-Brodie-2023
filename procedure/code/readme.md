@@ -17,3 +17,21 @@ Before running the code, please download the shared data from figshare and Asia 
 - compile_models.R: The wrap function to run all needed models.
 - archive: holds old scripts.
 - raw: holds the original scripts shared with the paper.
+
+# Example
+
+Here is an using example to run all models.
+
+```
+source("procedure/code/kick_off.R")
+kick_off("procedure/code")
+
+for (dist in seq(10, 150, 10)){
+    compile_models(taxon = "bird", med_dist = dist,
+                   src_dir = "data/derived/public", 
+                   dst_dir = "results")
+    compile_models(taxon = "mammal", med_dist = dist,
+                   src_dir = "data/derived/public", 
+                   dst_dir = "results")
+}
+```
