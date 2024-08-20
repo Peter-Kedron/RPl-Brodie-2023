@@ -1,7 +1,7 @@
 ## -------------------------------------------------------------------
 ## Script name: clean_data
 ## Purpose of script: Clean the training data: join original data with 
-## landscape meatures, scale the relevant variables, and subset the data
+## landscape measures, scale the relevant variables, and subset the data
 ## for relevant variables only.
 ## Author: Lei Song, Peter Kedron
 ## Date Created: 2024-08-13
