@@ -62,10 +62,10 @@ ggplot(pas_1, aes(x=nnd_km))+
 
 # ======== supp 01/26 ======
 dat_brodie <- data.frame(read.csv(
-                          here("data/raw/public/training/bird_data_230326.csv"), 
+                          here("data/raw/public/training/bird_data_corrected_240122.csv"), 
                           header = T))
 dat_brodie_mammal <- data.frame(read.csv(
-    here("data/raw/public/training/mammal_data_230326.csv"),
+    here("data/raw/public/training/mammal_data_corrected_240122.csv"),
     header = T))
 # Simplify the variable names of site identifier and geographic coordinates
 names(dat_brodie)[names(dat_brodie) == "site"] <- "station"
