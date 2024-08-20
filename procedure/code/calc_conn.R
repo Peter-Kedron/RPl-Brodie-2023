@@ -66,8 +66,8 @@ calc_conn <- function(taxon,
   }
   
   # Read samples and raster template
-  ## According to the pairs of lat/lon and east/north, they used
-  ## UTM Zone 46 (EPSG:32646) for projection, so here we will use the same one.
+  ## According to the pairs of lat/lon and east/north, Brodie et al. used
+  ## UTM Zone 46 (EPSG:32646) for projection, so here we use the same
   fname <- file.path(
     src_dir, "training", sprintf("%s_data_corrected_240122.csv", taxon))
   pts <- read.csv(fname) %>% 

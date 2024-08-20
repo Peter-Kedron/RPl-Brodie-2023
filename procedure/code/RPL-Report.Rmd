@@ -13,26 +13,178 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r chunk setup, include = FALSE, message=FALSE}
+# Record packages
+packages <- c("tidyverse", "here")
+
+# force all conflicts to become errors
+require(conflicted)
+library(here)
+
+# load and install required packages
+if (!require(groundhog)) {
+  install.packages("groundhog")
+  require(groundhog)
+}
+
+# record the R processing environment
+writeLines(
+  capture.output(sessionInfo()),
+  here("procedure", "environment", paste0("r-environment-", Sys.Date(), ".txt"))
+)
+
+# save package citations
+knitr::write_bib(c(packages, "base"), file = here("software.bib"))
+
+# set up default knitr parameters
+# https://yihui.org/knitr/options/
+knitr::opts_chunk$set(
+  echo = FALSE, # Run code, show outputs (don't show code)
+  fig.retina = 4,
+  fig.width = 8,
+  fig.path = paste0(here("results", "figures"), "/"),
+  warning = FALSE,
+  message = FALSE
+)
+
+# set working directory as the project folder
+knitr::opts_knit$set(root.dir = here(''))
+options(tinytex.verbose = TRUE)
 ```
 
-## R Markdown
+# Abstract {-}
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Introduction
+This study is a *replication* of:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+> Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). [https://doi.org/10.1038/s41586-023-06410-z](https://doi.org/10.1038/s41586-023-06410-z)
 
-```{r cars}
-summary(cars)
+Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
+While Brodie et al. provide evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by the connectedness of the protected area network.
+PA connectivity is widely recognized as a component of effective conservation, a guiding principle of the 30x30 initiative, and a possible confound of the effect of protection on biodiversity. 
+Ecologically, the connectedness of a PA network may affect biodiversity by facilitating gene flow across locations, which may moderate the effect of protection on biodiversity.
+
+To adjust for effect of connectivity on PA efficacy, we computationally reproduced the findings of Brodie et al. using the data shared by the authors, and extended the original analysis by introducing habitat connectivity as an independent predictor of biodiversity and a moderator of the PA effect.
+We find that ...
+
+This document presents our replication and extension of Brodie et al. (2023). 
+Our computational reproduction of the authors' original analysis is presented in *Reproduction Report for Brodie et al. (2023)*.
+All data and materials needed to fully reproduce the results of this paper are publicly available at GitHub (LINK) with the identifier PROJECT DOI and Figshare (LINK) with the identifier DATA DOI.
+
+
+# Study design
+We adopt the statistical approach of the original analysis and test the sensitivity of the authors' findings to PA connectivity. 
+Using propensity score matching to control for the confounds of location, site accessibility, and forest structure, Brodie et al. fit a linear mixed-effects model to measure the effect of PA status on bird and mammal biodiversity.
+The response variable examined in the study were three measures of biodiversity measured for both mammals and birds - Species richness (SR), Functional richness (FR), and Phylogenetic diversity (PD).
+The response variables were derived from 1,079 sampling locations in the eBird database and 1,365 camera stations deployed across the region. 
+The primary predictor of interest was a binary measure indicating whether a observation site was located inside or outside a PA.
+Predictor variables measuring PA status, site accessibility, forest structure, understory density, and human development pressure were derived from the World Database of Protected Areas, the NASA Global Ecosystem Dynamics Investigation (GEDI) mission, and the UN Development program Human Development Index.
+
+We conduct two related analyses to evaluate and extend the work of the Brodie et al. (2023). 
+
+First, we introduce PA connectivity as a predictor of bird and mammal biodiversity and a moderator of PA efficacy.
+Brodie et al. find evidence that the legal designation of PAs enhances Southeast Asian bird biodiversity.
+The authors did not find the same effect for mammals. 
+Our primary hypotheses are:
+
+> HA-1a: The protected area status of a site alters the level of mammal and bird biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, socioeconomic development, **and protected area connectivity**.
+
+> HA-1b: How connected a site is to surrounding protected areas moderates the effect protected area status has on the level of mammal and bird biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, socioeconomic development.
+
+Second, we examine whether the beneficial spillover effects observed around PAs persist when adjusting for PA connectivity.
+Brodie et al. find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, but also that the effects for birds are smaller than those for mammals.
+The authors found that distance to the nearest PA was significantly associated with only mammal biodiversity.
+Our primary hypotheses are:
+
+> HA-2a: The total area of the protected area located closest to an unprotected observation site alters the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development, **and protected area connectivity**.
+
+> HA-2b: The distance to the protected area located closest to an unprotected observation site alters on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development, **and protected area connectivity**..
+
+
+# Materials and Procedure
+
+## Computational Reproduction
+This replication attempt builds on our computational reproduction of Brodie et al. (2023).
+We use the same computational environments, data, and data preparation procedure adopted in that work. 
+Complete details of the materials and methods use are available in *Reproduction Report for Brodie et al. (2023)* and can be evaluated in depth by examining the functions called throughout this document. 
+All materials and procedures are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
+
+```{r package_setup, echo=FALSE, results='hide', message=FALSE}
+# library(groundhog)
+pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
+          "MatchIt", "modelsummary", "optmatch", "nlme")
+# groundhog.library(pkgs, "2024-02-11")
+lapply(pkgs, require, character.only=TRUE)
 ```
 
-## Including Plots
+## Connectivity Measures
+We measured site connectivity as the area-weighted flux (AWF) of species observation sites and the surrounding landscape. 
+Area-weighted flux measures flow, weighted by protected area, between all sites as
 
-You can also embed plots, for example:
+\begin{align*}
+AWF=  
+p_{ij}=e^{-k*d_{ij}} 
+\end{align*}
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+where 
+$p_{ij}$ is the probability of dispersal between two sites $i$ and $j$, $k$ is a median dispersal distance at which $p_{ij} = 0.5$, and $d_{ij}$ is the observed distance between $i$ and $j$. 
+
+**Lei, insert description of how AWF was adapted to all sites here. Touch on processing of PAs, restricting mammals to land bodies, thresholds used, etc.**
+
+```{r calculate_conn, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+# Calculate site connectivity for birds and mammals
+conn_flux_bird <- calc_conn(taxon = "bird", 
+                            src_dir = src_dir, 
+                            dst_dir = dst_dir)
+
+conn_flux_mammal <- calc_conn(taxon = "mammal", 
+                              src_dir = src_dir, 
+                              dst_dir = dst_dir)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Preparation of the Analytical Data Files
+Preparation of our analytical data file followed the procedures outlined in Brodie et al. (2023) and implemented in our computational reproduction. 
+Because that analysis did not analyze connectivity, we appended our calculated connectivity measures to that datafile and scaled those variables following the procedures of the original authors.
+Finally, we identified and removed outlier values from each dataset using **PROCEDURE INFO** and a list provided by Brodie et al. 
+
+```{r clean_data, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+# Clean data and remove outliers for bird and mammal models
+dat_clean_bird <- clean_data("bird", 
+                             conn_metrics, 
+                             src_dir = "data/derived/public", 
+                             conn_dir = "data/derived/public",
+                             dst_dir = "data/derived/public")
+
+dat_clean_mammal <- clean_data("mammal", 
+                             conn_metrics, 
+                             src_dir = "data/derived/public", 
+                             conn_dir = "data/derived/public",
+                             dst_dir = "data/derived/public")
+
+dat_analysis_bird <- identify_outliers(dat_clean_bird)
+
+data_analysis_mammal <- identify_outliers(dat_clean_mammal)
+```
+
+# Statistical Results
+
+## STATEMENT OF FIND
+We first used propensity score matching and a linear mixed effects model to assessed whether the finding that PA preserve vertebrate biodiversity within their boundaries persisted when adjusting for connectivity.
+Here we report connectivity results using a 100km threshold.
+
+```{r eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+mod_pa_<- model_pa_efficacy(dat_analysis_bird, "connec", "bird", "aymptPD")
+```
+
+
+## Linear Mixed Effects Model of PA Spillovers
+
+```{r eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+mod_pa_<- model_pa_efficacy(dat_analysis_bird, "connec", "bird", "aymptPD")
+```
+
+# Sensitivity Analyses
+
+# Discussion
+

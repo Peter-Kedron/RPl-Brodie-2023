@@ -143,9 +143,9 @@ Within the subset of observation sites outside PA, the authors tested for these 
 The authors fit 12 separate regression models - two response types (birds, mammals), by three biodiversity measures (SR, FR, PD), by two PA measures (area, distance). 
 The null hypothesis tested was:
 
-> OR-Ho-2a: The total area of the protected area located closest to an unprotected observation site has not effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+> OR-Ho-2a: The total area of the protected area located closest to an unprotected observation site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
 
-> OR-Ho-2b: The distance to the protected area located closest to an unprotected observation site has not effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+> OR-Ho-2b: The distance to the protected area located closest to an unprotected observation site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
 
 Brodie et al find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, that the effects for birds are smaller than those for mammals.
 The authors found that distance to the nearest PA was significantly associated with only mammal FR.

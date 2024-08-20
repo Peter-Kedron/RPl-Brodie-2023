@@ -78,8 +78,6 @@ clean_data <- function(taxon,
   dat <- left_join(dat, dat_conn_metrics, by = "station")
   
   # Scale subset of continuous variables in dat
-  # Peter - Need to add the connectivity measures to the scaling list when they 
-  # are introduced
   dat_scale <- subset(
     dat, select = c("utm_east", "utm_north", 
                     "HDI", "access_log10", 
