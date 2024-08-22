@@ -1,102 +1,55 @@
 ## -------------------------------------------------------------------
-## Script name: calc_conn_metrics
-## Purpose of script: Calculate connectivity metrics in different ways.
+## Script name: pas_conn
+## Purpose of script: The function to and calculate connectivity 
+## metrics of flux and area weighted flux.It calculates the 
+## fluxes, areas, and area weighted fluxes for points inside of
+## PA could (both are ecologically meaningful):
+## - the distance of this points to other surrounding PAs.
+## - or the boundary distance between the PA having this point and 
+## other PAs.
 ## Author: Lei Song
-## Date Created: 2023-12-14
+## Date Created: 2024-08-13
 ## Email: lsong@ucsb.edu
 
-## Usage
-## Rscript path/to/calc_conn_metrics.R --src_dir data/raw/public 
-## --dst_path path/for/result.csv
+## Import from package:
+## sf, dplyr, terra
+
+## Inputs:
+## pas (vector): The protected area file. pas has two layers: first is 
+## the index of PAs, the second is the area
+## pts (vector): An sf object of points to process, should at least have 
+## a column for station ids.
+## template (raster): A raster template.
+# pa_groups (boolean): PAs groups or NULL. Yes for mammal and NULL for birds.
+# med_dist (numeric): The median dispersal distance in KM.
+# buffer_size (numeric): The buffer size in a CORRECT unit, e.g. degree or meter.
+# dst_path (character): the path to save result
+
+## Outputs:
+# flux_ptg: flux for point to polygons
+# awf_ptg: awf for point to polygons
+# flux_gtg: flux for polygon (if has point) to polygons
+# awf_gtg: awf for for polygon (if has point) to polygons
+# flux_rst_ptp: flux for pixel to pixels
+# awf_rst_ptp: awf for pixel to pixels
+# flux_rst_ptp2: flux for pixel to other PA pixels
+# awf_rst_ptp2: awf for pixel to other PA pixels
+
+## Usage example:
+# library(optparse)
+
+# 
+# # Directories and paths
+# src_dir <- opt$src_dir
+# dst_dir <- opt$dst_dir
+# taxon <- opt$taxon
 ## -------------------------------------------------------------------
-
-# Load libraries, easy to switch to use groundhog
-pkgs <- c("sf", "dplyr", "terra", "stringr", "pbapply", "optparse")
-sapply(pkgs, require, character.only = TRUE)
-sf_use_s2(FALSE) # deal with buffering odd
-
-# Command line inputs
-option_list <- list(
-    make_option(c("-t", "--taxon"), 
-                action = "store", default = "mammal", type = 'character',
-                help = "The taxon group in [bird, mammal] to process. [default %default]."),
-    make_option(c("-s", "--src_dir"), 
-                action = "store", default = "data/raw/public", type = 'character',
-                help = "The source directory for reading data [default %default]."),
-    make_option(c("-d", "--dst_dir"), 
-                action = "store", default = 'data/derived/public', type = 'character',
-                help = paste0("The path to save the csv [default %default].")))
-opt <- parse_args(OptionParser(option_list = option_list))
-
-# Directories and paths
-src_dir <- opt$src_dir
-dst_dir <- opt$dst_dir
-taxon <- opt$taxon
-
-# Load PAs and groups
-fnames <- file.path(dst_dir, c("clean_pas.geojson", "pa_groups.shp"))
-if (!all(file.exists(fnames))){
-    stop("No cleaned pas and groups found, run clean_pas.R to get them.")
-} else {
-    clean_pas <- st_read(file.path(dst_dir, "clean_pas.geojson"))
-    if (taxon == "mammal"){
-        pa_groups <- st_read(file.path(dst_dir, "pa_groups.shp"))
-    } else pa_groups <- NULL
-}
-
-# Read samples and raster template
-## According to the pairs of lat/lon and east/north, they used
-## UTM Zone 46 (EPSG:32646) for projection, so here we will use the same one.
-## (Not mean it is the most right one to use)
-fname <- list.files(file.path(src_dir, "training"), full.names = TRUE, 
-                     pattern = taxon)
-pts <- read.csv(fname) %>% 
-    select(all_of(names(.)[
-        str_detect(names(.), "station|country|lat|long")])) %>% 
-    st_as_sf(coords = c(3, 2), crs = 4326) %>% 
-    st_transform(st_crs(clean_pas))
-
-template <- rast(
-    file.path(src_dir, "GEDIv002_20190417to20220413_cover_krig.tif")) %>% 
-    extend(c(100, 100)) %>%  # add a buffer
-    project(crs(clean_pas))
-values(template) <- 1:ncell(template)
-
-# Now it is near perfect to calculate the flux and area weighted flux
-## Get cell ids, NOTE that one cell could have multiple points
-## Also remove points outside of study area
-pts_clean <- terra::extract(template, pts, cells = TRUE, bind = TRUE) %>% 
-    st_as_sf() %>% 
-    filter(!is.na(cell)) %>% 
-    select(station, country)
-
-# Define the function to calculate the fluxes, areas, and area weighted fluxes
-# Points inside of PA could (both are ecologically meaningful):
-# - the distance of this points to other surrounding PAs.
-# - or the boundary distance between the PA having this point and other PAs.
 pas_conn <- function(pas, pts, template, 
                      pa_groups = NULL,
                      med_dist = 10,
                      # 5 times, the flux is around 0.0#
                      buffer_size = 5 * med_dist * 1000,
                      dst_path = NULL){
-    # pas has two layers: first is the index of PAs, the second is the area
-    # pts is a sf of points to process, at least have column station
-    # template: grid template
-    # pa_groups: PAs groups or NULL. Yes for mammal and NULL for birds.
-    # med_dist is the median dispersal distance in KM.
-    # buffer_size is the buffer size in RIGHT unit, e.g. degree or meter
-    # dst_path: the path to save result
-    
-    # result
-    # flux_ptg: flux for point to polygons
-    # awf_ptg: awf for point to polygons
-    # flux_gtg: flux for polygon (if has point) to polygons
-    # awf_gtg: awf for for polygon (if has point) to polygons
-    # flux_rst_ptp: flux for pixel to pixels
-    # awf_rst_ptp: awf for pixel to pixels
-    # flux_rst_ptp2: flux for pixel to other PA pixels
-    # awf_rst_ptp2: awf for pixel to other PA pixels
     
     # Q3: how to deal with very small polygons for raster based method?
     # now the code uses `touches == TRUE` for rasterization to use all polygons
@@ -215,14 +168,3 @@ pas_conn <- function(pas, pts, template,
     # return
     metrics
 }
-
-# Calculate and save out the result
-conn_metrics <- do.call(
-    rbind, lapply(seq(10, 150, 10), function(med_dist){
-        message(sprintf("Calculate flux for median dispersal distance: %s", med_dist))
-        dst_path <- file.path(dst_dir, sprintf("conn_flux_%s_%s.csv", taxon, med_dist))
-        pas_conn(pas = clean_pas, pts = pts_clean, template = template, 
-                 pa_groups = pa_groups, med_dist = med_dist, dst_path = dst_path)
-    }))
-dst_path <- file.path(dst_dir, sprintf("conn_flux_%s.csv", taxon))
-write.csv(conn_metrics, dst_path, row.names = FALSE)

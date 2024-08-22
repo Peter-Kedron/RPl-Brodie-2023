@@ -11,7 +11,6 @@
 
 ## Inputs:
 ## dat (data.frame): The data.frame of modeling data. The user should preprocess
-## it (e.g. outlier removal) before feed it into the model.
 ## mod_type (character): The model type. It is either brodie for running model
 ## defined in brodie paper, or connec for running model with connectivity included.
 ## taxon (character): The taxon name. Either mammal or bird.
