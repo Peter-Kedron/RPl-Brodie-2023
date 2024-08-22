@@ -12,17 +12,13 @@ editor_options:
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
-```{r chunk setup, include = FALSE, message=FALSE}
+```{r chunk setup, include = FALSE, message = FALSE}
 # record all the packages you are using here
 # this includes any calls to library(), require(),
 # and double colons such as here::i_am()
 packages <- c("tidyverse", "here")
 
 # force all conflicts to become errors
-# if you load dplyr and use filter(), R has to guess whether you mean dplyr::filter() or stats::filter()
-# the conflicted package forces you to be explicit about this
-# disable at your own peril
-# https://conflicted.r-lib.org/
 require(conflicted)
 library(here)
 
@@ -33,24 +29,7 @@ if (!require(groundhog)) {
   require(groundhog)
 }
 
-# this date will be used to determine the versions of R and your packages
-# it is best practice to keep R and its packages up to date
-# groundhog.day <- "2023-06-26"
-# groundhog.day <- "2024-02-08"
-# set.groundhog.folder("../../data/scratch/groundhog/")
-
-# this replaces any library() or require() calls
-#groundhog.library(packages, groundhog.day, 
-                  # tolerate.R.version='4.2.2'
-#                  )
-# you may need to install a correct version of R
-# you may need to respond OK in the console to permit groundhog to install packages
-# you may need to restart R and rerun this code to load installed packages
-# In RStudio, restart r with Session -> Restart Session
-# R version issue may or may not be resolved by adding the syntax: tolerate.R.version
-
 # record the R processing environment
-# alternatively, use devtools::session_info() for better results
 writeLines(
   capture.output(sessionInfo()),
   here("procedure", "environment", paste0("r-environment-", Sys.Date(), ".txt"))
@@ -73,63 +52,49 @@ knitr::opts_chunk$set(
 # set working directory as the project folder
 knitr::opts_knit$set(root.dir = here(''))
 options(tinytex.verbose = TRUE)
-
-
 ```
 
-# Abstract {-}
-
-
 # Introduction
-This study is a *replication* of:
+This study is a *computational reproduction* of:
 
 > Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). [https://doi.org/10.1038/s41586-023-06410-z](https://doi.org/10.1038/s41586-023-06410-z)
 
 Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
-While Brodie et al. provide evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by the connectedness of the protected area network.
-PA connectivity is widely recognized as a component of effective conservation, a guiding principle of the 30x30 initiative, and a possible confound of the effect of protection on biodiversity. 
-Ecologically, the connectedness of a PA network may affect biodiversity by facilitating gene flow across locations, which may moderate the effect of protection on biodiversity.
 
-To adjust for effect of connectivity on PA efficacy, we computationally reproduced the findings of Brodie et al. using the data shared by the authors, and extended the original analysis by introducing habitat connectivity as an independent predictor of bird biodiversity and a moderator of the PA effect.
-We find that ...
+In this reproduction, we attempt to identically reproduce the primary results of the original study. 
+The results of interest include 1) six measures of the effect of PA status on bird and mammal biodiversity, 2) six measures of the effect of adjacency to a large PA on bird and mammal biodiversity at unprotected sites, and 3) six measures of the effect of distance from a PA on bird and mammal biodiversity at unprotected sites.
+We attempt the reproduction twice. 
+First, we use the data and code published with author correction in April 2024. 
+Second, for completeness and because we had already begun our reproduction attempt before the correction was published, we attempt the reproduction using the code and data shared with the original publication in August 2023. 
+A successful reproduction should recreate the numerical results published in Brodie et al. (2023), or the those published with the correction in April 2024. 
 
-MAYBE ADD - Debates exist on whether protected areas are effective because of their remote location and good habitat conditions or conservation status itself. Motivated by such, Brodie et al. (2023) estimated protected areas efficacy for conserving tropical mammal and bird diversity after de-confounding the effects of site accessibility and habitat condition (OR-H1). To test the hypothesis, Brodie et al. (2023) used various aspects of biodiversity as outcome variables (i.e., dependent variable). 
+All materials and procedures used in this reproduction are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
+We implemented the reproduction in MacBook Pros using R programming language (Version 4.2.2).
+Structural causal modeling was performed using the DAGITTY package (Version #.#.#).
+We used the MatchIt package (Version #.#.#) to perform propensity score matching and the NLME package (Version #.#.#) to fit the linear mixed effects regression models.
 
 
 # Study design
-
-This study is a replication of the original statistical analysis of Brodie et al. (2023).
-We conduct two related analyses to evaluate and extend the work of the original authors. 
-First, we attempt to reproduce the statistical results of the original authors by implementing their workflow as identically as possible. 
+We attempt to reproduce the statistical results of the original authors by implementing their workflow as identically as possible. 
 This effort allows us to assess study design and conclusion validity of the original study. 
-Second, we extend the work of the original authors by introducing PA connectivity as a predictor of bird and mammal biodiversity and a potential moderator of PA efficacy.
-We also examine whether the beneficial spillover effects observed around protected areas persist when adjusting for PA connectivity.
-Our primary hypotheses are:
-
-> Ha-1: 
-
-> Ha-2:
-
-The spatial extent of this study is Southeast Asia, matching the area studied by the original authors. 
+The spatial extent of this reproduction attempt is Southeast Asia, matching the area studied by the original authors. 
 The spatial scale of our statistical analysis is the observation site level with national scale adjustments for human development levels.
-Our primary data source is the data file publicly shared by Brodie et al. (2023). 
+Our primary data source is the data files publicly shared by Brodie et al. (2023). 
 All data acquisition from original sources followed the procedures presented by the authors. 
-The original study and our replication attempts were conducted in R. 
-The DAGITTY package was used for structural causal modeling.
-The NLME package used for statistical estimation. 
+Both the original study and our reproduction attempt were conducted in R. 
 
 
 ## Original Study Design
-
 The original study uses a quasi-experimental design with the objective of identifying the causal effect of PAs on tropical biodiversity in Southeast Asia while deconfounding for the influence of site accessibility and habitat quality.
-The response variable examined in the study were three measures of biodiversity measured for both mammals and birds - Species richness (SR), Functional richness (FR), and Phylogenetic diversity (PD).
-The response variables were derived from 1,079 sampling locations in the eBird database and 1,365 camera stations deployed across the region. 
+The authors use three measures of bird and mammal biodiveristy as their response variables - Species richness (SR), Functional richness (FR), and Phylogenetic diversity (PD).
+These response variables were derived from 1,079 sampling locations in the eBird database and 1,365 camera stations deployed across the region. 
+The primary predictors of interest were 1) a binary measure indicating whether a observation site was located inside or outside a PA, 2) a binary indicator that identified of the PA closest to an unprotected site as larger than 500 sq km, and 3) a binary indicator that identified if the PA closest to an unprotected site was within 2km. 
 Predictor variables measuring PA status, site accessibility, forest structure, understory density, and human development pressure were derived from the World Database of Protected Areas, the NASA Global Ecosystem Dynamics Investigation (GEDI) mission, and the UN Development program Human Development Index.
-The primary variable of interest was binary measure indicating whether a observation site was located inside or outside a PA. 
 Site accessibility was proxied using circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)]. 
 Habitat quality was measured as the three-dimensional forest structure derived from GEDI mission.
 
-Using propensity score matching to control for the confounds of location, site accessibility, and forest structure, Brodie et al. fit a linear mixed-effects model to measure the effect of PA status on bird and mammal biodiversity. 
+Using propensity score matching to control for the confounds of location, site accessibility, and forest structure, Brodie et al. fit a linear mixed-effects models to estimate three PA related effects. 
+First, the authors estimated the the effect of a site being located inside or outside a PA on bird and mammal biodiversity. 
 In total, the authors fit six separate regression models - two response types (birds, mammals) by three biodiversity measures (SR, FR, PD) - testing the null hypothesis that:
 
 > OR-Ho-1: The protected area status of a site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
@@ -282,8 +247,7 @@ Note: HDI was not included in the data file shared by the orignal study. We gath
 
 ## Computational environment
 
-The reproduction of the original study was conducted in MacBook Pros using R programing language (Version 4.2.2). Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics. We built upon and annotated R scripts shared by them, and added missing information on HDI to the scripts.
-// Is this accurate?
+Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics. We built upon and annotated R scripts shared by them, and added missing information on HDI to the scripts.
 
 Required packages are as follows:
 

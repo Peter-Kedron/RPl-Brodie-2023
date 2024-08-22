@@ -13,7 +13,7 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
 
-```{r chunk setup, include = FALSE, message=FALSE}
+```{r chunk setup, include = FALSE, message = FALSE}
 # Record packages
 packages <- c("tidyverse", "here")
 
@@ -51,8 +51,6 @@ knitr::opts_chunk$set(
 knitr::opts_knit$set(root.dir = here(''))
 options(tinytex.verbose = TRUE)
 ```
-
-# Abstract {-}
 
 # Introduction
 This study is a *replication* of:
@@ -109,7 +107,7 @@ We use the same computational environments, data, and data preparation procedure
 Complete details of the materials and methods use are available in *Reproduction Report for Brodie et al. (2023)* and can be evaluated in depth by examining the functions called throughout this document. 
 All materials and procedures are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
 
-```{r package_setup, echo=FALSE, results='hide', message=FALSE}
+```{r package_setup, echo = TRUE, results = 'hide, message = FALSE}
 # library(groundhog)
 pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
           "MatchIt", "modelsummary", "optmatch", "nlme")
