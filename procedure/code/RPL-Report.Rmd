@@ -127,6 +127,7 @@ p_{ij}=e^{-k*d_{ij}}
 where 
 $p_{ij}$ is the probability of dispersal between two sites $i$ and $j$, $k$ is a median dispersal distance at which $p_{ij} = 0.5$, and $d_{ij}$ is the observed distance between $i$ and $j$. 
 
+To construct our site and PA connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas [https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
 **Lei, insert description of how AWF was adapted to all sites here. Touch on processing of PAs, restricting mammals to land bodies, thresholds used, etc.**
 
 ```{r calculate_conn, eval=FALSE, echo=TRUE, results='hide', message=FALSE}

@@ -87,15 +87,20 @@ Both the original study and our reproduction attempt were conducted in R.
 ## Original Study Design
 The original study uses a quasi-experimental design with the objective of identifying the causal effect of PAs on tropical biodiversity in Southeast Asia while deconfounding for the influence of site accessibility and habitat quality.
 The authors use three measures of bird and mammal biodiveristy as their response variables - Species richness (SR), Functional richness (FR), and Phylogenetic diversity (PD).
-These response variables were derived from 1,079 sampling locations in the eBird database and 1,365 camera stations deployed across the region. 
+Bird observations were gathered from 1,079 sampling locations in the eBird database spanning the period between January 2015 and August 2021. 
+Mammal observations were assembled by the authors from camera traps 1,365 camera stations deployed across the region. 
+
 The primary predictors of interest were 1) a binary measure indicating whether a observation site was located inside or outside a PA, 2) a binary indicator that identified of the PA closest to an unprotected site as larger than 500 sq km, and 3) a binary indicator that identified if the PA closest to an unprotected site was within 2km. 
-Predictor variables measuring PA status, site accessibility, forest structure, understory density, and human development pressure were derived from the World Database of Protected Areas, the NASA Global Ecosystem Dynamics Investigation (GEDI) mission, and the UN Development program Human Development Index.
-Site accessibility was proxied using circuit theory-based measures of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)]. 
-Habitat quality was measured as the three-dimensional forest structure derived from GEDI mission.
+Primary predictors measuring PA status were derived from the World Database of Protected Areas.
+Additional predictors used to deconfound for site accessibility, forest structure, understory density, and human development pressure were derived from the NASA Global Ecosystem Dynamics Investigation (GEDI) mission, and the UN Development program Human Development Index.
+Site accessibility was measured using circuit theory-based metrics of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)]. 
+Forest structure and understory density were measured use three-dimensional metrics derived from GEDI mission.
+Code to produce these predictors was not provided by the authors. 
 
 Using propensity score matching to control for the confounds of location, site accessibility, and forest structure, Brodie et al. fit a linear mixed-effects models to estimate three PA related effects. 
+The authors completed two sets of statistical analyses.
 First, the authors estimated the the effect of a site being located inside or outside a PA on bird and mammal biodiversity. 
-In total, the authors fit six separate regression models - two response types (birds, mammals) by three biodiversity measures (SR, FR, PD) - testing the null hypothesis that:
+In total, the authors fit six separate regression models - two response variable taxons (birds, mammals) for three biodiversity measures (SR, FR, PD) - testing the null hypothesis that:
 
 > OR-Ho-1: The protected area status of a site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
 
@@ -103,22 +108,20 @@ Brodie et al. find evidence that the legal designation of PAs provides substanti
 The authors did not find the same effect for mammals. 
 None of the three measures of mammalian biodiversity was significantly different inside v. outside or PAs.
 
-As a complementary analysis, Brodie et al. also tested whether the biodiversity preserving effects of PAs have positive (spillover) or negative (leakage) effects on the biodiversity of unprotected areas surrounding PAs. 
+Second, Brodie et al. tested whether the biodiversity preserving effects of PA status have positive (spillover) or negative (leakage) effects on the biodiversity of unprotected areas surrounding PAs. 
 Within the subset of observation sites outside PA, the authors tested for these effects using the same propensity score matching procedure and statistical framework presented above, but replaced the binary PA status predictor with the size of the nearest PA or the distance to the nearest PA in separate models.
-The authors fit 12 separate regression models - two response types (birds, mammals), by three biodiversity measures (SR, FR, PD), by two PA measures (area, distance). 
-The null hypothesis tested was:
+In total, the authors fit 12 separate regression models - two response variable taxons (birds, mammals), by three biodiversity measures (SR, FR, PD), by two PA measures (area, distance). 
+The null hypothesis tested were:
 
-> OR-Ho-2a: The total area of the protected area located closest to an unprotected observation site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+> OR-Ho-2a: Being located within 2km of a protected area of at least 500^km in size has no effect on the level of mammalian of avian biodiversity observed at an unprotected site when adjusting for the confounds of site accessibility, habitat condition, the socioeconomic development, and distance to that protected site.
 
 > OR-Ho-2b: The distance to the protected area located closest to an unprotected observation site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
 
-Brodie et al find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, that the effects for birds are smaller than those for mammals.
-The authors found that distance to the nearest PA was significantly associated with only mammal FR.
+Brodie et al find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, but that the effects for birds are smaller than those for mammals.
+The authors found that distance to the nearest PA was significantly associated with only mammal functional richness.
 
 
-# Study metadata
-
-## Brodie et al. (2023) Study Metadata
+## Study-level metadata
 
 - `Key words`: Biodiversity, Conservation, Protected Areas, Connectivity, 30x30
 - `Subject`: Ecology and Evolutionary Biology, Natural Resources and Conservation, 
@@ -131,16 +134,18 @@ The authors found that distance to the nearest PA was significantly associated w
 - `Temporal Resolution`: Varies with data set
 
 
-## Brodie et al. (2023) Dataset Metadata
-We use the dataset provided by Brodie et al. (2023) at [https://doi.org/10.6084/m9.figshare.22527298.v1](https://doi.org/10.6084/m9.figshare.22527298.v1) to replicate and extend the work of the original authors.
-However, the publicly available dataset is missing the country-level measure of the Human Development Index used in biodiversity modeling.
-We gather this data from the United Nations Development program and merge it with the authors' original dataset.
-To construct our site and PA connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas [https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
-Metadata on the datasets used by the original authors and our own additions are presented below.
+## Data-level Metadata
+We use two datasets provided by the Brodie et al. to conduct our reproduction. 
+Our primary analysis uses the author corrected dataset available at **INSERT DATASET LINK**.
+We also attempted to reproduce study results using the dataset originally provided by the authors, which is available at [https://doi.org/10.6084/m9.figshare.22527298.v1](https://doi.org/10.6084/m9.figshare.22527298.v1).
+The authors' originally published dataset is missing the country-level measure of the Human Development Index used in biodiversity modeling.
+We gathered this data from the United Nations Development program and merge it with the authors' original dataset.
+For completeness, we gathered and include here metadata on the datasets used by the original authors to construct their shared analytical datasets.
+
 
 ### eBird
-
-The original authors gathered bird observations from eBird.
+Brodie et al. use the eBird database to construct the biodiversity measures for birds that are then used as response variables in statistical modeling. 
+The authors did not provide scripts on how they derived the biodiversity metrics.
 
 - `Title`: eBird.
 - `Abstract`: A community science platform for reporting bird sightings.
@@ -152,10 +157,10 @@ The original authors gathered bird observations from eBird.
 - `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
 - `Distribution`: [eBird webpage](https://ebird.org/home) and [other download methods](https://science.ebird.org/en/use-ebird-data/download-ebird-data-products).
 - `Constraints`: Non-commercial use.
-- `Data Quality`: Although a direct data quality layer is not associated, Brodie et al. (2023) followed recommendations from existing studies to filter out data points.
+- `Data Quality`: Although a direct data quality layer is not associated, Brodie et al. (2023) stated that they followed recommendations from existing studies to filter out data points.
+
 
 ### The World Database on Protected Areas
-
 The original study used protected area boundaries to derive the three treatment variables (Table 3). 
 Brodie et al. (2023) did not specify a data processing procedure or provide code from the preparation of protected area boundaries. 
 
@@ -172,15 +177,17 @@ Brodie et al. (2023) did not specify a data processing procedure or provide code
 - `Data Quality`: Unknown.
 
 ### GEDI L2 metrics
-
 The Global Ecosystem Dynamics Investigation (GEDI) is a spaceborne light detection and ranging (LiDAR) mission monitoring forest structure on earth. 
 The original study derived both ground elevation and forest structure metrics from the Level 2 dataset of GEDI. 
-Level 2 GEDI data are at footprint level so Brodie et al. (2023) used kriging interpolation to create wall-to-wall layers at 1-km resolution.
+Level 2 GEDI data are at footprint level, so Brodie et al. (2023) used kriging interpolation to create wall-to-wall layers at 1-km resolution.
 
-L2A includes elevation data. 
+Level 2 GEDI data includes elevation data. 
 Brodie et al. computed slope and topographic position index (TPI) to represent topographic traits at each site. 
-The authors used five L2B metrics, which were canopy height (relative height at 95%), plant area volume density (PAVD) between 0 and 5 m (represents understory density), cumulative plant area index from ground to canopy top, foliage height diversity of plant area index, and proportional cover. 
-The authors found the five forest structure metrics to be highly correlated and only kept canopy height and understory density in models. 
+The authors originally gathered five L2B metrics, canopy height (relative height at 95%), plant area volume density (PAVD) between 0 and 5 m (represents understory density), cumulative plant area index from ground to canopy top, foliage height diversity of plant area index, and proportional canopy cover. 
+The authors found the five forest structure metrics to be highly correlated and retained only canopy height and understory density in statistical models. 
+
+Raster files at 1-km resolution for GEDI derived metrics and circuit-based accessibility were shared through a  [weblink](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters). 
+The authors did not provide code for the calculation of GEDI metrics. 
 
 - `Title`: The Global Ecosystem Dynamics Investigation Level 2 Elevation and Height Metrics.
 - `Abstract`: Global footprint level observations from GEDI on ground elevation and forest structure.
@@ -189,15 +196,17 @@ The authors found the five forest structure metrics to be highly correlated and 
 - `Spatial Reference System`: WGS 84.
 - `Temporal Coverage`: 2019/04/17 to 2022/04/12
 - `Temporal Resolution`: Not applicable.
-- `Lineage`: Brodie et al. (2023) queried and subset data directly from eBird website or its R package or API.
+- `Lineage`: ???
 - `Distribution`: Original GEDI L2 metrics can be derived from [NASA website](https://cmr.earthdata.nasa.gov/search/concepts/C1908348134-LPDAAC_ECS.html) and Brodie et al. (2023) shared krigged results on a [ webpage](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters).
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Original GEDI L2 metrics have quality and degrade flags and Brodie et al. (2023) kept only data points of satisfying quality.
 
 ### Human Development Index (HDI)
-
-Human Development Index for each country was included in the causal models to measure socioeconomic development.
-Data on this measure are missing from the dataset publicly shared by Brodie et al.
+Data on this measure are missing from the analysis file originally shared by Brodie et al..
+We gathered HDI values for each country from the Human Development Report 2020 following the citation provided by the authors.
+This data omission was corrected in the authors update. 
+Our HDI addition to the original file matched the authors updated inclusion, other than cases where the authors noted that they hand corrected certain measures. 
+Clear reasoning for those adjustments was not provided in the note on author corrections.
 
 - `Title`: Human Development Index
 - `Abstract`: An index on the level of human development by country.
@@ -211,8 +220,7 @@ Data on this measure are missing from the dataset publicly shared by Brodie et a
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Unknown.
 
-
-*Table 1* Secondary variables created from data sources.
+*Table 1* Response, treatment, and predictor variables generated by Brodie et al (2023).
 
 | **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
 | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
@@ -239,36 +247,13 @@ Data on this measure are missing from the dataset publicly shared by Brodie et a
 Note: HDI was not included in the data file shared by the orignal study. We gathered HDI values for each country from the Human Development Report 2020.
 
 
+## Statistical Approach
+Brodie et al. use propensity score matching to control for the potential confounding effects of site accessibility and habitat quality when estimating the efficacy of protected areas at improving bird and mammal biodiversity. 
+In PA efficacy models, observations were matched based on their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. 
+In spillover models, observations were matched based on these same factors and either adjacent PA size or distance to the nearest PA. 
+Weights produced by propensity score matching were then used in mixed-effects linear regression models that estimated the treatment effect - PA status, nearest PA size, nearest PA distance - while adjusting for forest canopy height, site accessibility, and HDI (Table 1).
 
-
-
-# Materials and procedure
-
-
-## Computational environment
-
-Brodie et al. (2023) cleaned up the variables and performed propensity score matching and causal analysis in R. They did not provide scripts on how they derived the biodiversity metrics, circuit theory-based metrics, HDI, and the GEDI metrics. We built upon and annotated R scripts shared by them, and added missing information on HDI to the scripts.
-
-Required packages are as follows:
-
-```{r package setup, echo=T, results='hide', message=FALSE}
-# library(groundhog)
-pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
-          "MatchIt", "modelsummary", "optmatch", "nlme")
-# groundhog.library(pkgs, "2024-02-11")
-lapply(pkgs, require, character.only=TRUE)
-```
-## Data and variables
-
-In the original study, outcome variables for the causal models are biodiversity metrics (i.e., species richness, functional richness, and phylogenetic diversity) derived from species observations. Mammal observations were assembled by the authors from camera traps in 65 study areas in the study region. Bird observations were gathered from eBird from 2015/01 to 2021/08 following a set of filtering procedures.
-
-The treatment variable for OR-H1 was derived from the World Database on Protected Areas (WDPA) by UNEP-WCMC, which is a binary variable on whether the sampling point is within protected areas or not.
-
-Observations were matched based on propoensity scores of their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. Predictors in the mixed-effects linear regression models were forest canopy height, site accessibility, HDI, and treatment variables.
-
-We gathered data shared by Brodie et al. (2023). Tabular data of most model inputs were provided in a  [figshare](https://doi.org/10.6084/m9.figshare.22527298.v1). Raster files at 1-km resolution for GEDI derived metrics and circuit-based accessibility were shared through a  [weblink](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters). Variable sources are presented in Table 1.
-
-*Table 1*. Variables used in Brodie et al. (2023)
+*Table 1*. Variables used in statistical modeling
 
 | **Name** | **Source** | **Usage** |
 | :--: | :--: | :--: |
@@ -281,32 +266,39 @@ We gathered data shared by Brodie et al. (2023). Tabular data of most model inpu
 | Forest structure metrics | NASA GEDI L2A | Predictor - forest structure |
 
 
-## Prior observations  
+## Observations Preceeding the Reproduction Attempt  
 
-At the beginning of this analysis, we had observed the dataset provided by Brodie et al with their publication. We noticed the following caveats in the script and raw data shared by the original study.
-1) HDI was missing.
-2) The process of computing biodiversity metrics, GEDI metrics, and the circuit-based accessibility metric was unclear.
-3) The procedure for preprocessing and cleaning PA boundaries was unclear.
+Before beginning our reproduction attempt, we had observed the analysis file and code published by Brodie et al..
+We noticed the following issues in the script and analysis file originally published by the authors.
 
-We did not manipulate the data before beginning our reproduction attempt. 
+1) The HDI measure was missing from the analysis file.
+2) The procedure for computing biodiversity metrics, GEDI metrics, and the circuit-based accessibility metric was not provided in the scripts and not presented in detail in the methodological supplement.
+3) The procedure for preparing PA boundaries for analysis was unclear.
+4) The procedure for identifying and eliminating outliers was not included in the script. Only a hand coded list of outliers was provided and removed in the code.
 
-## Bias and threats to validity
+The script and analysis file published by the authors with their correction in April 2024 addressed the first issue above. 
+However, the other issues remain.
 
-Given the research design as described in the original paper and primary data shared, we find that potential spatial autocorrelation of sample points were not addressed. In addition, uncertainty issues were not discussed thoroughly in the paper, which includes 1) the representativeness of biodiversity measures, 2) the validity of forest structure measures created through krigging, and 3) accessibility represented by country-level Human Development Index.
-
-// should we add a map/moran's I result here?
-// other concerns to add?
-
-## Data transformations
-
-We performed a series of data pre-processing steps before building the causal models, which include 1) re-construcitng the causla diagram, and 2) cleaning up data files produced by Brodie et al. (2023).
+Other than adding the HDI variable to the original analytical file, we did not manipulate the data before beginning our reproduction attempt. 
 
 
-### Conceptualization and causal diagram
+# Reproduction Attempts
 
-Before testing the hypotheses, we re-constructed the causal diagram for OR-H1.
+We completed two reproduction attempts - 1) using the analysis data and script originally published by the authors and 2) using the analysis data and script published with the author correction. 
+Both analyses were conducted in R using the following packages
 
-```{r scm, echo=T} 
+```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
+# library(groundhog)
+pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
+          "MatchIt", "modelsummary", "optmatch", "nlme")
+# groundhog.library(pkgs, "2024-02-11")
+lapply(pkgs, require, character.only=TRUE)
+```
+
+For completeness, we first reproduced the causal diagram underlying the original analysis. 
+We made not substantive changes to the authors original code. 
+
+```{r SCM, echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE} 
 # Load libraries
 # library(groundhog)
 pkgs <- c("dagitty", "ggdag")
@@ -314,7 +306,7 @@ pkgs <- c("dagitty", "ggdag")
 lapply(pkgs, require, character.only=TRUE)
 
 # ------------------------------------------------------------------------------
-# Structural Causal Modelling  
+# Structural Causal Modeling  
 # ------------------------------------------------------------------------------
 
 # Create the directed acyclic graph (DAG) of potential causal 
@@ -371,79 +363,29 @@ adjustmentSets(dagBrodie)
 
 ```
 
-### Original study
+## Data Preparation
+Preparation of our analytical data file followed the procedures outlined in Brodie et al. (2023).
+Complete details of the procedures are available in the called function headers and comments.
+All called function are available with the project repository.
+No additional preparation was needed for our reproduction attempt using the author corrected analysis file and script.
 
-#### Data preparation for bird models
+```{r clean_data, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+# Clean data and remove outliers for bird and mammal models
+dat_clean_bird <- clean_data("bird", 
+                             conn_metrics, 
+                             src_dir = "data/derived/public", 
+                             conn_dir = "data/derived/public",
+                             dst_dir = "data/derived/public")
 
+dat_clean_mammal <- clean_data("mammal", 
+                             conn_metrics, 
+                             src_dir = "data/derived/public", 
+                             conn_dir = "data/derived/public",
+                             dst_dir = "data/derived/public")
 
-```{r OR_bird_prep, echo=T, message=FALSE}
-# rm(list = ls())
+dat_analysis_bird <- identify_outliers(dat_clean_bird)
 
-# Load the data provided by Brodie et al. (2023)
-dat_brodie_bird <- data.frame(read.csv(
-                          here("data/raw/public/training/bird_data_230326.csv"), 
-                          header = T))
-
-# Simplify the variable names of site identifier and geographic coordinates
-names(dat_brodie_bird)[names(dat_brodie_bird) == "site"] <- "station"
-names(dat_brodie_bird)[names(dat_brodie_bird) == "lat_wgs84"] <- "lat"
-names(dat_brodie_bird)[names(dat_brodie_bird) == "long_wgs84"] <- "long"
-
-
-# Search for HDI in the column names 
-grep("hdi", names(dat_brodie_bird), value = TRUE)
-grep("HDI", names(dat_brodie_bird), value = TRUE)
-
-# Assign stations the HDI value of its country
-# Reference: Human Development Report 2020: The Next Frontier—Human Development 
-# and the Anthropocene (United Nations Development Programme, 2020).
-# https://hdr.undp.org/data-center/human-development-index#/indicies/HDI
-# https://hdr.undp.org/sites/default/files/2021-22_HDR/HDR21-22_Statistical_Annex_HDI_Table.xlsx
-
-dat_HDI <- data.frame(
-    country = unique(dat_brodie_bird$country), 
-    HDI = c(0.593, 0.768, 0.705, 0.607, 0.803, 0.939, 0.800, 
-            0.703, 0.829))
-dat_brodie_bird <- left_join(dat_brodie_bird, dat_HDI, by = "country")
-
-# Create dataframe containing the subset of variable used in the analysis
-dat_bird <- dat_brodie_bird %>% select(station, country, PA, utm_east, utm_north, 
-                             Hansen_recentloss,access_log10, HDI, dist_to_PA, 
-                             PA_size_km2, rh_95_a0.pred, pavd_0_5.pred, 
-                             pai_a0.pred, fhd_pai_1m_a0.pred, cover_a0.pred, 
-                             agbd_a0.pred,asymptPD, maxFRic, SR.mean)
-
-
-# Scale subset of continuous variables in dat
-# Peter - Need to add the connectivity measures to the scaling list when they 
-# are introduced
-dat_scale_bird <- data.frame(scale(subset(dat_bird, select = c("utm_east", "utm_north", 
-                                                     "HDI", "access_log10", 
-                                                     "PA_size_km2", 
-                                                     "dist_to_PA", 
-                                                     "rh_95_a0.pred", 
-                                                     "pavd_0_5.pred", 
-                                                     "pai_a0.pred", 
-                                                     "fhd_pai_1m_a0.pred", 
-                                                     "cover_a0.pred", 
-                                                     "agbd_a0.pred"), 
-                                     ), 
-                              center = TRUE, scale = TRUE))
-
-# Append scaled variables to data with .z suffixes
-dat_bird[paste0(names(dat_scale_bird), '.z')] <- dat_scale_bird
-
-# Rename scaled, predicted relative canopy height at 95% (rh_95_a0.pred.z) 
-# as forest_structure to match DAG 
-names(dat_bird)[names(dat_bird) == "rh_95_a0.pred.z"] <- "forest_structure"
-
-# Rename scaled, predicted plant area volume density between 0m and 5m 
-# (pavd_0_5.pred.z) as understory_density to match DAG
-names(dat_bird)[names(dat_bird) == "pavd_0_5.pred.z"] <- "understory_density"
-
-# Exclude stations that underwent recent forest loss as defined by 
-# Hansen et al. (2013)
-dat_clean_bird <- subset(dat_bird, Hansen_recentloss == 0)
+data_analysis_mammal <- identify_outliers(dat_clean_mammal)
 ```
 
 
@@ -855,6 +797,13 @@ The goal of the report is to reproduce analysis and results from Brodie et al. (
 While there are ways to improve the reproducibility of the original work, our reproduction found results that were consistent with the main findings of Brodie et al. (2023). We found supporting evidence for OR-H1 (i.e., similar coefficient values and significance) as the original study but were unable to reproduce exact results as Brodie et al. (2023). Reasons for the differences could be HDI values, data version issues, or computation environment.
 
 Through reconstructing the causal diagram and reproduction, we found that connectivity from sampling points to protected areas was not accounted for in the original study. We introduced hypothesis RPL-01 and tested it in our replication study.
+
+## Bias and threats to validity
+
+Given the research design as described in the original paper and primary data shared, we find that potential spatial autocorrelation of sample points were not addressed. In addition, uncertainty issues were not discussed thoroughly in the paper, which includes 1) the representativeness of biodiversity measures, 2) the validity of forest structure measures created through krigging, and 3) accessibility represented by country-level Human Development Index.
+
+// should we add a map/moran's I result here?
+// other concerns to add?
 
 # Integrity Statement
 
