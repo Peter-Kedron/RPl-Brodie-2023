@@ -196,7 +196,6 @@ library(nlme)
 library(lmerTest)
 library(cowplot)
 library(here)
-library(VGAM)
 
 med_dist <- 100
 taxon = "bird"
