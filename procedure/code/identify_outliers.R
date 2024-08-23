@@ -204,6 +204,6 @@ dat_test <- dat_raw[dat_raw$med_dist == med_dist,]
 leverage_threshold <- 0.02
 
 outliers <- identify_outliers(dat = dat_test, mod_type = "connec", taxon = taxon, 
-                  independent_variable = "SR.mean", # maxFRic, SR.mean
+                  independent_variable = "SR.mean", # asymptPD, maxFRic, SR.mean
                   leverage_threshold = leverage_threshold)
 
