@@ -1,41 +1,18 @@
-## -------------------------------------------------------------------
-## Script name: prep_dm
-## Purpose of script: Prepare data model. Calculate connectivity metrics
-## of flux and area weighted flux for a set of points based on four assumptions.
-## Author: Lei Song
-## Date Created: 2024-08-13
-## Email: lsong@ucsb.edu
-
-## Import from package:
-## sf, dplyr, terra
-
-## Inputs:
-## pas (sf): The sf of protected areas. 
-## pts (sf): The sf of points to process, at least have column station
-## template (SpatRaster): The grid template for the calculation.
-## pa_groups (sf): The PAs groups or NULL. Yes for mammal and NULL for birds.
-## Check clean_pa.R for more details.
-## med_dist (integer): The median dispersal distance in km.
-## buffer_size (integer): The buffer size in the same unit as pas, 
-## e.g. degree or meter. Default is 5 * med_dist * 1000.
-## dst_path (character): The path to save out the result or 
-## NULL to directly return the result.
-
-## Outputs:
-## The data.frame of the metrics or save out metrics as a csv file.
-## metrics:
-##  station: station id
-##  flux_ptg: flux for point to polygons
-##  awf_ptg: area weighted flux (awf) for point to polygons
-##  flux_gtg: flux for polygon (if has point) to polygons
-##  awf_gtg: awf for for polygon (if has point) to polygons
-##  flux_rst_ptp: flux for pixel to pixels
-##  awf_rst_ptp: awf for pixel to pixels
-##  flux_rst_ptp2: flux for pixel to other PA pixels
-##  awf_rst_ptp2: awf for pixel to other PA pixels
-##  med_dist: The median dispersal distance in km. It is the same as input. 
-
-## Details:
+## -----------------------------------------------------------------------------
+## prep_dm
+## -----------------------------------------------------------------------------
+#
+# Author:       Lei Song, Peter Kedron
+# Date Created: 2024-08-13
+# Last Update:  2024-08-25
+# Email:        lsong@ucsb.edu
+#
+# Import from package: sf, dplyr, terra
+#
+## Purpose of script: ---------------------------------------------------------- 
+# Prepare data model for the calculation of the connectivity metrics flux and 
+# area weighted flux for a set of points based on four assumptions.
+#
 ## Connectivity assumptions:
 ##  1. Vector based method 1 (*_ptg in outputs): Treat each species point 
 ##     (pts in inputs) as point and surrounding PAs as polygons. The flux and  
@@ -52,13 +29,49 @@
 ##     vectors to rasters is the same as raster based method 1. The only 
 ##     difference is to exclude PA polygon that the species point is within from
 ##     the surrounding PA polygons.
-##  If there is no surrounding PA polygons, all values are set to 0.
-## For tiny polygons: The function uses `touches == TRUE` for 
-## rasterization to make sure using all polygons.
+##
+##  If there is no surrounding PA polygons, all values are set to 0. For tiny 
+##  polygons: The function uses `touches == TRUE` for rasterization to make sure 
+##  using all polygons.
 
-## Usage example:
+# Inputs: ---------------------------------------------------------------------
+# pas (sf): The sf of protected areas. 
+#
+# pts (sf): The sf of points to process, at least have column station template 
+#           (SpatRaster): The grid template for the calculation.
+#
+# pa_groups (sf): The PAs groups or NULL. Yes for mammal and NULL for birds.
+#                 Check clean_pa.R for more details.
+#
+# med_dist (integer): The median dispersal distance in km.
+#
+# buffer_size (integer): The buffer size in the same unit as pas (e.g. degree or
+#                         meter). Default is 5 * med_dist * 1000.
+#
+# dst_path (character): The path to save out the result or NULL to directly 
+#                       return the result.
+#
+# Outputs: --------------------------------------------------------------------
+# A data.frame of the metrics or save out metrics as a csv file.
+#
+# metrics:
+##  station: station id
+##  flux_ptg: flux for point to polygons
+##  awf_ptg: area weighted flux (awf) for point to polygons
+##  flux_gtg: flux for polygon (if has point) to polygons
+##  awf_gtg: awf for for polygon (if has point) to polygons
+##  flux_rst_ptp: flux for pixel to pixels
+##  awf_rst_ptp: awf for pixel to pixels
+##  flux_rst_ptp2: flux for pixel to other PA pixels
+##  awf_rst_ptp2: awf for pixel to other PA pixels
+##  med_dist: The median dispersal distance in km. It is the same as input. 
+
+
+
+# Usage example: ---------------------------------------------------------------
 # See function calc_conn for a complete example.
-## -------------------------------------------------------------------
+#
+## -----------------------------------------------------------------------------
 
 # Define the function to calculate the fluxes and area weighted fluxes
 # Points inside of PA could (both are ecologically meaningful):

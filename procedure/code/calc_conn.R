@@ -1,26 +1,34 @@
-## -------------------------------------------------------------------
-## Script name: calc_conn
-## Purpose of script: The main function to load inputs and calculate 
-## connectivity metrics of flux and area weighted flux.
-## Author: Lei Song
-## Date Created: 2024-08-13
-## Email: lsong@ucsb.edu
+## -----------------------------------------------------------------------------
+## calc_conn
+## -----------------------------------------------------------------------------
+#
+# Author:       Lei Song, Peter Kedron
+# Date Created: 2024-08-13
+# Last Update:  2024-08-25
+# Email:        lsong@ucsb.edu
+#
+# Import from package: sf, dplyr, terra
+#
+# Purpose of script: -----------------------------------------------------------
+# Calculate connectivity metrics of flux and area weighted flux.
+#
 
-## Import from package:
-## sf, dplyr, terra
+# Inputs: ---------------------------------------------------------------------
+# taxon (character): The taxon name. Either mammal or bird.
+#
+# med_dists (vector): A vector of median dispersal distance in km. See details 
+#                     in function prep_dm.
+#
+# src_dir (character): The directory of data source.
+#
+# dst_dir (character): The directory to save files to.
+#
+# Outputs: --------------------------------------------------------------------
+#
+# Returns a data.frame of outputs from the function prep_dm calculated with 
+# each user specified distance in med_dists. See details in function prep_dm.
 
-## Inputs:
-## taxon (character): The taxon name. Either mammal or bird.
-## med_dists (vector): A vector of median dispersal distance in km.
-## See details in function prep_dm.
-## src_dir (character): The directory of data source.
-## dst_dir (character): The directory to save files to.
-
-## Outputs:
-## A combined data.frame of output from function prep_dm calculated with
-## each med_dists. See details in function prep_dm.
-
-## Usage example:
+# Usage example: ---------------------------------------------------------------
 # library(optparse)
 # option_list <- list(
 #   make_option(c("-t", "--taxon"), 
@@ -39,6 +47,7 @@
 # dst_dir <- opt$dst_dir
 # taxon <- opt$taxon
 # calc_conn(taxon = taxon, src_dir = src_dir, dst_dir = dst_dir)
+#
 ## -------------------------------------------------------------------
 
 # Start the function

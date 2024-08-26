@@ -1,42 +1,58 @@
-## -------------------------------------------------------------------
-## Script name: clean_data
-## Purpose of script: Clean the training data: join original data with 
-## landscape measures, scale the relevant variables, and subset the data
-## for relevant variables only.
-## Author: Lei Song, Peter Kedron
-## Date Created: 2024-08-13
-## Email: lsong@ucsb.edu
+## -----------------------------------------------------------------------------
+## clean_data
+## -----------------------------------------------------------------------------
+#
+# Author:       Lei Song, Peter Kedron
+# Date Created: 2024-08-13
+# Last Update:  2024-08-25
+# Email:        lsong@ucsb.edu
+#
+# Import from package: dplyr
+#
+# Purpose of script: -----------------------------------------------------------
+#  Prepare data used by Brodie et al. (2023) for statistical analysis. 
+#  - Join original data with landscape measures, 
+#  - Scale the relevant variables, 
+#  - Subset the data selecting only those used by Brodie et al.
+#
+# Inputs: ---------------------------------------------------------------------
+# taxon (character): The taxon name. Either mammal or bird.
+# 
+# conn_metrics (character): The connectivity measure to use. The value is one of 
+#                           ["flux_ptg", "awf_ptg", "flux_gtg", "awf_gtg", 
+#                           "flux_rst_ptp", "awf_rst_ptp", "flux_rst_ptp2", 
+#                           "awf_rst_ptp2"]. 
+#
+#                           The default is "awf_ptg".See details in function 
+#                           prep_dm.
+#
+# src_dir (character): The directory of data source to read original CSVs.
+#
+# conn_dir (character): The directory to read CSVs of connectivity measures.
+#                       Check function calc_conn for correct setting.
+#
+# dst_dir (character): The directory to save files to.
 
-## Import from package:
-## dplyr
-
-## Inputs:
-## taxon (character): The taxon name. Either mammal or bird.
-## conn_metrics (character): The connectivity measure to use. The value is 
-## one of ["flux_ptg", "awf_ptg", "flux_gtg", "awf_gtg", "flux_rst_ptp", 
-## "awf_rst_ptp", "flux_rst_ptp2", "awf_rst_ptp2"]. The default is "awf_ptg".
-## See details in function prep_dm.
-## src_dir (character): The directory of data source to read original CSVs.
-## conn_dir (character): The directory to read CSVs of connectivity measures.
-## Check function calc_conn for correct setting.
-## dst_dir (character): The directory to save files to.
-
-## Outputs:
-## The data.frame of the cleaned data. A CSV file named "dat_analysis_*" is 
-## saved out as well.
-## Variables are: station, study_area (only mammal), country, PA, utm_east, 
-## utm_north, dist_to_PA, PA_size_km2, asymptPD, maxFRic, SR.mean, med_dist, 
-## utm_east.z, utm_north.z, HDI.z, access_log10.z, PA_size_km2.z, dist_to_PA.z,
-## forest_structure, connectivity.z, BigPA, CloseToPA
-
-## Usage example:
+# Outputs: --------------------------------------------------------------------
+# Returns a data.frame of cleaned data and a .csv file named "dat_analysis_*".
+#
+# Variables are:  station, study_area (only mammal), country, PA, utm_east, 
+#                 utm_north, dist_to_PA, PA_size_km2, asymptPD, maxFRic, SR.mean, 
+#                 med_dist, utm_east.z, utm_north.z, HDI.z, access_log10.z, 
+#                 PA_size_km2.z, dist_to_PA.z, forest_structure, connectivity.z, 
+#                 BigPA, CloseToPA
+#
+#                 Definitions follow Brodie et al. (2023)
+# 
+# Usage example: ---------------------------------------------------------------
 # taxon <- "bird"
 # conn_metrics <- 'awf_ptg'
 # src_dir <- "data/raw/public"
 # conn_dir <- "data/derived/public"
 # dst_dir <- "data/derived/public"
 # dat_clean <- clean_data(taxon, conn_metrics, src_dir, conn_dir, dst_dir)
-## -------------------------------------------------------------------
+#
+## -----------------------------------------------------------------------------
 
 clean_data <- function(taxon, 
                        conn_metrics = "awf_ptg", 
@@ -58,9 +74,9 @@ clean_data <- function(taxon,
     file.path(src_dir, sprintf("training/%s_data_corrected_240122.csv", taxon)), 
     header = T))
   
-  # Create data.frame containing the subset of variable used in the analysis
-  ## Difference between bird and mammal is that using country and study_area 
-  ## to match for mammals, but only use country for bird.
+  # Create data.frame containing the subset of variable used in the analysis.
+  ## Mammals are constrained to country and study_area to model terrestrial 
+  ## movement. Birds are only subset using country.
   nms <- c('station', 'country', 'PA', 'utm_east', 'utm_north', 
           'Hansen_recentloss', 'access_log10', 'HDI', 'dist_to_PA', 
           'PA_size_km2', 'rh_95_a0.pred', 'asymptPD', 'maxFRic', 'SR.mean')
@@ -118,7 +134,7 @@ clean_data <- function(taxon,
   dat_clean[dat_clean$PA == 0, "CloseToPA"] <- 
       ifelse(dat_clean[dat_clean$PA == 0, "dist_to_PA"] > 2, 0, 1)
   
-  # Save out
+  # Save data as .csv
   fname <- file.path(dst_dir, sprintf("dat_analysis_%s.csv", taxon))
   write.csv(dat_clean, fname, row.names = FALSE)
   

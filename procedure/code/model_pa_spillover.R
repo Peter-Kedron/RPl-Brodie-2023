@@ -1,35 +1,50 @@
-## -------------------------------------------------------------------
-## Script name: model_pa_spillover
-## Purpose of script: Create model for PA spillover for species richness,
-## functional richness, and phylogenetic diversity.
-## Author: Lei Song, Peter Kedron
-## Date Created: 2024-08-13
-## Email: lsong@ucsb.edu
+## -----------------------------------------------------------------------------
+## model_pa_spillover
+## -----------------------------------------------------------------------------
 
-## Import from package:
-## tidyverse, Hmisc, MatchIt, optmatch, lme4, nlme, lmerTest, cowplot
+# Purpose of script: -----------------------------------------------------------
+# Create model for PA spillover for species richness,functional richness, and 
+# phylogenetic diversity.
+#
+# Author:       Lei Song, Peter Kedron
+# Date Created: 2024-08-13
+# Last Update:  2024-08-25
+# Email:        lsong@ucsb.edu
+#
+# Import from package: tidyverse, Hmisc, MatchIt, optmatch, lme4, nlme, 
+#                      lmerTest, cowplot
 
-## Inputs:
-## dat (data.frame): The data.frame of modeling data. The user should preprocess
-## it (e.g. outlier removal) before feed it into the model.
-## mod_type (character): The model type. It is brodie for running model
-## defined in brodie paper, or connec for running model with connectivity included,
-## or connect+ for running model with connectivity and interaction between 
-## PA effect and connectivity.
-## taxon (character): The taxon name. Either mammal or bird.
-## binary_var (character): The binary exposure variable to use.
-## Either BigPA for PA size spillover or CloseToPA for distance to PA spillover.
-## independent_variable (character): The independent variable to read. It is one
-## of ["asymptPD", "maxFRic", "SR.mean"] for [phylogenetic diversity, 
-## Functional Richness, species richness]. The default is "asymptPD".
-## outliers (character or vector): The user could pass a vector of outliers to
-## remove or set "auto" to call function identify_outliers to automatically
-## detect outliers and remove them.
-
-## Outputs:
+# Inputs: ---------------------------------------------------------------------
+# dat (data.frame): The data.frame of modeling data. The user should preprocess
+#                   it (e.g. outlier removal) before feeding it into the model.
+#
+# mod_type (character): The model type. It is either brodie for running model
+#                       defined in brodie paper, or connec for running model 
+#                       with connectivity included.
+#
+# taxon (character): The taxon name. Either mammal or bird.
+#
+# binary_var (character): The binary exposure variable to use. Either BigPA for 
+#                         PA size spillover or CloseToPA for distance to PA 
+#                         spillover.
+#
+# independent_variable (character): The independent variable to read. It is one
+#                                   of ["asymptPD", "maxFRic", "SR.mean"] 
+#                                   for [phylogenetic diversity, Functional 
+#                                   Richness, species richness]. 
+#
+#                                   The default is "asymptPD".
+#
+# outliers (character or vector): The user could pass a vector of outliers to
+#                                 remove or set "auto" to call function 
+#                                 identify_outliers to automatically detect 
+#                                 outliers and remove them.
+#
+# Outputs: --------------------------------------------------------------------
 ## The lme model object.
 
-## Usage example:
+# Usage example: ---------------------------------------------------------------
+# 
 # taxon <- "bird"
 # conn_metrics <- 'awf_ptg'
 # src_dir <- "data/raw/public"
@@ -37,11 +52,14 @@
 # dst_dir <- "data/derived/public"
 # dat_clean <- clean_data(taxon, conn_metrics, src_dir, conn_dir, dst_dir)
 ## outliers <- NULL
+#
 ## Create model for phylogenetic diversity of bird with connectivity calculated
 ## with the median dispersal distance of 100 km.
 # mod <- model_pa_spillover(dat_clean, "connec", "bird", "BigPA", 
 #                           "asymptPD", outliers)
-## -------------------------------------------------------------------
+#
+## -----------------------------------------------------------------------------
+
 
 model_pa_spillover <- function(dat, # leave outliers removal outside of function
                                mod_type = "connec", # 3A

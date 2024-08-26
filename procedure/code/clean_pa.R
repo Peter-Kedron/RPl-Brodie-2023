@@ -1,28 +1,39 @@
-## -------------------------------------------------------------------
-## Script name: clean_pa
-## Purpose of script: Clean the Protected areas.
-## Author: Lei Song
-## Date Created: 2024-08-13
-## Email: lsong@ucsb.edu
+## -----------------------------------------------------------------------------
+## clean_pa
+## -----------------------------------------------------------------------------
+#
+# Purpose of script: -----------------------------------------------------------
+# Clean the Protected areas.
+#
+# Author:       Lei Song, Peter Kedron
+# Date Created: 2024-08-13
+# Last Update:  2024-08-25
+# Email:        lsong@ucsb.edu
 
-## Import from package:
-## sf, dplyr, terra, wdpar, countrycode
+# Import from package: sf, dplyr, terra, wdpar, countrycode
 
-## Inputs:
-## geometry_precision (integer): The precision to deal with geometry. 
-## See details in function st_set_precision in sf package. Default is 100000.
-## dst_crs (character): The CRS to use. The default is "EPSG:32646".
-## bbox_buffer (integer): The size set to buffer the bounding box to clip PAs.
-## Unit should be the same as dst_crs. Default is 800000 in meters.
-## src_dir (character): The directory of data source.
-## dst_dir (character): The directory to save files to.
-
-## Outputs:
-## No return values. Two files to save out:
+# Inputs: ---------------------------------------------------------------------
+# geometry_precision (integer): The precision to deal with geometry. See details 
+#                               in function st_set_precision in sf package. 
+#                               Default is 100,000.
+#
+# dst_crs (character): The CRS to use. The default is "EPSG:32646".
+#
+# bbox_buffer (integer): The size set to buffer the bounding box to clip PAs.
+#                        Unit should be the same as dst_crs. Default is 800,000 
+#                        in meters.
+#
+# src_dir (character): The directory of data source.
+#
+# dst_dir (character): The directory to save files to.
+#
+# Outputs: --------------------------------------------------------------------
+## No return values. Two files are created and saved:
 ## 1. clean_pas.geojson: cleaned PAs
 ## 2. pa_groups.shp: PA groups for mammal connectivity
 
-## Usage example:
+# Usage example: ---------------------------------------------------------------
+# 
 # library(optparse)
 # option_list <- list(
 #   make_option(c("-s", "--src_dir"), 
@@ -37,7 +48,8 @@
 # src_dir <- opt$src_dir
 # dst_dir <- opt$dst_dir
 # clean_pa(src_dir = src_dir, dst_dir = dst_dir)
-## -------------------------------------------------------------------
+#
+## -----------------------------------------------------------------------------
 
 clean_pa <- function(geometry_precision = 100000, 
                      dst_crs = "EPSG:32646",
