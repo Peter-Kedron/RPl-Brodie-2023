@@ -28,12 +28,12 @@
 #                         PA size spillover or CloseToPA for distance to PA 
 #                         spillover.
 #
-# independent_variable (character): The independent variable to read. It is one
-#                                   of ["asymptPD", "maxFRic", "SR.mean"] 
-#                                   for [phylogenetic diversity, Functional 
-#                                   Richness, species richness]. 
+# response_variable (character): The independent variable to read. It is one
+#                                of ["asymptPD", "maxFRic", "SR.mean"] 
+#                                for [phylogenetic diversity, Functional 
+#                                Richness, species richness]. 
 #
-#                                   The default is "asymptPD".
+#                                The default is "asymptPD".
 #
 # outliers (character or vector): The user could pass a vector of outliers to
 #                                 remove or set "auto" to call function 
@@ -65,7 +65,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                                mod_type = "connec", # 3A
                                taxon = "bird", # 2T
                                binary_var = "BigPA", # 2M 
-                               independent_variable = "asymptPD", # 3RV
+                               response_variable = "asymptPD", # 3RV
                                outliers){
     # Check inputs
     if (!taxon %in% c("bird", "mammal")){
@@ -77,15 +77,15 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
     if (!binary_var %in% c("BigPA", "CloseToPA")){
         stop("binary_var must be either BigPA or CloseToPA.")
     }
-    if (!independent_variable %in% c("asymptPD", "maxFRic", "SR.mean")){
-        stop("independent_variable must be one of (asymptPD, maxFRic, SR.mean).")
+    if (!response_variable %in% c("asymptPD", "maxFRic", "SR.mean")){
+        stop("response_variable must be one of (asymptPD, maxFRic, SR.mean).")
     }
     
     # Subset the modeling data
     dat <- subset(dat, PA == 0)
     
     # Rename the dependent variable to have a common name
-    dat <- dat %>% rename(y = all_of(independent_variable))
+    dat <- dat %>% rename(y = all_of(response_variable))
     
     ## select the variables
     nms <- c("station", 'y', 'country', 'utm_east', 'utm_north', 

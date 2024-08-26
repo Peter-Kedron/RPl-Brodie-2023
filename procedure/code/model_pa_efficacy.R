@@ -24,12 +24,12 @@
 #
 # taxon (character): The taxon name. Either mammal or bird.
 #
-# independent_variable (character): The independent variable to read. It is one
-#                                   of ["asymptPD", "maxFRic", "SR.mean"] 
-#                                   for [phylogenetic diversity, Functional 
-#                                   Richness, species richness]. 
+# response_variable (character): The independent variable to read. It is one
+#                                of ["asymptPD", "maxFRic", "SR.mean"] 
+#                                for [phylogenetic diversity, Functional 
+#                                Richness, species richness]. 
 #
-#                                   The default is "asymptPD".
+#                                The default is "asymptPD".
 #
 # outliers (character or vector): The user could pass a vector of outliers to
 #                                 remove or set "auto" to call function 
@@ -57,7 +57,7 @@
 model_pa_efficacy <- function(dat, # leave outliers removal outside of function
                               mod_type = "connec",
                               taxon = "bird",
-                              independent_variable = "asymptPD",
+                              response_variable = "asymptPD",
                               outliers){
     # Check inputs
     if (!taxon %in% c("bird", "mammal")){
@@ -66,12 +66,12 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
     if (!mod_type %in% c("brodie", "connec")){
         stop("mod_type must be either brodie or connec.")
     }
-    if (!independent_variable %in% c("asymptPD", "maxFRic", "SR.mean")){
-        stop("independent_variable must be one of (asymptPD, maxFRic, SR.mean).")
+    if (!response_variable %in% c("asymptPD", "maxFRic", "SR.mean")){
+        stop("response_variable must be one of (asymptPD, maxFRic, SR.mean).")
     }
     
     # Rename the dependent variable to have a common name
-    dat <- dat %>% rename(y = all_of(independent_variable))
+    dat <- dat %>% rename(y = all_of(response_variable))
     
     ## Select the variables
     nms <- c("station", 'y', 'PA', 'country', 'utm_east', 'utm_north', 
