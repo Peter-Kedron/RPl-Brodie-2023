@@ -288,26 +288,15 @@ We completed two reproduction attempts - 1) using the analysis data and script o
 Both analyses were conducted in R using the following packages
 
 ```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
-# library(groundhog)
-pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
-          "MatchIt", "modelsummary", "optmatch", "nlme")
-# groundhog.library(pkgs, "2024-02-11")
-lapply(pkgs, require, character.only=TRUE)
+
+# Load required packages and scripts
+kick_off('/procedure/code')
 ```
 
 For completeness, we first reproduced the causal diagram underlying the original analysis. 
 We made not substantive changes to the authors original code. 
 
 ```{r SCM, echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE} 
-# Load libraries
-# library(groundhog)
-pkgs <- c("dagitty", "ggdag")
-# groundhog.library(pkgs, "2023-12-05")
-lapply(pkgs, require, character.only=TRUE)
-
-# ------------------------------------------------------------------------------
-# Structural Causal Modeling  
-# ------------------------------------------------------------------------------
 
 # Create the directed acyclic graph (DAG) of potential causal 
 # Assign PA as the exposure and diversity as the outcome.
@@ -371,6 +360,7 @@ All called function are available with the project repository.
 No additional preparation was needed for our reproduction attempt using the author corrected analysis file and script.
 
 ```{r clean_data, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
+
 # Clean data and remove outliers for bird and mammal models
 dat_clean_bird <- clean_data("bird", 
                              conn_metrics, 
@@ -408,36 +398,68 @@ Following the authors, statistical significance of the treatment and predictor v
 
 
 ## Reproduction Using Original Data and Code
-To assess **OR-Ho-1** we reproduced the propensity score matching procedure and linear mixed-effects modeling conducted by the Brodie et al. for each the three biodiversity response variables. 
-Following the authors, statistical significance of the treatment and predictor variables are indicated using p-value thresholds of 0.001 ( *** ), 0.01 ( ** ), and 0.05 ( * ).
+To assess **OR-Ho-1**, we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA efficacy for each the three biodiversity response variables for each taxon.
+This procedure resulted in six fitted regressions.
 
-**<< Insert Chunk calling model_pa_efficacy.R AND Table building script >>**
+```{roriginal_models, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
 
-### Analysis of PA Spillover Effects
+## Estimate PA efficacy (OR-Ho-1) using originally published data and code -----
 
-**<< Insert Chunk calling model_pa_spillover.R AND Table building script >>**
+# Estimate PA efficacy for birds
+mod_bird_eff_PD <- model_pa_efficacy(dat_analysis_bird, "brodie", "bird", "asymptPD", outliers)
+mod_bird_eff_FR <- model_pa_efficacy(dat_analysis_bird, "brodie", "bird", "maxFRic", outliers)
+mod_bird_eff_SR <- model_pa_efficacy(dat_analysis_bird, "brodie", "bird", "SR.mean", outliers)
+
+# Estimate PA efficacy for mammals
+mod_mammal_eff_PD <- model_pa_efficacy(dat_analysis_bird, "brodie", "mammal", "asymptPD", outliers)
+mod_mammal_eff_FR <- model_pa_efficacy(dat_analysis_bird, "brodie", "mammal", "maxFRic", outliers)
+mod_mammal_eff_SR <- model_pa_efficacy(dat_analysis_bird, "brodie", "mammal", "SR.mean", outliers)
+```
+
+**<< Insert Table of outputs here >>**
+
+To assess **OR-Ho-2a** and **OR-Ho-2b** we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA size and PA distance spillovers for each the three biodiversity response variables for each taxon.
+This produced 12 fitted regressions.
+
+```{r original_models, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
+
+## Estimate PA spillovers (OR-Ho-2a,b) using originally published data and code-
+
+# Estimate PA size effects for birds
+mod_bird_size_PD <- model_pa_spillover(dat_clean, "brodie", "bird", "BigPA", "asymptPD", outliers)
+
+mod_bird_size_FR <- model_pa_spillover(dat_clean, "brodie", "bird", "BigPA", "maxFRic", outliers)
+
+mod_bird_size_SR <- model_pa_spillover(dat_clean, "brodie", "bird", "BigPA", "SR.mean", outliers)
+
+# Estimate PA distance effects for birds
+mod_bird_dist_PD <- model_pa_spillover(dat_clean, "brodie", "bird", "CloseToPA", "asymptPD", outliers)
+
+mod_bird_dist_FR <- model_pa_spillover(dat_clean, "brodie", "bird", "CloseToPA", "maxFRic", outliers)
+
+mod_bird_dist_SR <- model_pa_spillover(dat_clean, "brodie", "bird", "CloseToPA", "SR.mean", outliers)
+
+# Estimate PA size effects for mammals
+mod_mammal_size_PD <- model_pa_spillover(dat_clean, "brodie", "mammal", "BigPA", "asymptPD", outliers)
+
+mod_mammal_size_FR <- model_pa_spillover(dat_clean, "brodie", "mammal", "BigPA", "maxFRic", outliers)
+
+mod_mammal_size_SR <- model_pa_spillover(dat_clean, "brodie", "mammal", "BigPA", "SR.mean", outliers)
+
+# Estimate PA distance effects for mammals
+mod_mammal_dist_PD <- model_pa_spillover(dat_clean, "brodie", "mammal", "CloseToPA", "asymptPD", outliers)
+
+mod_mammal_dist_FR <- model_pa_spillover(dat_clean, "brodie", "mammal", "CloseToPA", "maxFRic", outliers)
+
+mod_mammal_dist_SR <- model_pa_spillover(dat_clean, "brodie", "mammal", "CloseToPA", "SR.mean", outliers)
+
+```
+
+**<< Insert Table of outputs here >>**
 
 ### Comparison of Statistical Estimates
 
 **Build comparison table in with simplified symbology in Rmarkdown**
-
-We identified significant PA effects on bird species diversity and non significant effects on mammal species diversity as reported in the paper. PA effect sizes for SR (OR:27.04, RPR:31.6), FR (OR:24.02, RPR:25.52), PD (OR:0.38, RPR:0.37) from the reproduction are similar to those reported in Brodie et al. (2023). Significance of other variables and their coefficient values were also similar to the original study.
-
-```{r results, echo=T, eval = FALSE}
-#summary(mod_SR_efficacy_mam) 
-msummary(list('Bird SR'=mod_SR_efficacy_bird, 'Bird FR'=mod_FR_efficacy_bird, 'Bird PD'=mod_PD_efficacy_bird,'Mammal SR'=mod_SR_efficacy_mam, 'Mammal FR'=mod_FR_efficacy_mam, 'Mammal PD'=mod_PD_efficacy_mam
-              ),stars = TRUE)
-
-# Note: if rendering this part of the code returns errors for tex rendering
-# Please consider going through steps on this debugging page:
-# https://yihui.org/tinytex/r/#debugging
- 
-# Also: https://github.com/travis-ci/travis-ci/issues/10166
-# sudo tlmgr install 
-# could be really helpful
-
-```
-
 
 
 

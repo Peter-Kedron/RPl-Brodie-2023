@@ -107,12 +107,10 @@ We use the same computational environments, data, and data preparation procedure
 Complete details of the materials and methods use are available in *Reproduction Report for Brodie et al. (2023)* and can be evaluated in depth by examining the functions called throughout this document. 
 All materials and procedures are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
 
-```{r package_setup, echo = TRUE, results = 'hide, message = FALSE}
-# library(groundhog)
-pkgs <- c("tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
-          "MatchIt", "modelsummary", "optmatch", "nlme")
-# groundhog.library(pkgs, "2024-02-11")
-lapply(pkgs, require, character.only=TRUE)
+```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
+
+# Load required packages and scripts
+kick_off('/procedure/code')
 ```
 
 ## Connectivity Measures
