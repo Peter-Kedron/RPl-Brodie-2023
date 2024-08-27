@@ -117,3 +117,4 @@ $RECYCLE.BIN/
 
 # Temporary files
 *.rda
+!results/figures/*.rda
