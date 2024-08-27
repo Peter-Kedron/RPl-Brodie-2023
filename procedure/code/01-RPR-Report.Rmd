@@ -382,13 +382,13 @@ data_analysis_mammal <- identify_outliers(dat_clean_mammal)
 
 ## Reproduction Using Author Corrected Data and Code
 
-### Analysis of PA Efficacy
-To assess **OR-Ho-1** we reproduced the propensity score matching procedure and linear mixed-effects modeling conducted by the Brodie et al. for each the three biodiversity response variables. 
-Following the authors, statistical significance of the treatment and predictor variables are indicated using p-value thresholds of 0.001 ( *** ), 0.01 ( ** ), and 0.05 ( * ).
+To assess **OR-Ho-1** we reproduced the propensity score matching procedure and linear mixed-effects modeling conducted by the Brodie et al. for each the three biodiversity response variables for each taxon. 
+This procedure resulted in six fitted regressions.
 
 **<< Insert Chunk calling model_pa_efficacy.R AND Table building script >>**
 
-### Analysis of PA Spillover Effects
+To assess **OR-Ho-2a** and **OR-Ho-2b** we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA size and PA distance spillovers for each the three biodiversity response variables for each taxon.
+This produced 12 fitted regressions.
 
 **<< Insert Chunk calling model_pa_spillover.R AND Table building script >>**
 
