@@ -8,6 +8,8 @@
 ## Inputs:
 ## src_dir (character): The directory of models
 ## dst_dir (character): The directory to save out the plots.
+## med_dists (vector): Dispersal distances for birds and mammals. Default is
+## c(100, 50), 100 for birds, and 50 for mammals.
 
 ## Outputs:
 ## Save out a data.frame with columns: Effect, Variable, [SR|FR|PD].[Birds|Mammals].
