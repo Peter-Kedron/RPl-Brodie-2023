@@ -2,7 +2,7 @@
 ## Script name: plot_dist_effect
 ## Purpose of script: Plot the change in coefficient of interested variables
 ## (PA, connectivity, and interaction) with changing dispersal distance to 
-## calculate connectivty.
+## calculate connectivity.
 ## Author: Lei Song
 ## Date Created: 2024-08-26
 ## Email: lsong@ucsb.edu
@@ -15,11 +15,11 @@
 ## Save out a list of gg object. The structure is:
 ## taxon_dist_plot:
 ##  - bird
-##      - Phylogenetic diveristy (PD)
+##      - Phylogenetic diversity (PD)
 ##      - Functional richness (FR)
 ##      - Species richness (SR)
 ##  - mammal
-##      - Phylogenetic diveristy (PD)
+##      - Phylogenetic diversity (PD)
 ##      - Functional richness (FR)
 ##      - Species richness (SR)
 ## -------------------------------------------------------------------
@@ -28,11 +28,11 @@ plot_dist_effect <- function(src_dir = "results",
                              dst_dir = "results/figures"){
     # Load associated models
     fnames <- list.files(src_dir, pattern = ".rda$")
-    taxons <- unique(str_extract(fnames, "mammal|bird")) # Could just hardcode
+    taxons <- unique(str_extract(fnames, "mammal|bird")) # Could just hard code
     
     # Tidy up the models
     coefs <- lapply(taxons, function(taxon){
-        # Subset fames
+        # Subset fnames
         fnames <- fnames[str_detect(fnames, taxon)]
         fnames <- fnames[str_detect(fnames, "[0-9]+")]
         
@@ -41,7 +41,7 @@ plot_dist_effect <- function(src_dir = "results",
             # Load the model object
             load(file.path(src_dir, fname))
             
-            # Selete relevant models
+            # Select relevant models
             nms <- names(models)
             nms <- nms[!str_detect(nms, "brodie")]
             nms <- nms[!str_detect(nms, "spillover_connec$")]
@@ -92,13 +92,8 @@ plot_dist_effect <- function(src_dir = "results",
                 scale_x_continuous(breaks = seq(10, 150, by = 10))+
                 xlab('Dispersal distance (km)') +
                 ylab('Eestimated effect') +
-                # geom_hline(yintercept=0.38, linetype='dashed', color = "red")+
-                # ylab(paste(var, 'effect', sep=' '))+
-                # facet_wrap(~ind+varname, scales = 'free_y')+
                 theme_tufte()+
-                theme(
-                    #strip.text.x = element_text(angle = 0, vjust = 0),
-                    panel.border = element_rect(colour='white', fill=NA))
+                theme(panel.border = element_rect(colour='white', fill=NA))
         })
         names(plot_list) <- c("Phylogenetic diveristy (PD)", 
                               "Functional richness (FR)",

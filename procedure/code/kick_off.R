@@ -14,9 +14,9 @@
 
 kick_off <- function(code_dir){
     # Load libraries
-    pkgs <- c("here", "sf", "dplyr", "terra", "wdpar", "countrycode", "stringr", "pbapply",
+    pkgs <- c("here", "sf", "dplyr", "terra", "wdpar", "countrycode", "stringr", 
               "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
-              "MatchIt", "modelsummary", "optmatch", "nlme")
+              "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply")
     for (pkg in pkgs){
         if (!require(pkg, character.only = TRUE)) {
             install.packages(pkg)
