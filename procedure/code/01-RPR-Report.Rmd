@@ -69,9 +69,9 @@ Second, for completeness and because we had already begun our reproduction attem
 A successful reproduction should recreate the numerical results published in Brodie et al. (2023), or the those published with the correction in April 2024. 
 
 All materials and procedures used in this reproduction are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
-We implemented the reproduction in MacBook Pros using R programming language (Version 4.2.2).
-Structural causal modeling was performed using the DAGITTY package (Version #.#.#).
-We used the MatchIt package (Version #.#.#) to perform propensity score matching and the NLME package (Version #.#.#) to fit the linear mixed effects regression models.
+We implemented the reproduction in platform `r R.version$platform` using R programming language (Version `r paste0(R.version$major, ".", R.version$minor)`).
+Structural causal modeling was performed using the DAGITTY package (Version `r packageVersion('dagitty')`).
+We used the MatchIt package (Version `r packageVersion('matchit')`) to perform propensity score matching and the NLME package (Version `r packageVersion('nlme')`) to fit the linear mixed effects regression models.
 
 
 # Study design
@@ -230,8 +230,8 @@ Clear reasoning for those adjustments was not provided in the note on author cor
 | asymptPD | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
 | **WDPA** |
 | PA | Within or outside PAs | Whether the point is inside a PA or not | Binary | Not applicable | 1 for inside and 0 for outside | Not applicable | Unknown |
-| PA_size_km2 | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
-| dist_to_PA | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| PA_size_km2 | PA size | The area of nearest PA in sq km | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
+| dist_to_PA | Distance to PA | The distance to the nearest PA in km | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
 | **GEDI L2 Metrics** |
 | elev | Elevation | Ground elevation at the site (krigged) | Integer | Unknown | Equal to or greater than 0 (terrestrial observations) | Unknown | Unknown |
 | slope | Slope | Slope of topography | Float | Unknown | 0 to 90 | Unknown | Unknown |
@@ -244,7 +244,7 @@ Clear reasoning for those adjustments was not provided in the note on author cor
 | **HDI** |
 | HDI | Human Development Index | Level of human development | Float | Unknown | 0 to 1 | Not applicable | Not applicable |
 
-Note: HDI was not included in the data file shared by the orignal study. We gathered HDI values for each country from the Human Development Report 2020.
+Note: HDI was not included in the data file shared by the original study. We gathered HDI values for each country from the Human Development Report 2020.
 
 
 ## Statistical Approach
@@ -262,7 +262,7 @@ Weights produced by propensity score matching were then used in mixed-effects li
 | Protected area boundaries | WDPA | Treatment variables (whether inside PAs) |
 | Ground elevation | NASA GEDI L2B | Predictor - elevation and topography |
 | Circuit-based site accessibility (log transformed) | Authors | Predictor - site accessibility |
-| Human Development Index | Human Development Report 2020 | Predictor - site accessibility |
+| Human Development Index | Human Development Report 2020 | Predictor - Human development index |
 | Forest structure metrics | NASA GEDI L2A | Predictor - forest structure |
 
 
@@ -352,7 +352,6 @@ adjustmentSets(dagBrodie)
 
 ```
 
-
 ## Data Preparation
 Preparation of our analysis data followed the procedures outlined in Brodie et al. (2023).
 Complete details of the procedures are available in the called function headers and comments.
@@ -374,9 +373,23 @@ dat_clean_mammal <- clean_data("mammal",
                              conn_dir = "data/derived/public",
                              dst_dir = "data/derived/public")
 
-dat_analysis_bird <- identify_outliers(dat_clean_bird)
+# Copy provided outliers
+outliers_eff_bird <- list(
+    "PD" = c("L2422371", "L3776738", "L2521761", 
+             "L6127181", "L3865754"),
+    "FR" = c("L921125", "L2422371", "L4331944", "L13465594"),
+    "SR" = c("L4789498", "L921125", "L1122096", 
+             "L7010824", "L3865754", "L3776738"))
 
-data_analysis_mammal <- identify_outliers(dat_clean_mammal)
+outliers_spil_bird <- list(
+    "PD" = c("L1084299", "L4225511", "L3846512", "L2129865", "L3267752"),
+    "FR" = c("L4225511", "L5969878", "L3267752", 
+             "L4331944", "L13465594", "L1084299"),
+    "SR" = c("L4225511", "L5624588", "L3321319", "L14087870"))
+outliers_spil_mammal <- list(
+    "PD" = c("WM-OP009", "WM-HCV003", "C24A25", "C1A09", "C1B12"),
+    "FR" = c("Bal013a", "Bal017a", "C1CT21"),
+    "SR" = c("Bal011", "C1CT50", "C24A25"))
 ```
 
 
@@ -387,15 +400,62 @@ This procedure resulted in six fitted regressions.
 
 **<< Insert Chunk calling model_pa_efficacy.R AND Table building script >>**
 
+```{r reproduction_efficacy, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
+# Make a common catalog
+var_catalog <- data.frame(
+    response_variable = c("asymptPD", "maxFRic", "SR.mean"),
+    name = c("PD", "FR", "SR"))
+
+# Reproduce models for bird
+rep_models_bird <- lapply(1:nrow(var_catalog), function(i){
+    model_pa_efficacy(dat_clean_bird, "brodie", "bird",
+                      var_catalog[[i, "response_variable"]], 
+                      outliers_eff_bird[[var_catalog[[i, "name"]]]])
+}); names(rep_models_bird) <- sprintf("mod_bird_eff_%s", var_catalog$name)
+
+# Reproduce models for mammal
+rep_models_mammal <- lapply(1:nrow(var_catalog), function(i){
+    model_pa_efficacy(dat_clean_bird, "brodie", "mammal",
+                      var_catalog[[i, "response_variable"]], NULL)
+}); names(rep_models_bird) <- sprintf("mod_mammal_eff_%s", var_catalog$name)
+```
+
 To assess **OR-Ho-2a** and **OR-Ho-2b** we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA size and PA distance spillovers for each the three biodiversity response variables for each taxon.
 This produced 12 fitted regressions.
 
-**<< Insert Chunk calling model_pa_spillover.R AND Table building script >>**
+```{r reproduction_spillover, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
+# Reproduce models for bird
+rep_models_bird <- lapply(1:nrow(var_catalog), function(i){
+    mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
+        model_pa_spillover(dat_clean_bird, "brodie", "bird", bnr_var, 
+                       var_catalog[[i, "response_variable"]], 
+                      outliers_spil_bird[[var_catalog[[i, "name"]]]])
+    })
+    names(mods) <- sprintf("mod_bird_%s_%s", 
+                           c("size", "dist"), var_catalog[[i, "name"]])
+    mods
+    
+})
+rep_models_bird <- do.call(c, rep_models_bird)
+
+# Reproduce models for mammal
+rep_models_mammal <- lapply(1:nrow(var_catalog), function(i){
+    mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
+        model_pa_spillover(dat_clean_bird, "brodie", "mammal", bnr_var, 
+                       var_catalog[[i, "response_variable"]], 
+                      outliers_spil_mammal[[var_catalog[[i, "name"]]]])
+    })
+    names(mods) <- sprintf("mod_mammal_%s_%s", 
+                           c("size", "dist"), var_catalog[[i, "name"]])
+    mods
+    
+})
+rep_models_mammal <- do.call(c, rep_models_mammal)
+```
 
 ### Comparison of Statistical Estimates
 
 **Build comparison table in with simplified symbology in Rmarkdown**
-
 
 ## Reproduction Using Original Data and Code
 To assess **OR-Ho-1**, we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA efficacy for each the three biodiversity response variables for each taxon.
@@ -460,8 +520,6 @@ mod_mammal_dist_SR <- model_pa_spillover(dat_clean, "brodie", "mammal", "CloseTo
 ### Comparison of Statistical Estimates
 
 **Build comparison table in with simplified symbology in Rmarkdown**
-
-
 
 # Discussion & Conclusion
 
