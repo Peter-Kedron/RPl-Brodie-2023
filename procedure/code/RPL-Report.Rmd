@@ -166,7 +166,7 @@ data_analysis_mammal <- identify_outliers(dat_clean_mammal)
 
 # Statistical Results
 
-## STATEMENT OF FIND
+## STATEMENT OF FIND Efficacy
 We first used propensity score matching and a linear mixed effects model to assessed whether the finding that PA preserve vertebrate biodiversity within their boundaries persisted when adjusting for connectivity.
 Here we report connectivity results using a 100km threshold.
 
@@ -174,12 +174,19 @@ Here we report connectivity results using a 100km threshold.
 mod_pa_<- model_pa_efficacy(dat_analysis_bird, "connec", "bird", "aymptPD")
 ```
 
+**<< Insert Table of Replication Results >>**
+
+**<< Insert Table comparing Replication and Brodie using simplified typology >>**
 
 ## Linear Mixed Effects Model of PA Spillovers
 
 ```{r eval=FALSE, echo=TRUE, results='hide', message=FALSE}
 mod_pa_<- model_pa_efficacy(dat_analysis_bird, "connec", "bird", "aymptPD")
 ```
+
+**<< Insert Table of Spillover Replication Results >>**
+
+**<< Insert Table comparing Spillover Replication and Brodie using simplified typology >>**
 
 # Sensitivity Analyses
 
