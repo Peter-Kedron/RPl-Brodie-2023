@@ -130,12 +130,9 @@ To construct our site and PA connectivity measures, we independently gathered da
 
 ```{r calculate_conn, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
 # Calculate site connectivity for birds and mammals
-conn_flux_bird <- calc_conn(taxon = "bird", 
-                            src_dir = src_dir, 
-                            dst_dir = dst_dir)
+calc_conn(taxon = "bird", src_dir = src_dir, dst_dir = dst_dir)
 
-conn_flux_mammal <- calc_conn(taxon = "mammal", 
-                              src_dir = src_dir, 
+calc_conn(taxon = "mammal",                         src_dir = src_dir, 
                               dst_dir = dst_dir)
 
 ```
@@ -146,6 +143,9 @@ Because that analysis did not analyze connectivity, we appended our calculated c
 Finally, we identified and removed outlier values from each dataset using **PROCEDURE INFO** and a list provided by Brodie et al. 
 
 ```{r clean_data, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+# Load Brodie outlier list
+
+
 # Clean data and remove outliers for bird and mammal models
 dat_clean_bird <- clean_data("bird", 
                              conn_metrics, 
@@ -158,10 +158,6 @@ dat_clean_mammal <- clean_data("mammal",
                              src_dir = "data/derived/public", 
                              conn_dir = "data/derived/public",
                              dst_dir = "data/derived/public")
-
-# Identify and remove outliers
-dat_analysis_bird <- identify_outliers(dat_clean_bird)
-data_analysis_mammal <- identify_outliers(dat_clean_mammal)
 ```
 
 # Statistical Results
@@ -177,7 +173,7 @@ var_catalog <- data.frame(response_variable = c("asymptPD", "maxFRic",
                           name = c("PD", "FR", "SR"))
 
 # Reproduce models for birds
-rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
+rpl_efficacy_bird <- lapply(1:nrow(var_catalog), function(i){
     model_pa_efficacy(dat_analysis_bird, "connec", "bird",
                       var_catalog[[i, "response_variable"]], 
                       outliers_eff_bird[[var_catalog[[i, "name"]]]])
@@ -241,6 +237,20 @@ rpl_spill_mammal <- do.call(c, rep_models_mammal)
 **<< Insert Table comparing Spillover Replication and Brodie using simplified typology >>**
 
 # Sensitivity Analyses
+Compile models runs all the functions above and produces x...
+
+```{r}
+# Run compile models function
+```
+
+
+```{r}
+# Birds 3x3 efficacy result over distance
+```
+
+```{r}
+# Mammals 3x3 efficacy result over distance
+```
 
 # Discussion
 

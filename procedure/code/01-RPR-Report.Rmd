@@ -285,12 +285,12 @@ Other than adding the HDI variable to the original analytical file, we did not m
 # Reproduction Attempts
 
 We completed two reproduction attempts - 1) using the analysis data and script originally published by the authors and 2) using the analysis data and script published with the author correction. 
-Both analyses were conducted in R using the following packages
+Both analyses were conducted in R using the following packages.
 
 ```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
 
 # Load required packages and scripts
-kick_off('/procedure/code')
+# Groundhog Brodies 
 ```
 
 For completeness, we first reproduced the causal diagram underlying the original analysis. 
@@ -362,42 +362,11 @@ No additional preparation was needed for our reproduction attempt using the auth
 
 # Load Revised Data ------------------------------------------------------------
 
-# Wenxin add code loading data here
+# Wenxin add code loading corrected data here w/ 2 names
 
 # Load and Clean Original Data -------------------------------------------------
+# Brodie cleaning code
 
-# Copy outlier sets used by Brodie et al.
-outliers_eff_bird <- list("PD" = c("L2422371", "L3776738", "L2521761", 
-                                   "L6127181", "L3865754"),
-                          "FR" = c("L921125", "L2422371", "L4331944", 
-                                   "L13465594"),
-                          "SR" = c("L4789498", "L921125", "L1122096", 
-                                   "L7010824", "L3865754", "L3776738"))
-
-outliers_spil_bird <- list("PD" = c("L1084299", "L4225511", "L3846512", 
-                                    "L2129865", "L3267752"),
-                           "FR" = c("L4225511", "L5969878", "L3267752", 
-                                    "L4331944", "L13465594", "L1084299"),
-                           "SR" = c("L4225511", "L5624588", "L3321319", 
-                                    "L14087870"))
-
-outliers_spil_mammal <- list("PD" = c("WM-OP009", "WM-HCV003", "C24A25", 
-                                      "C1A09", "C1B12"),
-                             "FR" = c("Bal013a", "Bal017a", "C1CT21"),
-                             "SR" = c("Bal011", "C1CT50", "C24A25"))
-
-# Remove outliers from bird and mammal models
-dat_clean_bird <- clean_data("bird", 
-                             conn_metrics, 
-                             src_dir = "data/derived/public", 
-                             conn_dir = "data/derived/public",
-                             dst_dir = "data/derived/public")
-
-dat_clean_mammal <- clean_data("mammal", 
-                             conn_metrics, 
-                             src_dir = "data/derived/public", 
-                             conn_dir = "data/derived/public",
-                             dst_dir = "data/derived/public")
 ```
 
 
@@ -407,7 +376,9 @@ To assess **OR-Ho-1** we reproduced the propensity score matching procedure and 
 This procedure resulted in six fitted regressions.
 
 ```{r rpr_cor_eff, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
+# Brodies efficacy code Bird
 
+# Brodies efficacy code Mammals
 ```
 
 ```{r rpr_cor_eff_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
@@ -421,6 +392,10 @@ This produced 12 fitted regressions.
 
 ```{r rpr_cor_spill, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
 
+# Brodies spillover code Bird
+
+# Brodies spillover code Mammals
+
 ```
 
 ```{r rpr_cor_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
@@ -433,80 +408,8 @@ This produced 12 fitted regressions.
 
 **Build comparison table in with simplified symbology in Rmarkdown**
 
-## Reproduction Using Original Data and Code
-To assess **OR-Ho-1**, we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA efficacy for each the three biodiversity response variables for each taxon.
-This procedure resulted in six fitted regressions.
 
-```{r rpr_org_eff, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
 
-## Estimate PA efficacy (OR-Ho-1) using original data and code -----------------
-
-# Make a common catalog
-var_catalog <- data.frame(response_variable = c("asymptPD", "maxFRic", 
-                                                "SR.mean"), 
-                          name = c("PD", "FR", "SR"))
-
-# Reproduce models for birds
-rpr_eff_bird <- lapply(1:nrow(var_catalog), function(i){
-    model_pa_efficacy(dat_clean_bird, "brodie", "bird",
-                      var_catalog[[i, "response_variable"]], 
-                      outliers_eff_bird[[var_catalog[[i, "name"]]]])
-}); names(rpr_eff_bird) <- sprintf("mod_bird_eff_%s", var_catalog$name)
-
-# Reproduce models for mammals
-rpr_eff_mammal <- lapply(1:nrow(var_catalog), function(i){
-    model_pa_efficacy(dat_clean_mammal, "brodie", "mammal",
-                      var_catalog[[i, "response_variable"]], NULL)
-}); names(rpr_eff_mammal) <- sprintf("mod_mammal_eff_%s", var_catalog$name)
-```
-
-```{r rpr_org_eff_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
-
-# Insert code to construct a summary table of efficacy models like Brodie et al.
-
-```
-
-To assess **OR-Ho-2a** and **OR-Ho-2b** we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA size and PA distance spillovers for each the three biodiversity response variables for each taxon.
-This produced 12 fitted regressions.
-
-```{r rep_org_spill, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
-
-## Estimate PA efficacy (OR-Ho-2a,b) using original data and code --------------
-
-# Reproduce models for birds
-rpr_spill_bird <- lapply(1:nrow(var_catalog), function(i){
-    mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_clean_bird, "brodie", "bird", bnr_var, 
-                       var_catalog[[i, "response_variable"]], 
-                      outliers_spil_bird[[var_catalog[[i, "name"]]]])
-    })
-    names(mods) <- sprintf("mod_bird_%s_%s", 
-                           c("size", "dist"), var_catalog[[i, "name"]])
-    mods
-    
-})
-rpr_spill_bird <- do.call(c, rpr_spill_bird)
-
-# Reproduce models for mammals
-rpr_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
-    mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_clean_mammal, "brodie", "mammal", bnr_var, 
-                       var_catalog[[i, "response_variable"]], 
-                      outliers_spil_mammal[[var_catalog[[i, "name"]]]])
-    })
-    names(mods) <- sprintf("mod_mammal_%s_%s", 
-                           c("size", "dist"), var_catalog[[i, "name"]])
-    mods
-    
-})
-rpr_spill_mammal <- do.call(c, rpr_spill_mammal)
-```
-
-```{r rpr_org_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
-
-# Insert code to construct a summary table of efficacy models like Brodie et al.
-
-```
 ### Comparison of Statistical Estimates
 
 **Build comparison table in with simplified symbology in Rmarkdown**
