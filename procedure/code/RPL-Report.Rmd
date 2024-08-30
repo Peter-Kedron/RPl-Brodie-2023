@@ -159,8 +159,8 @@ dat_clean_mammal <- clean_data("mammal",
                              conn_dir = "data/derived/public",
                              dst_dir = "data/derived/public")
 
+# Identify and remove outliers
 dat_analysis_bird <- identify_outliers(dat_clean_bird)
-
 data_analysis_mammal <- identify_outliers(dat_clean_mammal)
 ```
 
@@ -170,21 +170,73 @@ data_analysis_mammal <- identify_outliers(dat_clean_mammal)
 We first used propensity score matching and a linear mixed effects model to assessed whether the finding that PA preserve vertebrate biodiversity within their boundaries persisted when adjusting for connectivity.
 Here we report connectivity results using a 100km threshold.
 
-```{r eval=FALSE, echo=TRUE, results='hide', message=FALSE}
-mod_pa_<- model_pa_efficacy(dat_analysis_bird, "connec", "bird", "aymptPD")
+```{r rpl_eff, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+# Make a common catalog
+var_catalog <- data.frame(response_variable = c("asymptPD", "maxFRic", 
+                                                "SR.mean"), 
+                          name = c("PD", "FR", "SR"))
+
+# Reproduce models for birds
+rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
+    model_pa_efficacy(dat_analysis_bird, "connec", "bird",
+                      var_catalog[[i, "response_variable"]], 
+                      outliers_eff_bird[[var_catalog[[i, "name"]]]])
+}); names(rpl_efficacy_bird) <- sprintf("mod_bird_eff_%s", var_catalog$name)
+
+# Reproduce models for mammals
+rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
+    model_pa_efficacy(dat_analysis_mammal, "connec", "mammal",
+                      var_catalog[[i, "response_variable"]], NULL)
+}); names(rpl_efficacy_mammal) <- sprintf("mod_mammal_eff_%s", var_catalog$name)
 ```
 
-**<< Insert Table of Replication Results >>**
+```{r rpl_eff_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
+# Insert code to construct a summary table of efficacy models like Brodie et al.
+
+```
 **<< Insert Table comparing Replication and Brodie using simplified typology >>**
 
 ## Linear Mixed Effects Model of PA Spillovers
 
-```{r eval=FALSE, echo=TRUE, results='hide', message=FALSE}
-mod_pa_<- model_pa_efficacy(dat_analysis_bird, "connec", "bird", "aymptPD")
+```{r rpl_spill, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+
+# Replicate spillover models for birds w/ connectivity
+## Lei, we need to change the outlier procedure in this function
+rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
+    mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
+        model_pa_spillover(dat_analysis_bird, "connec", "bird", bnr_var, 
+                       var_catalog[[i, "response_variable"]], 
+                      outliers_spil_bird[[var_catalog[[i, "name"]]]])
+    })
+    names(mods) <- sprintf("mod_bird_%s_%s", 
+                           c("size", "dist"), var_catalog[[i, "name"]])
+    mods
+    
+})
+rpl_spill_bird <- do.call(c, rep_models_bird)
+
+# Replicate spillover models for mammals w/ connectivity
+## Lei, we need to change the outlier procedure in this function
+rpl_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
+    mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
+        model_pa_spillover(dat_analysis_mammal, "connec", "mammal", bnr_var, 
+                       var_catalog[[i, "response_variable"]], 
+                      outliers_spil_mammal[[var_catalog[[i, "name"]]]])
+    })
+    names(mods) <- sprintf("mod_mammal_%s_%s", 
+                           c("size", "dist"), var_catalog[[i, "name"]])
+    mods
+    
+})
+rpl_spill_mammal <- do.call(c, rep_models_mammal)
 ```
 
-**<< Insert Table of Spillover Replication Results >>**
+```{r rpl_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+
+# Insert code to construct a summary table of efficacy models like Brodie et al.
+
+```
 
 **<< Insert Table comparing Spillover Replication and Brodie using simplified typology >>**
 
