@@ -12,17 +12,18 @@
 ## No output. Set up the computational environment.
 ## -------------------------------------------------------------------
 
-kick_off <- function(code_dir){
-    # Load libraries
+kick_off <- function(code_dir, date = "2024-08-27"){
+    # Install groundhog
+    if (!require("groundhog", character.only = TRUE)) {
+        install.packages("groundhog")
+        require("groundhog")
+    }
+    
+    # Load libraries with specific version by groundhog
     pkgs <- c("here", "sf", "dplyr", "terra", "wdpar", "countrycode", "stringr", 
               "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
               "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply")
-    for (pkg in pkgs){
-        if (!require(pkg, character.only = TRUE)) {
-            install.packages(pkg)
-            require(pkg, character.only = TRUE)
-        }
-    }
+    groundhog.library(pkgs, date)
     rm(pkgs, pkg)
     
     # Load functions
