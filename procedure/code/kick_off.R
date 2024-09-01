@@ -10,6 +10,10 @@
 
 ## Outputs:
 ## No output. Set up the computational environment.
+
+## WARNING:
+## Using groundhog may disrupt the usage as the permission or restart
+## issues.
 ## -------------------------------------------------------------------
 
 kick_off <- function(code_dir, date = "2024-08-27"){
@@ -21,10 +25,10 @@ kick_off <- function(code_dir, date = "2024-08-27"){
     
     # Load libraries with specific version by groundhog
     pkgs <- c("here", "sf", "dplyr", "terra", "wdpar", "countrycode", "stringr", 
-              "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
+              "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", "lmerTest",
               "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply")
     groundhog.library(pkgs, date)
-    rm(pkgs, pkg)
+    rm(pkgs)
     
     # Load functions
     functions <- c("clean_pa", "prep_dm", "calc_conn", "clean_data", 
