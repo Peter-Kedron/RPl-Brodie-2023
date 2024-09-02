@@ -46,7 +46,8 @@ knitr::opts_chunk$set(
   fig.width = 8,
   fig.path = paste0(here("results", "figures"), "/"),
   warning = FALSE,
-  message = FALSE
+  message = FALSE,
+  include = TRUE
 )
 
 # set working directory as the project folder
@@ -290,16 +291,28 @@ Both analyses were conducted in R using the following packages.
 ```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
 
 # Load required packages and scripts
-# Groundhog Brodies 
+# We made minimum changes to the original script
+library(groundhog)
+pkgs <- c("tidyverse", "Hmisc", "MatchIt",  "optmatch", "lme4",  "nlme", 
+          "lmerTest", "cowplot",   
+           "here", "modelsummary", "dagitty", "ggdag", "kableExtra")
+# We follow the recommendation to set the time for groundhog two weeks before 
+# when the original script was edited
+groundhog.library(pkgs, "2024-03-03") 
+
+# lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
+here('')
 ```
 
 For completeness, we first reproduced the causal diagram underlying the original analysis. 
 We made not substantive changes to the authors original code. 
 
-```{r SCM, echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE} 
-
+```{r SCM, echo = FALSE} 
 # Create the directed acyclic graph (DAG) of potential causal 
 # Assign PA as the exposure and diversity as the outcome.
+library(dagitty)
+library(ggdag)
+
 dagBrodie <- dagitty("dag {
   PA -> Diversity
   ForestStructure -> PA
@@ -361,12 +374,155 @@ No additional preparation was needed for our reproduction attempt using the auth
 ```{r clean_data, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
 
 # Load Revised Data ------------------------------------------------------------
+# Birds ------------------------------------------------------------------------
+rm(list = ls())
+dat_birds <- data.frame(read.csv(here("data/raw/public/training/bird_data_corrected_240122.csv"), header = T))
 
-# Wenxin add code loading corrected data here w/ 2 names
+# Mammals ----------------------------------------------------------------------
+dat_mammals <- data.frame(read.csv(here("data/raw/public/training/mammal_data_corrected_240122.csv"), header = T))
 
 # Load and Clean Original Data -------------------------------------------------
-# Brodie cleaning code
+# Birds ------------------------------------------------------------------------
+m01<-mean(dat_birds$utm_east,na.rm=T);
+s01<-sd(dat_birds$utm_east,na.rm=T); 
+dat_birds$utm_east.z<-(dat_birds$utm_east-m01)/s01
 
+m02<-mean(dat_birds$utm_north,na.rm=T);
+s02<-sd(dat_birds$utm_north,na.rm=T);
+dat_birds$utm_north.z<-(dat_birds$utm_north-m02)/s02
+
+m03<-mean(dat_birds$HDI,na.rm=T);
+s03<-sd(dat_birds$HDI,na.rm=T);
+dat_birds$HDI.z<-(dat_birds$HDI-m03)/s03
+
+m06<-mean(dat_birds$elev,na.rm=T);
+s06<-sd(dat_birds$elev,na.rm=T);
+dat_birds$elev.z<-(dat_birds$elev-m06)/s06
+
+m06f<-mean(dat_birds$TPI,na.rm=T);
+s06f<-sd(dat_birds$TPI,na.rm=T);
+dat_birds$TPI.z<-(dat_birds$TPI-m06f)/s06f
+
+m08<-mean(dat_birds$access_log10,na.rm=T);
+s08<-sd(dat_birds$access_log10,na.rm=T);
+dat_birds$access_log10.z<-(dat_birds$access_log10-m08)/s08
+
+m09<-mean(dat_birds$bio01,na.rm=T);
+s09<-sd(dat_birds$bio01,na.rm=T);
+dat_birds$bio01.z<-(dat_birds$bio01-m09)/s09
+
+# these two variables will be used in subsequent analysis so renamed
+# ---
+m44_birds<-mean(dat_birds$PA_size_km2,na.rm=T); 
+s44_birds<-sd(dat_birds$PA_size_km2,na.rm=T); 
+dat_birds$PA_size_km2.z<-(dat_birds$PA_size_km2-m44_birds)/s44_birds
+
+m45_birds<-mean(dat_birds$dist_to_PA,na.rm=T);
+s45_birds<-sd(dat_birds$dist_to_PA,na.rm=T);
+dat_birds$dist_to_PA.z<-(dat_birds$dist_to_PA-m45_birds)/s45_birds
+# ---
+
+m47<-mean(dat_birds$rh_95_a0.pred,na.rm=T);
+s47<-sd(dat_birds$rh_95_a0.pred,na.rm=T);
+dat_birds$rh_95_a0.pred.z<-(dat_birds$rh_95_a0.pred-m47)/s47
+
+m51<-mean(dat_birds$pai_a0.pred,na.rm=T);
+s51<-sd(dat_birds$pai_a0.pred,na.rm=T);
+dat_birds$pai_a0.pred.z<-(dat_birds$pai_a0.pred-m51)/s51
+
+m53<-mean(dat_birds$fhd_pai_1m_a0.pred,na.rm=T);
+s53<-sd(dat_birds$fhd_pai_1m_a0.pred,na.rm=T);
+dat_birds$fhd_pai_1m_a0.pred.z<-(dat_birds$fhd_pai_1m_a0.pred-m53)/s53
+
+m55<-mean(dat_birds$cover_a0.pred,na.rm=T);
+s55<-sd(dat_birds$cover_a0.pred,na.rm=T);
+dat_birds$cover_a0.pred.z<-(dat_birds$cover_a0.pred-m55)/s55
+
+m60<-mean(dat_birds$agbd_a0.pred,na.rm=T);
+s60<-sd(dat_birds$agbd_a0.pred,na.rm=T);
+dat_birds$agbd_a0.pred.z<-(dat_birds$agbd_a0.pred-m60)/s60
+
+dat_birds1 <- subset(dat_birds, select = c(station, country, utm_east, utm_north, utm_east.z, utm_north.z, 
+	elev.z, TPI.z, HDI.z, access_log10.z, bio01.z, 
+	PA, PA_size_km2.z, dist_to_PA.z, Hansen_recentloss, 
+	rh_95_a0.pred.z, pai_a0.pred.z, fhd_pai_1m_a0.pred.z, cover_a0.pred.z, agbd_a0.pred.z,  
+	maxFRic, asymptPD, SR.mean)) 
+dat_birds1 <- subset(dat_birds1, !is.na(dat_birds1$bio01.z))
+d_birds1 <- subset(dat_birds1, select = -c(dist_to_PA.z))
+d_birds1 <- d_birds1[complete.cases(d_birds1), ]
+d_birds1$gedi.m <- d_birds1$rh_95_a0.pred.z 
+d_birds1 <- subset(d_birds1, Hansen_recentloss == 0)
+
+# Mammals ----------------------------------------------------------------------
+m01<-mean(dat_mammals$utm_east,na.rm=T); 
+s01<-sd(dat_mammals$utm_east,na.rm=T); 
+dat_mammals$utm_east.z<-(dat_mammals$utm_east-m01)/s01
+
+m02<-mean(dat_mammals$utm_north,na.rm=T); 
+s02<-sd(dat_mammals$utm_north,na.rm=T); 
+dat_mammals$utm_north.z<-(dat_mammals$utm_north-m02)/s02
+
+m03<-mean(dat_mammals$HDI,na.rm=T); 
+s03<-sd(dat_mammals$HDI,na.rm=T); 
+dat_mammals$HDI.z<-(dat_mammals$HDI-m03)/s03
+
+m06<-mean(dat_mammals$elev,na.rm=T); 
+s06<-sd(dat_mammals$elev,na.rm=T); 
+dat_mammals$elev.z<-(dat_mammals$elev-m06)/s06
+
+m06f<-mean(dat_mammals$TPI,na.rm=T); 
+s06f<-sd(dat_mammals$TPI,na.rm=T); 
+dat_mammals$TPI.z<-(dat_mammals$TPI-m06f)/s06f
+
+m08<-mean(dat_mammals$access_log10,na.rm=T); 
+s08<-sd(dat_mammals$access_log10,na.rm=T); 
+dat_mammals$access_log10.z<-(dat_mammals$access_log10-m08)/s08
+
+m09<-mean(dat_mammals$bio01,na.rm=T); 
+s09<-sd(dat_mammals$bio01,na.rm=T); 
+dat_mammals$bio01.z<-(dat_mammals$bio01-m09)/s09
+
+# same here
+# ---
+m44_mammals<-mean(dat_mammals$PA_size_km2,na.rm=T); 
+s44_mammals<-sd(dat_mammals$PA_size_km2,na.rm=T); 
+dat_mammals$PA_size_km2.z<-(dat_mammals$PA_size_km2-m44_mammals)/s44_mammals
+
+m45_mammals<-mean(dat_mammals$dist_to_PA,na.rm=T); 
+s45_mammals<-sd(dat_mammals$dist_to_PA,na.rm=T); 
+dat_mammals$dist_to_PA.z<-(dat_mammals$dist_to_PA-m45_mammals)/s45_mammals
+# ---
+
+m47<-mean(dat_mammals$rh_95_a0.pred,na.rm=T); 
+s47<-sd(dat_mammals$rh_95_a0.pred,na.rm=T); 
+dat_mammals$rh_95_a0.pred.z<-(dat_mammals$rh_95_a0.pred-m47)/s47
+
+m51<-mean(dat_mammals$pai_a0.pred,na.rm=T);
+s51<-sd(dat_mammals$pai_a0.pred,na.rm=T);
+dat_mammals$pai_a0.pred.z<-(dat_mammals$pai_a0.pred-m51)/s51
+
+m53<-mean(dat_mammals$fhd_pai_1m_a0.pred,na.rm=T);
+s53<-sd(dat_mammals$fhd_pai_1m_a0.pred,na.rm=T);
+dat_mammals$fhd_pai_1m_a0.pred.z<-(dat_mammals$fhd_pai_1m_a0.pred-m53)/s53
+
+m55<-mean(dat_mammals$cover_a0.pred,na.rm=T);
+s55<-sd(dat_mammals$cover_a0.pred,na.rm=T);
+dat_mammals$cover_a0.pred.z<-(dat_mammals$cover_a0.pred-m55)/s55
+
+m60<-mean(dat_mammals$agbd_a0.pred,na.rm=T);
+s60<-sd(dat_mammals$agbd_a0.pred,na.rm=T);
+dat_mammals$agbd_a0.pred.z<-(dat_mammals$agbd_a0.pred-m60)/s60
+
+dat_mammals1 <- subset(dat_mammals, select = c(study_area, station, country, utm_east, utm_north, utm_east.z, utm_north.z, 
+	elev.z, TPI.z, HDI.z, access_log10.z, bio01.z, 
+	PA, PA_size_km2.z, dist_to_PA.z, Hansen_recentloss, 
+	rh_95_a0.pred.z, pai_a0.pred.z, fhd_pai_1m_a0.pred.z, cover_a0.pred.z, agbd_a0.pred.z,  
+	maxFRic, asymptPD, SR.mean)) 
+dat_mammals1 <- subset(dat_mammals1, !is.na(dat_mammals1$bio01.z))
+d_mammals1 <- subset(dat_mammals1, select = -c(dist_to_PA.z))
+d_mammals1 <- d_mammals1[complete.cases(d_mammals1), ]
+d_mammals1$gedi.m <- d_mammals1$rh_95_a0.pred.z 
+d_mammals1 <- subset(d_mammals1, Hansen_recentloss == 0)
 ```
 
 
@@ -375,16 +531,134 @@ No additional preparation was needed for our reproduction attempt using the auth
 To assess **OR-Ho-1** we reproduced the propensity score matching procedure and linear mixed-effects modeling conducted by the Brodie et al. for each the three biodiversity response variables for each taxon. 
 This procedure resulted in six fitted regressions.
 
-```{r rpr_cor_eff, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
-# Brodies efficacy code Bird
+```{r rpr_cor_eff, echo = TRUE, results = 'show', message = FALSE, eval = FALSE, include = TRUE}
+# Brodies efficacy code Bird ---------------------------------------------------
+#--------------------------- PD ------------------------------------------------
+d_birds1_pd <- d_birds1
+d_birds1_pd$y <- d_birds1_pd$asymptPD
 
-# Brodies efficacy code Mammals
+#----- All sites - PA effect - Matched -----
+d_birds1b <- subset(d_birds1_pd, station != "L2422371")
+d_birds1b <- subset(d_birds1b, station != "L3776738")
+d_birds1b <- subset(d_birds1b, station != "L2521761")
+d_birds1b <- subset(d_birds1b, station != "L6127181")
+d_birds1b <- subset(d_birds1b, station != "L3865754")
+matchb_birds <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
+	data = d_birds1b, method = "full", distance = "glm", link = "probit", replace = F)
+dmatchb_birds_pd <- match.data(matchb_birds)
+mm02_birds_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb_birds_pd, weights = ~I(1/weights), 
+	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+#--------------------------- FR ------------------------------------------------
+d_birds1_fr <- d_birds1
+d_birds1_fr$y <- d_birds1_fr$maxFR
+
+#----- All sites - PA effect - Matched -----
+d_birds1b <- subset(d_birds1_fr, station != "L921125")
+d_birds1b <- subset(d_birds1b, station != "L2422371")
+d_birds1b <- subset(d_birds1b, station != "L4331944")
+d_brids1b <- subset(d_birds1b, station != "L13465594")
+matchb_birds <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
+	data = d_birds1b, method = "full", distance = "glm", link = "probit", replace = F)
+dmatchb_birds_fr <- match.data(matchb_birds)
+mm02_birds_fr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb_birds_fr, weights = ~I(1/weights), 
+	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+#--------------------------- SR ------------------------------------------------
+d_birds1_sr <- d_birds1
+d_birds1_sr$y <- d_birds1_sr$SR.mean
+
+#----- All sites - PA effect - Matched -----
+d_birds1b <- subset(d_birds1_sr, station != "L4789498")
+d_birds1b <- subset(d_birds1b, station != "L921125")
+d_birds1b <- subset(d_birds1b, station != "L1122096")
+d_birds1b <- subset(d_birds1b, station != "L7010824")
+d_birds1b <- subset(d_birds1b, station != "L3865754")
+d_birds1b <- subset(d_birds1b, station != "L3776738")
+matchb_birds <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
+	data = d_birds1b, method = "full", distance = "glm", link = "probit", replace = F)
+dmatchb_birds_sr <- match.data(matchb_birds)
+mm02_birds_sr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, random = list(~1 | country), data = dmatchb_birds_sr, weights = ~I(1/weights), 
+	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+
+# Brodies efficacy code Mammals ------------------------------------------------
+#--------------------------- PD ------------------------------------------------
+d_mammals1_pd <- d_mammals1
+d_mammals1_pd$y <- d_mammals1_pd$asymptPD
+
+#----- All sites - PA effect - Matched -----
+match_mammals2 <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
+	data = d_mammals1_pd, method = "full", distance = "glm", link = "probit", replace = F)
+# summary(match_mammals2)
+dmatch_mammals_pd <- match.data(match_mammals2)
+mm02_mammals_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, 
+	random = list(~1 | country, ~1 | study_area), data = dmatch_mammals_pd, weights = ~I(1/weights), 
+	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+#--------------------------- FR ------------------------------------------------
+d_mammals1_fr <- d_mammals1
+d_mammals1_fr$y <- d_mammals1_fr$maxFR
+
+#----- All sites - PA effect - Matched -----
+match_mammals2 <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
+	data = d_mammals1_fr, method = "full", distance = "glm", link = "probit", replace = F)
+dmatch_mammals_fr <- match.data(match_mammals2)
+mm02_mammals_fr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, 
+	random = list(~1 | country, ~1 | study_area), data = dmatch_mammals_fr, weights = ~I(1/weights), 
+	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+#--------------------------- SR ------------------------------------------------
+d_mammals1_sr <- d_mammals1
+d_mammals1_sr$y <- d_mammals1_sr$SR.mean
+
+#----- All sites - PA effect - Matched -----
+match_mammals2 <- MatchIt::matchit(PA ~ utm_east.z + utm_north.z + gedi.m + access_log10.z + HDI.z, 
+	data = d_mammals1_sr, method = "full", distance = "glm", link = "probit", replace = F)
+dmatch_mammals_sr <- match.data(match_mammals2)
+mm02_mammals_sr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA, 
+	random = list(~1 | country, ~1 | study_area), data = dmatch_mammals_sr, weights = ~I(1/weights), 
+	correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+# create a list to store these models ------------------------------------------
+bird_eff_models <- list(PD = mm02_birds_pd, FR = mm02_birds_fr, SR = mm02_birds_sr)
+mammals_eff_models <- list(PD = mm02_mammals_pd, FR = mm02_mammals_fr, SR = mm02_mammals_sr)
+efficacy_models <- c(bird_eff_models, mammals_eff_models)
+
 ```
 
-```{r rpr_cor_eff_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r rpr_cor_eff_tab, echo = TRUE, warning = FALSE, message = FALSE}
 
 # Insert code to construct a summary table of efficacy models like Brodie et al.
+# maybe should use with KableExtra to construct customized tables
 
+#library(tibble)
+#rows <- tribble(~term,          ~OLS,  ~Logit,
+#                'factor(cyl)4', '-',   '-',
+#                'Info',         '???', 'XYZ')
+#attr(rows, 'position') <- c(3, 9)
+#modelsummary(models, add_rows = rows)
+
+# polr
+library(modelsummary)
+library(kableExtra)
+tab_eff <- msummary(efficacy_models, output = "kableExtra", fmt = 2, 
+         estimate = c("{estimate} ({std.error}, {p.value})"), 
+         coef_rename = c("(Intercept)" = "Intercept","gedi.m" = "Forest canopy height", 
+                         "access_log10.z" = "Site accessibility", "HDI.z" = "HDI"))
+tab_eff <- tab_eff %>%
+    
+    # column labels
+    add_header_above(c(" " = 1, "Birds" = 3, "Mammals" = 3)) 
+
+tab_eff
+#%>%
+   
+    # text and background color
+ #   row_spec(3, color = 'red') %>%
+ #   row_spec(5, background = 'lightblue')
+
+# r.squaredGLMM() --> compute R squared values
 ```
 
 To assess **OR-Ho-2a** and **OR-Ho-2b** we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA size and PA distance spillovers for each the three biodiversity response variables for each taxon.
@@ -392,16 +666,210 @@ This produced 12 fitted regressions.
 
 ```{r rpr_cor_spill, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
 
-# Brodies spillover code Bird
+# Brodies spillover effect code Bird -------------------------------------------
+#--------------------------- PD ------------------------------------------------
+# PA size ----------------------------------------------------------------------
+d_birds3 <- subset(d_birds1_pd, PA == 0)
+tmp <- subset(dat_birds1, select = c(station, dist_to_PA.z))
+d_birds3 <- left_join(d_birds3, tmp, by = "station")
+d_birds3$PA_size_km2 <- (d_birds3$PA_size_km2.z * s44_birds) + m44_birds
+PA_size_threshold.z <- (500 - m44_birds) / s44_birds
+d_birds3$BigPA <- ifelse(d_birds3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
+d_birds3b <- subset(d_birds3, station != "L1084299")
+d_birds3b <- subset(d_birds3b, station != "L4225511")
+d_birds3b <- subset(d_birds3b, station != "L3846512")
+d_birds3b <- subset(d_birds3b, station != "L2129865")
+d_birds3b <- subset(d_birds3b, station != "L3267752")
+matchb_birds_size_pd <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	dist_to_PA.z, data = d_birds3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatchb_birds_size_pd <- match.data(matchb_birds_size_pd)
+mm02b_birds_size_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + dist_to_PA.z + BigPA, random = list(~1 | country),
+	data = dmatchb_birds_size_pd, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
-# Brodies spillover code Mammals
+# PA distance ------------------------------------------------------------------
+d_birds3b$dist_to_PA <- (d_birds3b$dist_to_PA.z * s45_birds) + m45_birds
+PA_dist_threshold <- 2 # threshold distance (km)
+d_birds3b$CloseToPA <- ifelse(d_birds3b$dist_to_PA > PA_dist_threshold, 0, 1)
+match2_birds_dist_pd <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	PA_size_km2.z, data = d_birds3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatch_birds_dist_pd <- match.data(match2_birds_dist_pd)
+mm02d_birds_dist_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
+	data = dmatch_birds_dist_pd, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
+#--------------------------- FR ------------------------------------------------
+# PA size ----------------------------------------------------------------------
+d_birds3 <- subset(d_birds1_fr, PA == 0)
+tmp <- subset(dat_birds1, select = c(station, dist_to_PA.z))
+d_birds3 <- left_join(d_birds3, tmp, by = "station")
+d_birds3$PA_size_km2 <- (d_birds3$PA_size_km2.z * s44_birds) + m44_birds
+PA_size_threshold.z <- (500 - m44_birds) / s44_birds
+d_birds3$BigPA <- ifelse(d_birds3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
+d_birds3b <- subset(d_birds3, station != "L4225511")
+d_birds3b <- subset(d_birds3b, station != "L5969878")
+d_birds3b <- subset(d_birds3b, station != "L3267752")
+d_birds3b <- subset(d_birds3b, station != "L4331944")
+d_birds3b <- subset(d_birds3b, station != "L13465594")
+d_birds3b <- subset(d_birds3b, station != "L1084299")
+matchb_birds_size_fr <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	dist_to_PA.z, data = d_birds3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatchb_birds_size_fr <- match.data(matchb_birds_size_fr)
+mm02b_birds_size_fr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + dist_to_PA.z + BigPA, random = list(~1 | country),
+	data = dmatchb_birds_size_fr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+# PA distance ------------------------------------------------------------------
+d_birds3b$dist_to_PA <- (d_birds3b$dist_to_PA.z * s45_birds) + m45_birds
+PA_dist_threshold <- 2 # threshold distance (km)
+d_birds3b$CloseToPA <- ifelse(d_birds3b$dist_to_PA > PA_dist_threshold, 0, 1)
+match2_birds_dist_fr <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	PA_size_km2.z, data = d_birds3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatch_birds_dist_fr <- match.data(match2_birds_dist_fr)
+mm02d_birds_dist_fr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
+	data = dmatch_birds_dist_fr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+
+#--------------------------- SR ------------------------------------------------
+# PA size ----------------------------------------------------------------------
+d_birds3 <- subset(d_birds1_sr, PA == 0)
+tmp <- subset(dat_birds1, select = c(station, dist_to_PA.z))
+d_birds3 <- left_join(d_birds3, tmp, by = "station")
+d_birds3$PA_size_km2 <- (d_birds3$PA_size_km2.z * s44_birds) + m44_birds
+PA_size_threshold.z <- (500 - m44) / s44
+d_birds3$BigPA <- ifelse(d_birds3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
+d_birds3b <- subset(d_birds3, station != "L4225511")
+d_birds3b <- subset(d_birds3b, station != "L5624588")
+d_birds3b <- subset(d_birds3b, station != "L3321319")
+d_birds3b <- subset(d_birds3b, station != "L14087870")
+matchb_birds_size_sr <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	dist_to_PA.z, data = d_birds3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatchb_birds_size_sr <- match.data(matchb_birds_size_sr)
+mm02b_birds_size_sr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + dist_to_PA.z + BigPA, random = list(~1 | country),
+	data = dmatchb_birds_size_sr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+# PA distance ------------------------------------------------------------------
+d_birds3b$dist_to_PA <- (d_birds3b$dist_to_PA.z * s45_birds) + m45_birds
+PA_dist_threshold <- 2 # threshold distance (km)
+d_birds3b$CloseToPA <- ifelse(d_birds3b$dist_to_PA > PA_dist_threshold, 0, 1)
+match2_birds_dist_sr <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	PA_size_km2.z, data = d_birds3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatch_birds_dist_sr <- match.data(match2_birds_dist_sr)
+mm02d_birds_dist_sr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
+	data = dmatch_birds_dist_sr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+
+# Brodies spillover effect code Mammals ----------------------------------------
+#--------------------------- PD ------------------------------------------------
+# PA size ----------------------------------------------------------------------
+d_mammals3 <- subset(d_mammals1_pd, PA == 0)
+tmp <- subset(dat_mammals1, select = c(station, dist_to_PA.z))
+d_mammals3 <- left_join(d_mammals3, tmp, by = "station")
+d_mammals3$PA_size_km2 <- (d_mammals3$PA_size_km2.z * s44_mammals) + m44_mammals
+PA_size_threshold.z <- (500 - m44_mammals) / s44_mammals
+d_mammals3$BigPA <- ifelse(d_mammals3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
+d_mammals3b <- subset(d_mammals3, station != "WM-OP009")
+d_mammals3b <- subset(d_mammals3b, station != "WM-HCV003")
+d_mammals3b <- subset(d_mammals3b, station != "C24A25")
+d_mammals3b <- subset(d_mammals3b, station != "C1A09")
+d_mammals3b <- subset(d_mammals3b, station != "C1B12")
+matchb_mammals_size_pd <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	dist_to_PA.z, data = d_mammals3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatchb_mammals_size_pd <- match.data(matchb_mammals_size_pd)
+mm02b_mammals_size_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + dist_to_PA.z + BigPA, random = list(~1 | country, ~1 | study_area),
+	data = dmatchb_mammals_size_pd, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+# PA distance ------------------------------------------------------------------
+d_mammals3b$dist_to_PA <- (d_mammals3b$dist_to_PA.z * s45_mammals) + m45_mammals
+PA_dist_threshold <- 2 
+d_mammals3b$CloseToPA <- ifelse(d_mammals3b$dist_to_PA > PA_dist_threshold, 0, 1)
+match2_mammals_dist_pd <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	PA_size_km2.z, data = d_mammals3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatch_mammals_dist_pd <- match.data(match2_mammals_dist_pd)
+mm02d_mammals_dist_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | study_area),
+	data = dmatch_mammals_dist_pd, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+
+#--------------------------- FR ------------------------------------------------
+# PA size ----------------------------------------------------------------------
+d_mammals3 <- subset(d_mammals1_fr, PA == 0)
+tmp <- subset(dat_mammals1, select = c(station, dist_to_PA.z))
+d_mammals3 <- left_join(d_mammals3, tmp, by = "station")
+d_mammals3$PA_size_km2 <- (d_mammals3$PA_size_km2.z * s44_mammals) + m44_mammals
+PA_size_threshold.z <- (500 - m44_mammals) / s44_mammals
+d_mammals3$BigPA <- ifelse(d_mammals3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
+d_mammals3b <- subset(d_mammals3, station != "Bal013a")
+d_mammals3b <- subset(d_mammals3b, station != "Bal017a")
+d_mammals3b <- subset(d_mammals3b, station != "C1CT21")
+matchb_mammals_size_fr <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	dist_to_PA.z, data = d_mammals3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatchb_mammals_size_fr <- match.data(matchb_mammals_size_fr)
+mm02b_mammals_size_fr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + dist_to_PA.z + BigPA, random = list(~1 | country, ~1 | study_area),
+	data = dmatchb_mammals_size_fr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+# PA distance ------------------------------------------------------------------
+d_mammals3b$dist_to_PA <- (d_mammals3b$dist_to_PA.z * s45_mammals) + m45_mammals
+PA_dist_threshold <- 2 
+d_mammals3b$CloseToPA <- ifelse(d_mammals3b$dist_to_PA > PA_dist_threshold, 0, 1)
+match2_mammals_dist_fr <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	PA_size_km2.z, data = d_mammals3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatch_mammals_dist_fr <- match.data(match2_mammals_dist_fr)
+mm02d_mammals_dist_fr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country, ~1 | study_area),
+	data = dmatch_mammals_dist_fr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+
+#--------------------------- SR ------------------------------------------------
+# PA size ----------------------------------------------------------------------
+d_mammals3 <- subset(d_mammals1_sr, PA == 0)
+tmp <- subset(dat_mammals1, select = c(station, dist_to_PA.z))
+d_mammals3 <- left_join(d_mammals3, tmp, by = "station")
+d_mammals3$PA_size_km2 <- (d_mammals3$PA_size_km2.z * s44_mammals) + m44_mammals
+PA_size_threshold.z <- (500 - m44_mammals) / s44_mammals
+d_mammals3$BigPA <- ifelse(d_mammals3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
+d_mammals3b <- subset(d_mammals3, station != "Bal011")
+d_mammals3b <- subset(d_mammals3b, station != "C1CT50")
+d_mammals3b <- subset(d_mammals3b, station != "C24A25")
+matchb_mammals_size_sr <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	dist_to_PA.z, data = d_mammals3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatchb_mammals_size_sr <- match.data(matchb_mammals_size_sr)
+mm02b_mammals_size_sr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + dist_to_PA.z + BigPA, random = list(~1 | country, ~1 | study_area),
+	data = dmatchb_mammals_size_sr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+# PA distance ------------------------------------------------------------------
+d_mammals3b$dist_to_PA <- (d_mammals3b$dist_to_PA.z * s45_mammals) + m45_mammals
+PA_dist_threshold <- 2 
+d_mammals3b$CloseToPA <- ifelse(d_mammals3b$dist_to_PA > PA_dist_threshold, 0, 1)
+match2_mammals_dist_sr <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
+	PA_size_km2.z, data = d_mammals3b, method = "full", distance = "glm",
+	link = "probit", replace = F)
+dmatch_mammals_dist_sr <- match.data(match2_mammals_dist_sr)
+mm02d_mammals_dist_sr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country, ~1 | study_area),
+	data = dmatch_mammals_dist_sr, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+
+# create a list to store these models ------------------------------------------
+bird_size_models <- list(PD = mm02b_birds_size_pd, FR = mm02b_birds_size_fr, SR = mm02b_birds_size_sr)
+mammals_size_models <- list(PD = mm02b_mammals_size_pd, FR = mm02b_mammals_size_fr, SR = mm02b_mammals_size_sr)
+
+bird_dist_models <- list(PD = mm02d_birds_dist_pd, FR = mm02d_birds_dist_fr, SR = mm02d_birds_dist_sr)
+mammals_dist_models <- list(PD = mm02d_mammals_dist_pd, FR = mm02d_mammals_dist_fr, SR = mm02d_mammals_dist_sr)
+
+size_models <- c(bird_size_models, mammals_size_models)
+dist_models <- c(bird_dist_models, mammals_dist_models)
 ```
 
 ```{r rpr_cor_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 # Insert code to construct a summary table of efficacy models like Brodie et al.
-
+# <<code chunk>>
 ```
 
 ### Comparison of Statistical Estimates
