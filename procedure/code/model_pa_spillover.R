@@ -105,198 +105,214 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
     dat <- dat[complete.cases(dat), ]
     
     # Remove outliers
-    if (length(outliers) == 1 & "auto" %in% outliers){
-        outliers <- identify_outliers()
+    if (!(length(outliers) == 1 & "auto" %in% outliers)){
+        dat <- dat %>% filter(!station %in% outliers)
+        dat <- dat %>% select(-station)
+        det_outlier_flag <- FALSE
+    } else {
+        det_outlier_flag <- TRUE
     }
-    dat <- dat %>% filter(!station %in% outliers)
-    dat <- dat %>% select(-station)
     
-    # Internal note: 2M
-    if (binary_var == "BigPA"){
-        # Create mix linear model accordingly
-        ## Internal note: 3A
-        if (mod_type == "brodie"){
-            # Perform propensity score matching following the DAG developed in the 
-            # structural causal modeling and retrieve the matched dataset
-            match_mod <- matchit(BigPA ~ utm_east.z + utm_north.z + forest_structure + 
-                                     access_log10.z + HDI.z + dist_to_PA.z,
-                                 data = dat, method = "full", 
-                                 distance = "glm", link = "probit", replace = F)
-            dat_matched <- match.data(match_mod)
-            
-            # Run original Brodie linear mixed effects model with exponential spatial 
-            # correlation structure for the residuals
-            ## Internal note: 2T
-            if (taxon == "bird"){
-                mod_spillover <- lme(
-                    y ~ forest_structure + access_log10.z 
-                    + HDI.z + dist_to_PA.z + BigPA,  
-                    random = list(~1 | country), 
-                    data = dat_matched, weights = ~I(1/weights), 
-                    correlation = corExp(form = ~utm_east + utm_north, 
-                                         nugget = TRUE))
-            } else if (taxon == "mammal"){
-                mod_spillover <- lme(
-                    y ~ forest_structure + access_log10.z 
-                    + HDI.z + dist_to_PA.z + BigPA, 
-                    random = list(~1 | country, ~1 | study_area), 
-                    data = dat_matched, weights = ~I(1/weights), 
-                    correlation = corExp(form = ~utm_east + utm_north, 
-                                         nugget = TRUE))
-            }
-        } else {
-            # Perform propensity score matching following the DAG developed in the 
-            # structural causal modeling and retrieve the matched dataset
-            match_mod <- matchit(
-                BigPA ~ utm_east.z + utm_north.z + forest_structure + 
-                    access_log10.z + HDI.z + dist_to_PA.z + connectivity.z,
-                data = dat, method = "full", 
-                distance = "glm", link = "probit", replace = F)
-            dat_matched <- match.data(match_mod)
-            
-            if (mod_type == "connec"){
+    while(TRUE){
+        # Internal note: 2M
+        if (binary_var == "BigPA"){
+            # Create mix linear model accordingly
+            ## Internal note: 3A
+            if (mod_type == "brodie"){
+                # Perform propensity score matching following the DAG developed in the 
+                # structural causal modeling and retrieve the matched dataset
+                match_mod <- matchit(BigPA ~ utm_east.z + utm_north.z + forest_structure + 
+                                         access_log10.z + HDI.z + dist_to_PA.z,
+                                     data = dat, method = "full", 
+                                     distance = "glm", link = "probit", replace = F)
+                dat_matched <- match.data(match_mod)
+                
                 # Run original Brodie linear mixed effects model with exponential spatial 
                 # correlation structure for the residuals
                 ## Internal note: 2T
                 if (taxon == "bird"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
-                        + HDI.z + dist_to_PA.z + BigPA + connectivity.z,  
+                        + HDI.z + dist_to_PA.z + BigPA,  
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
+                                             nugget = TRUE))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
-                        + HDI.z + dist_to_PA.z + BigPA + connectivity.z, 
+                        + HDI.z + dist_to_PA.z + BigPA, 
                         random = list(~1 | country, ~1 | study_area), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
+                                             nugget = TRUE))
                 }
             } else {
-                # Run original Brodie linear mixed effects model with exponential spatial 
-                # correlation structure for the residuals
+                # Perform propensity score matching following the DAG developed in the 
+                # structural causal modeling and retrieve the matched dataset
+                match_mod <- matchit(
+                    BigPA ~ utm_east.z + utm_north.z + forest_structure + 
+                        access_log10.z + HDI.z + dist_to_PA.z + connectivity.z,
+                    data = dat, method = "full", 
+                    distance = "glm", link = "probit", replace = F)
+                dat_matched <- match.data(match_mod)
+                
+                if (mod_type == "connec"){
+                    # Run original Brodie linear mixed effects model with 
+                    # exponential spatial correlation structure for the residuals
+                    ## Internal note: 2T
+                    if (taxon == "bird"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + dist_to_PA.z + BigPA + connectivity.z,  
+                            random = list(~1 | country), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    } else if (taxon == "mammal"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + dist_to_PA.z + BigPA + connectivity.z, 
+                            random = list(~1 | country, ~1 | study_area), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    }
+                } else {
+                    # Run original Brodie linear mixed effects model with 
+                    # exponential spatial correlation structure for the residuals
+                    ## Internal note: 2T
+                    if (taxon == "bird"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + dist_to_PA.z + BigPA +
+                                connectivity.z + connectivity.z:BigPA,  
+                            random = list(~1 | country), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    } else if (taxon == "mammal"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + dist_to_PA.z + BigPA +
+                                connectivity.z + connectivity.z:BigPA, 
+                            random = list(~1 | country, ~1 | study_area), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    }
+                }
+            }
+        } else { # CloseToPA
+            # Create mix linear model accordingly
+            if (mod_type == "brodie"){
+                # Perform propensity score matching following the DAG developed in the 
+                # structural causal modeling and retrieve the matched dataset
+                match_mod <- matchit(CloseToPA ~ utm_east.z + utm_north.z + 
+                                         forest_structure + access_log10.z + HDI.z +
+                                         PA_size_km2.z,
+                                     data = dat, method = "full", 
+                                     distance = "glm", link = "probit", replace = F)
+                dat_matched <- match.data(match_mod)
+                
+                # Run original Brodie linear mixed effects model with exponential  
+                # spatial correlation structure for the residuals
                 ## Internal note: 2T
                 if (taxon == "bird"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
-                        + HDI.z + dist_to_PA.z + BigPA +
-                            connectivity.z + connectivity.z:BigPA,  
+                        + HDI.z + PA_size_km2.z + CloseToPA, 
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
+                                             nugget = TRUE))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
-                        + HDI.z + dist_to_PA.z + BigPA +
-                            connectivity.z + connectivity.z:BigPA, 
+                        + HDI.z + PA_size_km2.z + CloseToPA, 
                         random = list(~1 | country, ~1 | study_area), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
+                                             nugget = TRUE))
+                }
+            } else {
+                # Perform propensity score matching following the DAG developed in the 
+                # structural causal modeling and retrieve the matched dataset
+                match_mod <- matchit(CloseToPA ~ utm_east.z + utm_north.z + 
+                                         forest_structure + access_log10.z + HDI.z +
+                                         PA_size_km2.z + connectivity.z,
+                                     data = dat, method = "full", 
+                                     distance = "glm", link = "probit", replace = F)
+                dat_matched <- match.data(match_mod)
+                
+                if (mod_type == "connec"){
+                    # Run original Brodie linear mixed effects model with 
+                    # exponential spatial correlation structure for the residuals
+                    ## Internal note: 2T
+                    if (taxon == "bird"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z, 
+                            random = list(~1 | country), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    } else if (taxon == "mammal"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z, 
+                            random = list(~1 | country, ~1 | study_area), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    }
+                } else {
+                    # Run original Brodie linear mixed effects model with 
+                    # exponential spatial correlation structure for the residuals
+                    ## Internal note: 2T
+                    if (taxon == "bird"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z +
+                                connectivity.z:CloseToPA, 
+                            random = list(~1 | country), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    } else if (taxon == "mammal"){
+                        mod_spillover <- lme(
+                            y ~ forest_structure + access_log10.z 
+                            + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z +
+                                connectivity.z:CloseToPA, 
+                            random = list(~1 | country, ~1 | study_area), 
+                            data = dat_matched, weights = ~I(1/weights), 
+                            correlation = corExp(form = ~utm_east + utm_north, 
+                                                 nugget = TRUE),
+                            control =list(msMaxIter = 1000, msMaxEval = 1000))
+                    }
                 }
             }
         }
-    } else { # CloseToPA
-        # Create mix linear model accordingly
-        if (mod_type == "brodie"){
-            # Perform propensity score matching following the DAG developed in the 
-            # structural causal modeling and retrieve the matched dataset
-            match_mod <- matchit(CloseToPA ~ utm_east.z + utm_north.z + 
-                                     forest_structure + access_log10.z + HDI.z +
-                                     PA_size_km2.z,
-                                 data = dat, method = "full", 
-                                 distance = "glm", link = "probit", replace = F)
-            dat_matched <- match.data(match_mod)
-            
-            # Run original Brodie linear mixed effects model with exponential spatial 
-            # correlation structure for the residuals
-            ## Internal note: 2T
-            if (taxon == "bird"){
-                mod_spillover <- lme(
-                    y ~ forest_structure + access_log10.z 
-                    + HDI.z + PA_size_km2.z + CloseToPA, 
-                    random = list(~1 | country), 
-                    data = dat_matched, weights = ~I(1/weights), 
-                    correlation = corExp(form = ~utm_east + utm_north, 
-                                         nugget = TRUE))
-            } else if (taxon == "mammal"){
-                mod_spillover <- lme(
-                    y ~ forest_structure + access_log10.z 
-                    + HDI.z + PA_size_km2.z + CloseToPA, 
-                    random = list(~1 | country, ~1 | study_area), 
-                    data = dat_matched, weights = ~I(1/weights), 
-                    correlation = corExp(form = ~utm_east + utm_north, 
-                                         nugget = TRUE))
-            }
-        } else {
-            # Perform propensity score matching following the DAG developed in the 
-            # structural causal modeling and retrieve the matched dataset
-            match_mod <- matchit(CloseToPA ~ utm_east.z + utm_north.z + 
-                                     forest_structure + access_log10.z + HDI.z +
-                                     PA_size_km2.z + connectivity.z,
-                                 data = dat, method = "full", 
-                                 distance = "glm", link = "probit", replace = F)
-            dat_matched <- match.data(match_mod)
-            
-            if (mod_type == "connec"){
-                # Run original Brodie linear mixed effects model with exponential spatial 
-                # correlation structure for the residuals
-                ## Internal note: 2T
-                if (taxon == "bird"){
-                    mod_spillover <- lme(
-                        y ~ forest_structure + access_log10.z 
-                        + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z, 
-                        random = list(~1 | country), 
-                        data = dat_matched, weights = ~I(1/weights), 
-                        correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
-                } else if (taxon == "mammal"){
-                    mod_spillover <- lme(
-                        y ~ forest_structure + access_log10.z 
-                        + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z, 
-                        random = list(~1 | country, ~1 | study_area), 
-                        data = dat_matched, weights = ~I(1/weights), 
-                        correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
-                }
-            } else {
-                # Run original Brodie linear mixed effects model with exponential spatial 
-                # correlation structure for the residuals
-                ## Internal note: 2T
-                if (taxon == "bird"){
-                    mod_spillover <- lme(
-                        y ~ forest_structure + access_log10.z 
-                        + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z +
-                            connectivity.z:CloseToPA, 
-                        random = list(~1 | country), 
-                        data = dat_matched, weights = ~I(1/weights), 
-                        correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
-                } else if (taxon == "mammal"){
-                    mod_spillover <- lme(
-                        y ~ forest_structure + access_log10.z 
-                        + HDI.z + PA_size_km2.z + CloseToPA + connectivity.z +
-                            connectivity.z:CloseToPA, 
-                        random = list(~1 | country, ~1 | study_area), 
-                        data = dat_matched, weights = ~I(1/weights), 
-                        correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control =list(msMaxIter = 1000, msMaxEval = 1000))
-                }
-            }
+        
+        # Detect outliers if necessary
+        if (det_outlier_flag){
+            message("Diagnose outliers.")
+            outliers <- identify_outliers(dat, mod_efficacy)
+            dat <- dat %>% filter(!station %in% outliers)
+            dat <- dat %>% select(-station)
+            det_outlier_flag <- FALSE
+        } else{
+            break
         }
     }
+    
     
     # Return the model
     return(mod_spillover)
