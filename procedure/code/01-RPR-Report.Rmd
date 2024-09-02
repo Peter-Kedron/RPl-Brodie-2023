@@ -626,7 +626,9 @@ efficacy_models <- c(bird_eff_models, mammals_eff_models)
 
 ```
 
+
 Wenxin's initial attempt to create a model result summary table.
+
 
 ```{r rpr_cor_eff_tab, echo = FALSE, warning = FALSE, message = FALSE, eval=TRUE}
 # Insert code to construct a summary table of efficacy models like Brodie et al.
@@ -672,7 +674,9 @@ tab_eff <- tab_eff %>%
 tab_eff
 ```
 
+
 Ultimately adapted Lei's code from the RPL report that's much more flexible.
+
 
 ```{r rpr_cor_eff_tab_final, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
 # <<final table>>
@@ -856,7 +860,7 @@ d_birds3 <- subset(d_birds1_sr, PA == 0)
 tmp <- subset(dat_birds1, select = c(station, dist_to_PA.z))
 d_birds3 <- left_join(d_birds3, tmp, by = "station")
 d_birds3$PA_size_km2 <- (d_birds3$PA_size_km2.z * s44_birds) + m44_birds
-PA_size_threshold.z <- (500 - m44) / s44
+PA_size_threshold.z <- (500 - m44_birds) / s44_birds
 d_birds3$BigPA <- ifelse(d_birds3$PA_size_km2.z < PA_size_threshold.z, 0, 1)
 d_birds3b <- subset(d_birds3, station != "L4225511")
 d_birds3b <- subset(d_birds3b, station != "L5624588")
@@ -975,19 +979,18 @@ mm02d_mammals_dist_sr <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size
 
 
 # create a list to store these models ------------------------------------------
-bird_size_models <- list(PD = mm02b_birds_size_pd, FR = mm02b_birds_size_fr, SR = mm02b_birds_size_sr)
-mammals_size_models <- list(PD = mm02b_mammals_size_pd, FR = mm02b_mammals_size_fr, SR = mm02b_mammals_size_sr)
+bird_size_models <- list(PD_size = mm02b_birds_size_pd, FR_size = mm02b_birds_size_fr, SR_size = mm02b_birds_size_sr)
+mammals_size_models <- list(PD_size = mm02b_mammals_size_pd, FR_size = mm02b_mammals_size_fr, SR_size = mm02b_mammals_size_sr)
 
-bird_dist_models <- list(PD = mm02d_birds_dist_pd, FR = mm02d_birds_dist_fr, SR = mm02d_birds_dist_sr)
-mammals_dist_models <- list(PD = mm02d_mammals_dist_pd, FR = mm02d_mammals_dist_fr, SR = mm02d_mammals_dist_sr)
+bird_dist_models <- list(PD_dist = mm02d_birds_dist_pd, FR_dist = mm02d_birds_dist_fr, SR_dist = mm02d_birds_dist_sr)
+mammals_dist_models <- list(PD_dist = mm02d_mammals_dist_pd, FR_dist = mm02d_mammals_dist_fr, SR_dist = mm02d_mammals_dist_sr)
 
-size_models <- c(bird_size_models, mammals_size_models)
-dist_models <- c(bird_dist_models, mammals_dist_models)
+# size_models <- c(bird_size_models, mammals_size_models)
+# dist_models <- c(bird_dist_models, mammals_dist_models)
 ```
 
 ```{r rpr_cor_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
-
-# Insert code to construct a summary table of efficacy models like Brodie et al.
+# similar to the previous table
 # Insert code to construct a summary table of efficacy models like Table 1 in Brodie et al.
 # Define variable convert table
 var_cvt <- data.frame(
@@ -995,23 +998,22 @@ var_cvt <- data.frame(
              "HDI.z", "PA", "dist_to_PA.z", "BigPA",
              "PA_size_km2.z", "CloseToPA"),
     Variable = c("$R^{2}$", "Intercept", "Forest canopy height",
-                 "Site accessibility", "HDI", "PA", "Connectivity",
-                 "PA|Connectivity", "Distance to PA", "PA size (binary)",
-                 "PA size|Connectivity", "PA size", 
-                 "Distance to PA (binary)", "Distance to PA|Connectivity"))
+                 "Site accessibility", "HDI", "PA", 
+                  "Distance to PA", "PA size (binary)","PA size", 
+                 "Distance to PA (binary)"))
 
-mods <- list("bird" = do.call(c, list(rpl_efficacy_bird, rpl_spill_bird)), 
-             "mammal" = do.call(c, list(rpl_efficacy_mammal, rpl_spill_mammal)))
+mods <- list("bird" = do.call(c, list(bird_size_models, bird_dist_models)), 
+             "mammal" = do.call(c, list(mammals_size_models, mammals_dist_models)))
+
 coefs <- lapply(names(mods), function(taxon){
     models <- mods[[taxon]]
     lapply(names(models), function(nm){
         # Extract names for identity
-        var_nm <- toupper(strsplit(nm, "_")[[1]][4])
-        effect_nm <- strsplit(nm, "_")[[1]][3]
-        effect_nm <- ifelse(effect_nm == "eff", "All sites",
-                            ifelse(effect_nm == 'size', 
+        var_nm <- toupper(strsplit(nm, "_")[[1]][1])
+        effect_nm <- strsplit(nm, "_")[[1]][2]
+        effect_nm <- ifelse(effect_nm == 'size', 
                                    "Outside protected areas - 'PA size' effect",
-                                   "Outside protected areas - 'Distance to PA' effect"))
+                                   "Outside protected areas - 'Distance to PA' effect")
         r_square <- r.squaredGLMM(models[[nm]])[[2]]
         
         # Do the tidy work
@@ -1024,7 +1026,8 @@ coefs <- lapply(names(mods), function(taxon){
             left_join(var_cvt, by = "term") %>% 
             mutate(var_nm = var_nm, Effect = effect_nm) %>% 
             select(Effect, Variable, report_value, var_nm)
-    }) %>% bind_rows() %>% 
+    }) %>% 
+        bind_rows() %>% 
         mutate(var_nm = factor(var_nm, levels = c("SR", "FR", "PD"))) %>% 
         arrange(var_nm) %>% 
         pivot_wider(names_from = var_nm, values_from = report_value)
@@ -1036,15 +1039,13 @@ coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
 effects <- unique(coefs$Effect)
 row_1 <- which(coefs$Effect == effects[1])
 row_2 <- which(coefs$Effect == effects[2])
-row_3 <- which(coefs$Effect == effects[3])
 coefs <- coefs %>% select(-Effect)
 
 # Bold some cells
 row_ids <- which(coefs$Variable %in% 
-                     c("PA", "Connectivity",
-                       "PA|Connectivity", "PA size (binary)",
-                       "PA size|Connectivity", "Distance to PA (binary)",
-                       "Distance to PA|Connectivity"))
+                     c("PA",
+                        "PA size (binary)",
+                        "Distance to PA (binary)"))
 detec_sig <- coefs[row_ids, -1]
 detec_sig <- do.call(cbind, lapply(1:ncol(detec_sig), function(i){
     as.numeric(sapply(detec_sig[[i]], function(x){
@@ -1069,7 +1070,6 @@ coefs %>%
     kable_classic(full_width = F) %>%
     pack_rows(effects[1], min(row_1), max(row_1)) %>%
     pack_rows(effects[2], min(row_2), max(row_2)) %>% 
-    pack_rows(effects[3], min(row_3), max(row_3)) %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
                      align = "c")
 ```
