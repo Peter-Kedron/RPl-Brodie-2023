@@ -288,19 +288,20 @@ Other than adding the HDI variable to the original analytical file, we did not m
 We completed two reproduction attempts - 1) using the analysis data and script originally published by the authors and 2) using the analysis data and script published with the author correction. 
 Both analyses were conducted in R using the following packages.
 
-```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
-
+```{r package setup, echo = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
+# , results = 'hide', message = FALSE, warning = FALSE, eval = FALSE
 # Load required packages and scripts
 # We made minimum changes to the original script
 library(groundhog)
 pkgs <- c("tidyverse", "Hmisc", "MatchIt",  "optmatch", "lme4",  "nlme", 
           "lmerTest", "cowplot",   
-           "here", "modelsummary", "dagitty", "ggdag", "kableExtra")
+           "here", "modelsummary", "dagitty", "ggdag", "kableExtra",
+          "MuMIn", "tibble", "broom.mixed" )
 # We follow the recommendation to set the time for groundhog two weeks before 
 # when the original script was edited
-groundhog.library(pkgs, "2024-03-03") 
+# groundhog.library(pkgs, "2024-03-03") 
 
-# lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
+lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
 here('')
 ```
 
@@ -310,9 +311,6 @@ We made not substantive changes to the authors original code.
 ```{r SCM, echo = FALSE} 
 # Create the directed acyclic graph (DAG) of potential causal 
 # Assign PA as the exposure and diversity as the outcome.
-library(dagitty)
-library(ggdag)
-
 dagBrodie <- dagitty("dag {
   PA -> Diversity
   ForestStructure -> PA
@@ -371,8 +369,9 @@ Complete details of the procedures are available in the called function headers 
 All called functions are available with the project repository.
 No additional preparation was needed for our reproduction attempt using the author corrected analysis file and script.
 
-```{r clean_data, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
 
+```{r clean_data, echo = TRUE}
+# results = 'hide', message = FALSE, eval = FALSE,
 # Load Revised Data ------------------------------------------------------------
 # Birds ------------------------------------------------------------------------
 rm(list = ls())
@@ -531,7 +530,7 @@ d_mammals1 <- subset(d_mammals1, Hansen_recentloss == 0)
 To assess **OR-Ho-1** we reproduced the propensity score matching procedure and linear mixed-effects modeling conducted by the Brodie et al. for each the three biodiversity response variables for each taxon. 
 This procedure resulted in six fitted regressions.
 
-```{r rpr_cor_eff, echo = TRUE, results = 'show', message = FALSE, eval = FALSE, include = TRUE}
+```{r rpr_cor_eff, echo = TRUE,  include = TRUE}
 # Brodies efficacy code Bird ---------------------------------------------------
 #--------------------------- PD ------------------------------------------------
 d_birds1_pd <- d_birds1
@@ -627,44 +626,164 @@ efficacy_models <- c(bird_eff_models, mammals_eff_models)
 
 ```
 
-```{r rpr_cor_eff_tab, echo = TRUE, warning = FALSE, message = FALSE}
+Wenxin's initial attempt to create a model result summary table.
 
+```{r rpr_cor_eff_tab, echo = FALSE, warning = FALSE, message = FALSE, eval=TRUE}
 # Insert code to construct a summary table of efficacy models like Brodie et al.
-# maybe should use with KableExtra to construct customized tables
+# <<initial attempt>>
+# pro: simple
+# con: difficult to customize
 
-#library(tibble)
-#rows <- tribble(~term,          ~OLS,  ~Logit,
-#                'factor(cyl)4', '-',   '-',
-#                'Info',         '???', 'XYZ')
-#attr(rows, 'position') <- c(3, 9)
-#modelsummary(models, add_rows = rows)
+# library(modelsummary)
+# library(kableExtra)
 
-# polr
-library(modelsummary)
-library(kableExtra)
+# add one line of R squared at the very top
+# library(MuMIn)
+# library(tibble)
+getRsqd <- function(mod){
+    r_sqd <- r.squaredGLMM(mod)[[2]]
+    return(as.numeric(r_sqd))
+}
+
+rvals <- c(lapply(efficacy_models, getRsqd))
+# row_rvals <- c("estimates", "R2", "estimate", rvals)
+row_rsqd <- tribble(~term, ~PD,         ~FR,         ~SR,         ~PD, 
+                    ~FR,         ~SR,
+                    "R2",   rvals[1]$PD, rvals[2]$FR, rvals[3]$SR, rvals[4]$PD, 
+                     rvals[5]$FR, rvals[6]$SR)
+
+attr(row_rsqd, 'position') <- 1
+
 tab_eff <- msummary(efficacy_models, output = "kableExtra", fmt = 2, 
          estimate = c("{estimate} ({std.error}, {p.value})"), 
+         statistic = NULL, # omit standard errors in parenthesis
+         gof_omit = "Num.Obs.|R2 Marg.|R2 Cond.|AIC|BIC|ICC|RMSE", # remove indices we don't need
          coef_rename = c("(Intercept)" = "Intercept","gedi.m" = "Forest canopy height", 
-                         "access_log10.z" = "Site accessibility", "HDI.z" = "HDI"))
+                         "access_log10.z" = "Site accessibility", "HDI.z" = "HDI"),
+         coef_omit = "SD*",
+         add_row = row_rsqd)
+
 tab_eff <- tab_eff %>%
-    
     # column labels
-    add_header_above(c(" " = 1, "Birds" = 3, "Mammals" = 3)) 
+    add_header_above(c(" " = 1, "Birds" = 3, "Mammals" = 3)) %>%
+    kable_styling(full_width = F) %>%
+    row_spec(6, bold = T)
 
 tab_eff
-#%>%
-   
-    # text and background color
- #   row_spec(3, color = 'red') %>%
- #   row_spec(5, background = 'lightblue')
-
-# r.squaredGLMM() --> compute R squared values
 ```
+
+Ultimately adapted Lei's code from the RPL report that's much more flexible.
+
+```{r rpr_cor_eff_tab_final, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+# <<final table>>
+# edited from code chunk written by Lei Song in the RPL-Report.Rmd
+# pro: very flexible and customizable
+# con: hard for me to write
+
+var_cvt <- data.frame(
+    term = c("R2", "(Intercept)", "gedi.m", "access_log10.z", 
+             "HDI.z", "PA"),
+    Variable = c("$R^{2}$", "Intercept", "Forest canopy height",
+                 "Site accessibility", "HDI", "PA"))
+
+mods <- list("bird" = bird_eff_models, 
+             "mammal" = mammals_eff_models)
+
+coefs <- lapply(names(mods), function(taxon){
+    models <- mods[[taxon]]
+    lapply(names(models), function(nm){
+        # extract names to know which model it is
+        # in the case for efficacy models
+        # create uppercase y variable names - SR, FR, PD
+        var_nm <- toupper(strsplit(nm, "_")[[1]])
+        # Extract effect names - All sites for efficacy models
+        effect_nm <- "All sites"
+        # compute r.squared values
+        r_square <- r.squaredGLMM(models[[nm]])[[2]]
+        
+        # clean model output into into a tidy data frame with broom.mixed
+        broom.mixed::tidy(
+            models[[nm]], effects='fixed', conf.int = TRUE) %>%
+            # add a column into the dataframe called report_value to store
+            # all statistics to be reported
+            mutate(report_value = sprintf("%.3f (%.3f; %.3f)", 
+                                          estimate, std.error, p.value)) %>% 
+            # select columns to keep
+            select(term, report_value) %>% 
+            # add the of R2 values
+            rbind(c("R2", sprintf("%.3f", r_square)), .) %>%
+            # join the data frame with var_cvt to add the column of converted names
+            left_join(var_cvt, by = "term") %>% 
+            # add two new columns to store variable names and effect names
+            mutate(var_nm = var_nm, Effect = effect_nm) %>% 
+            select(Effect, Variable, report_value, var_nm)
+    }) %>% 
+        # after doing this for each y (SR, FR, PD) and each taxon (bird, mammal)
+        # combine them using bind rows
+        bind_rows() %>% 
+        # change var_nm to be of factor type
+        mutate(var_nm = factor(var_nm, levels = c("SR", "FR", "PD"))) %>% 
+        # reorder rows using column values
+        arrange(var_nm) %>% 
+        # transpose the data frame
+        pivot_wider(names_from = var_nm, values_from = report_value)
+})
+
+# join results of birds and mammals into a single data frame
+coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
+                       suffix = sprintf(".%s", c("Birds", "Mammals")))
+
+# Manipulate the table
+effects <- unique(coefs$Effect)
+# identify which rows are results for which effect
+row_1 <- which(coefs$Effect == effects[1])
+# and then remove the column of Effect
+coefs <- coefs %>% select(-Effect)
+
+# Bold cells that have significant treatment effects
+# first, get row ids for rows displaying results of the model of interest
+row_ids <- which(coefs$Variable %in% c("PA"))
+# second,  extract row(s) with identified row ids
+detec_sig <- coefs[row_ids, -1]
+# then apply a function to detect their significance
+# for each column, extract value after ; sign
+# using a regular expression I don't understand but it works great
+detec_sig <- do.call(cbind, lapply(1:ncol(detec_sig), function(i){
+    as.numeric(sapply(detec_sig[[i]], function(x){
+        str_extract(x, "(?<=;[[:space:]]).*?(?=\\))")}))
+}))
+# convert it into boolean class, TRUE -- significant, FALSE -- insignificant
+detec_sig <- detec_sig <= 0.05
+# create a matrix of whether to bold the cell or not
+bold_ids <- matrix(data = FALSE, nrow = nrow(coefs), ncol = ncol(coefs))
+bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
+
+# use cell_spec to bold cells we need to bold
+for (i in 1:nrow(bold_ids)){
+    for (j in 1:ncol(bold_ids)){
+        if (bold_ids[i, j] == TRUE){
+            coefs[i, j] <- cell_spec(coefs[i, j], bold = T)
+        }
+    }
+}
+
+# Make the kable
+names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
+coefs %>%
+    kableExtra::kbl(escape = FALSE) %>% 
+    kable_classic(full_width = F) %>%
+    # pack_rows can group rows into a category 
+    # we are grouping them by effects
+    pack_rows(effects[1], min(row_1), max(row_1)) %>%
+    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
+                     align = "c")
+```
+
 
 To assess **OR-Ho-2a** and **OR-Ho-2b** we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA size and PA distance spillovers for each the three biodiversity response variables for each taxon.
 This produced 12 fitted regressions.
 
-```{r rpr_cor_spill, echo = TRUE, results = 'hide', message = FALSE, eval = FALSE}
+```{r rpr_cor_spill, echo = TRUE, results = 'hide', message = FALSE, eval = TRUE}
 
 # Brodies spillover effect code Bird -------------------------------------------
 #--------------------------- PD ------------------------------------------------
@@ -866,10 +985,93 @@ size_models <- c(bird_size_models, mammals_size_models)
 dist_models <- c(bird_dist_models, mammals_dist_models)
 ```
 
-```{r rpr_cor_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r rpr_cor_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 # Insert code to construct a summary table of efficacy models like Brodie et al.
-# <<code chunk>>
+# Insert code to construct a summary table of efficacy models like Table 1 in Brodie et al.
+# Define variable convert table
+var_cvt <- data.frame(
+    term = c("R2", "(Intercept)", "gedi.m", "access_log10.z", 
+             "HDI.z", "PA", "dist_to_PA.z", "BigPA",
+             "PA_size_km2.z", "CloseToPA"),
+    Variable = c("$R^{2}$", "Intercept", "Forest canopy height",
+                 "Site accessibility", "HDI", "PA", "Connectivity",
+                 "PA|Connectivity", "Distance to PA", "PA size (binary)",
+                 "PA size|Connectivity", "PA size", 
+                 "Distance to PA (binary)", "Distance to PA|Connectivity"))
+
+mods <- list("bird" = do.call(c, list(rpl_efficacy_bird, rpl_spill_bird)), 
+             "mammal" = do.call(c, list(rpl_efficacy_mammal, rpl_spill_mammal)))
+coefs <- lapply(names(mods), function(taxon){
+    models <- mods[[taxon]]
+    lapply(names(models), function(nm){
+        # Extract names for identity
+        var_nm <- toupper(strsplit(nm, "_")[[1]][4])
+        effect_nm <- strsplit(nm, "_")[[1]][3]
+        effect_nm <- ifelse(effect_nm == "eff", "All sites",
+                            ifelse(effect_nm == 'size', 
+                                   "Outside protected areas - 'PA size' effect",
+                                   "Outside protected areas - 'Distance to PA' effect"))
+        r_square <- r.squaredGLMM(models[[nm]])[[2]]
+        
+        # Do the tidy work
+        broom.mixed::tidy(
+            models[[nm]], effects='fixed', conf.int = TRUE) %>% 
+            mutate(report_value = sprintf("%.3f (%.3f; %.3f)", 
+                                          estimate, std.error, p.value)) %>% 
+            select(term, report_value) %>% 
+            rbind(c("R2", sprintf("%.3f", r_square)), .) %>% 
+            left_join(var_cvt, by = "term") %>% 
+            mutate(var_nm = var_nm, Effect = effect_nm) %>% 
+            select(Effect, Variable, report_value, var_nm)
+    }) %>% bind_rows() %>% 
+        mutate(var_nm = factor(var_nm, levels = c("SR", "FR", "PD"))) %>% 
+        arrange(var_nm) %>% 
+        pivot_wider(names_from = var_nm, values_from = report_value)
+})
+coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
+                       suffix = sprintf(".%s", c("Birds", "Mammals")))
+
+# Manipulate the table
+effects <- unique(coefs$Effect)
+row_1 <- which(coefs$Effect == effects[1])
+row_2 <- which(coefs$Effect == effects[2])
+row_3 <- which(coefs$Effect == effects[3])
+coefs <- coefs %>% select(-Effect)
+
+# Bold some cells
+row_ids <- which(coefs$Variable %in% 
+                     c("PA", "Connectivity",
+                       "PA|Connectivity", "PA size (binary)",
+                       "PA size|Connectivity", "Distance to PA (binary)",
+                       "Distance to PA|Connectivity"))
+detec_sig <- coefs[row_ids, -1]
+detec_sig <- do.call(cbind, lapply(1:ncol(detec_sig), function(i){
+    as.numeric(sapply(detec_sig[[i]], function(x){
+        str_extract(x, "(?<=;[[:space:]]).*?(?=\\))")}))
+}))
+detec_sig <- detec_sig <= 0.05
+bold_ids <- matrix(data = FALSE, nrow = nrow(coefs), ncol = ncol(coefs))
+bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
+
+for (i in 1:nrow(bold_ids)){
+    for (j in 1:ncol(bold_ids)){
+        if (bold_ids[i, j] == TRUE){
+            coefs[i, j] <- cell_spec(coefs[i, j], bold = T)
+        }
+    }
+}
+
+# Make the kable
+names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
+coefs %>%
+    kableExtra::kbl(escape = FALSE) %>% 
+    kable_classic(full_width = F) %>%
+    pack_rows(effects[1], min(row_1), max(row_1)) %>%
+    pack_rows(effects[2], min(row_2), max(row_2)) %>% 
+    pack_rows(effects[3], min(row_3), max(row_3)) %>% 
+    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
+                     align = "c")
 ```
 
 ### Comparison of Statistical Estimates
