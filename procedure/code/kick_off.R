@@ -13,7 +13,8 @@
 
 ## WARNING:
 ## Using groundhog may disrupt the usage as the permission or restart
-## issues.
+## issues. It will also cause issues with different R versions.
+## Keep observing other issues.
 ## -------------------------------------------------------------------
 
 kick_off <- function(code_dir, date = "2024-08-27"){

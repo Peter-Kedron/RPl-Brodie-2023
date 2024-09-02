@@ -204,12 +204,11 @@ rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
 ## Linear Mixed Effects Model of PA Spillovers
 
 ```{r rpl_spill, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
-
 # Replicate spillover models for birds w/ connectivity
 ## Lei, we need to change the outlier procedure in this function
 rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_clean_bird, "connec", "bird", bnr_var, 
+        model_pa_spillover(dat_clean_bird, "connec+", "bird", bnr_var, 
                        var_catalog[[i, "response_variable"]], 
                       outliers_spil_bird[[var_catalog[[i, "name"]]]])
     })
@@ -224,7 +223,7 @@ rpl_spill_bird <- do.call(c, rpl_spill_bird)
 ## Lei, we need to change the outlier procedure in this function
 rpl_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_clean_mammal, "connec", "mammal", bnr_var, 
+        model_pa_spillover(dat_clean_mammal, "connec+", "mammal", bnr_var, 
                        var_catalog[[i, "response_variable"]], 
                       outliers_spil_mammal[[var_catalog[[i, "name"]]]])
     })
@@ -288,11 +287,34 @@ row_1 <- which(coefs$Effect == effects[1])
 row_2 <- which(coefs$Effect == effects[2])
 row_3 <- which(coefs$Effect == effects[3])
 coefs <- coefs %>% select(-Effect)
-names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
+
+# Bold some cells
+row_ids <- which(coefs$Variable %in% 
+                     c("PA", "Connectivity",
+                       "PA|Connectivity", "PA size (binary)",
+                       "PA size|Connectivity", "Distance to PA (binary)",
+                       "Distance to PA|Connectivity"))
+detec_sig <- coefs[row_ids, -1]
+detec_sig <- do.call(cbind, lapply(1:ncol(detec_sig), function(i){
+    as.numeric(sapply(detec_sig[[i]], function(x){
+        str_extract(x, "(?<=;[[:space:]]).*?(?=\\))")}))
+}))
+detec_sig <- detec_sig <= 0.05
+bold_ids <- matrix(data = FALSE, nrow = nrow(coefs), ncol = ncol(coefs))
+bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
+
+for (i in 1:nrow(bold_ids)){
+    for (j in 1:ncol(bold_ids)){
+        if (bold_ids[i, j] == TRUE){
+            coefs[i, j] <- cell_spec(coefs[i, j], bold = T)
+        }
+    }
+}
 
 # Make the kable
+names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
 coefs %>%
-    kbl() %>% 
+    kableExtra::kbl(escape = FALSE) %>% 
     kable_classic(full_width = F) %>%
     pack_rows(effects[1], min(row_1), max(row_1)) %>%
     pack_rows(effects[2], min(row_2), max(row_2)) %>% 
