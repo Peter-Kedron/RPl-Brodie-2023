@@ -20,6 +20,7 @@ packages <- c("tidyverse", "here")
 # force all conflicts to become errors
 require(conflicted)
 library(here)
+library(kableExtra)
 
 # load and install required packages
 if (!require(groundhog)) {
@@ -108,9 +109,9 @@ Complete details of the materials and methods use are available in *Reproduction
 All materials and procedures are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
 
 ```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
-
+source(here("procedure/code/kick_off.R"))
 # Load required packages and scripts
-kick_off('/procedure/code')
+kick_off('procedure/code')
 ```
 
 ## Connectivity Measures
@@ -131,10 +132,7 @@ To construct our site and PA connectivity measures, we independently gathered da
 ```{r calculate_conn, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
 # Calculate site connectivity for birds and mammals
 calc_conn(taxon = "bird", src_dir = src_dir, dst_dir = dst_dir)
-
-calc_conn(taxon = "mammal",                         src_dir = src_dir, 
-                              dst_dir = dst_dir)
-
+calc_conn(taxon = "mammal", src_dir = src_dir, dst_dir = dst_dir)
 ```
 
 ## Preparation of the Analytical Data Files
@@ -144,20 +142,32 @@ Finally, we identified and removed outlier values from each dataset using **PROC
 
 ```{r clean_data, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
 # Load Brodie outlier list
+## For PA efficacy
+outliers_eff_bird <- list(
+    "PD" = c("L2422371", "L3776738", "L2521761", 
+             "L6127181", "L3865754"),
+    "FR" = c("L921125", "L2422371", "L4331944", "L13465594"),
+    "SR" = c("L4789498", "L921125", "L1122096", 
+             "L7010824", "L3865754", "L3776738"))
 
+# For spillover
+outliers_spil_bird <- list(
+    "PD" = c("L1084299", "L4225511", "L3846512", "L2129865", "L3267752"),
+    "FR" = c("L4225511", "L5969878", "L3267752", 
+             "L4331944", "L13465594", "L1084299"),
+    "SR" = c("L4225511", "L5624588", "L3321319", "L14087870"))
+outliers_spil_mammal <- list(
+    "PD" = c("WM-OP009", "WM-HCV003", "C24A25", "C1A09", "C1B12"),
+    "FR" = c("Bal013a", "Bal017a", "C1CT21"),
+    "SR" = c("Bal011", "C1CT50", "C24A25"))
 
 # Clean data and remove outliers for bird and mammal models
-dat_clean_bird <- clean_data("bird", 
-                             conn_metrics, 
-                             src_dir = "data/derived/public", 
-                             conn_dir = "data/derived/public",
-                             dst_dir = "data/derived/public")
-
-dat_clean_mammal <- clean_data("mammal", 
-                             conn_metrics, 
-                             src_dir = "data/derived/public", 
-                             conn_dir = "data/derived/public",
-                             dst_dir = "data/derived/public")
+conn_metrics <- 'awf_ptg'
+src_dir <- "data/raw/public"
+conn_dir <- "data/derived/public"
+dst_dir <- "data/derived/public"
+dat_clean_bird <- clean_data("bird", conn_metrics, src_dir, conn_dir, dst_dir)
+dat_clean_mammal <- clean_data("mammal", conn_metrics, src_dir, conn_dir, dst_dir)
 ```
 
 # Statistical Results
@@ -168,30 +178,28 @@ Here we report connectivity results using a 100km threshold.
 
 ```{r rpl_eff, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
 # Make a common catalog
-var_catalog <- data.frame(response_variable = c("asymptPD", "maxFRic", 
-                                                "SR.mean"), 
-                          name = c("PD", "FR", "SR"))
+var_catalog <- data.frame(
+    response_variable = c("asymptPD", "maxFRic", "SR.mean"), 
+    name = c("PD", "FR", "SR"))
 
 # Reproduce models for birds
+dat_clean_bird <- subset(dat_clean_bird, med_dist == 100)
 rpl_efficacy_bird <- lapply(1:nrow(var_catalog), function(i){
-    model_pa_efficacy(dat_analysis_bird, "connec", "bird",
+    model_pa_efficacy(dat_clean_bird, "connec", "bird",
                       var_catalog[[i, "response_variable"]], 
-                      outliers_eff_bird[[var_catalog[[i, "name"]]]])
+                      # set to auto for auto detection
+                      outliers_eff_bird[[var_catalog[[i, "name"]]]]) 
 }); names(rpl_efficacy_bird) <- sprintf("mod_bird_eff_%s", var_catalog$name)
 
 # Reproduce models for mammals
+dat_clean_mammal <- subset(dat_clean_mammal, med_dist == 50)
 rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
-    model_pa_efficacy(dat_analysis_mammal, "connec", "mammal",
-                      var_catalog[[i, "response_variable"]], NULL)
+    model_pa_efficacy(dat_clean_mammal, "connec", "mammal",
+                      var_catalog[[i, "response_variable"]], 
+                      # set to auto for auto detection
+                      NULL)
 }); names(rpl_efficacy_mammal) <- sprintf("mod_mammal_eff_%s", var_catalog$name)
 ```
-
-```{r rpl_eff_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
-
-# Insert code to construct a summary table of efficacy models like Brodie et al.
-
-```
-**<< Insert Table comparing Replication and Brodie using simplified typology >>**
 
 ## Linear Mixed Effects Model of PA Spillovers
 
@@ -201,7 +209,7 @@ rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
 ## Lei, we need to change the outlier procedure in this function
 rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_analysis_bird, "connec", "bird", bnr_var, 
+        model_pa_spillover(dat_clean_bird, "connec", "bird", bnr_var, 
                        var_catalog[[i, "response_variable"]], 
                       outliers_spil_bird[[var_catalog[[i, "name"]]]])
     })
@@ -210,13 +218,13 @@ rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
     mods
     
 })
-rpl_spill_bird <- do.call(c, rep_models_bird)
+rpl_spill_bird <- do.call(c, rpl_spill_bird)
 
 # Replicate spillover models for mammals w/ connectivity
 ## Lei, we need to change the outlier procedure in this function
 rpl_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_analysis_mammal, "connec", "mammal", bnr_var, 
+        model_pa_spillover(dat_clean_mammal, "connec", "mammal", bnr_var, 
                        var_catalog[[i, "response_variable"]], 
                       outliers_spil_mammal[[var_catalog[[i, "name"]]]])
     })
@@ -225,31 +233,122 @@ rpl_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
     mods
     
 })
-rpl_spill_mammal <- do.call(c, rep_models_mammal)
+rpl_spill_mammal <- do.call(c, rpl_spill_mammal)
 ```
 
-```{r rpl_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r rpl_spill_tab, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+# Insert code to construct a summary table of efficacy models like Table 1 in Brodie et al.
+# Define variable convert table
+var_cvt <- data.frame(
+    term = c("R2", "(Intercept)", "forest_structure", "access_log10.z", 
+             "HDI.z", "PA", "connectivity.z", "PA:connectivity.z",
+             "dist_to_PA.z", "BigPA", "BigPA:connectivity.z",
+             "PA_size_km2.z", "CloseToPA", "CloseToPA:connectivity.z"),
+    Variable = c("$R^{2}$", "(Intercept)", "Forest canopy height",
+                 "Site accessibility", "HDI", "PA", "Connectivity",
+                 "PA|Connectivity", "Distance to PA", "PA size (binary)",
+                 "PA size|Connectivity", "PA size", 
+                 "Distance to PA (binary)", "Distance to PA|Connectivity"))
 
-# Insert code to construct a summary table of efficacy models like Brodie et al.
+mods <- list("bird" = do.call(c, list(rpl_efficacy_bird, rpl_spill_bird)), 
+             "mammal" = do.call(c, list(rpl_efficacy_mammal, rpl_spill_mammal)))
+coefs <- lapply(names(mods), function(taxon){
+    models <- mods[[taxon]]
+    lapply(names(models), function(nm){
+        # Extract names for identity
+        var_nm <- toupper(strsplit(nm, "_")[[1]][4])
+        effect_nm <- strsplit(nm, "_")[[1]][3]
+        effect_nm <- ifelse(effect_nm == "eff", "All sites",
+                            ifelse(effect_nm == 'size', 
+                                   "Outside protected areas - 'PA size' effect",
+                                   "Outside protected areas - 'Distance to PA' effect"))
+        r_square <- r.squaredGLMM(models[[nm]])[[2]]
+        
+        # Do the tidy work
+        broom.mixed::tidy(
+            models[[nm]], effects='fixed', conf.int = TRUE) %>% 
+            mutate(report_value = sprintf("%.3f (%.3f; %.3f)", 
+                                          estimate, std.error, p.value)) %>% 
+            select(term, report_value) %>% 
+            rbind(c("R2", sprintf("%.3f", r_square)), .) %>% 
+            left_join(var_cvt, by = "term") %>% 
+            mutate(var_nm = var_nm, Effect = effect_nm) %>% 
+            select(Effect, Variable, report_value, var_nm)
+    }) %>% bind_rows() %>% 
+        mutate(var_nm = factor(var_nm, levels = c("SR", "FR", "PD"))) %>% 
+        arrange(var_nm) %>% 
+        pivot_wider(names_from = var_nm, values_from = report_value)
+})
+coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
+                       suffix = sprintf(".%s", c("Birds", "Mammals")))
 
+# Manipulate the table
+effects <- unique(coefs$Effect)
+row_1 <- which(coefs$Effect == effects[1])
+row_2 <- which(coefs$Effect == effects[2])
+row_3 <- which(coefs$Effect == effects[3])
+coefs <- coefs %>% select(-Effect)
+names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
+
+# Make the kable
+coefs %>%
+    kbl() %>% 
+    kable_classic(full_width = F) %>%
+    pack_rows(effects[1], min(row_1), max(row_1)) %>%
+    pack_rows(effects[2], min(row_2), max(row_2)) %>% 
+    pack_rows(effects[3], min(row_3), max(row_3)) %>% 
+    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
+                     align = "c")
 ```
+
+**<< Insert Table comparing Replication and Brodie using simplified typology >>**
 
 **<< Insert Table comparing Spillover Replication and Brodie using simplified typology >>**
 
 # Sensitivity Analyses
 Compile models runs all the functions above and produces x...
 
-```{r}
-# Run compile models function
+```{r compile_models, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+for (dist in seq(10, 150, 10)){
+    compile_models(taxon = "bird", med_dist = dist,
+                   src_dir = "data/derived/public", 
+                   dst_dir = "results")
+    compile_models(taxon = "mammal", med_dist = dist,
+                   src_dir = "data/derived/public", 
+                   dst_dir = "results")
+}
+
+# Generate plots
+plot_dist_effect(src_dir = "results", dst_dir = "results/figures")
 ```
 
 
-```{r}
+```{r, bird_eff_dist, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+load(here("results/figures/plot_dist_effect_taxons.rda"))
+
 # Birds 3x3 efficacy result over distance
+taxon_dist_plot$bird$`Phylogenetic diveristy (PD)` +
+    ggtitle(paste0("Bird", " - ", "Phylogenetic diveristy (PD)")) +
+    theme(plot.title = element_text(hjust = 0.5))
+taxon_dist_plot$bird$`Functional richness (FR)` +
+    ggtitle(paste0("Bird", " - ", "Functional richness (FR)")) +
+    theme(plot.title = element_text(hjust = 0.5))
+taxon_dist_plot$bird$`Species richness (SR)` +
+    ggtitle(paste0("Bird", " - ", "Species richness (SR)")) +
+    theme(plot.title = element_text(hjust = 0.5))
 ```
 
-```{r}
+```{r, mammal_eff_dist, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
 # Mammals 3x3 efficacy result over distance
+taxon_dist_plot$mammal$`Phylogenetic diveristy (PD)` +
+    ggtitle(paste0("Mammal", " - ", "Phylogenetic diveristy (PD)")) +
+    theme(plot.title = element_text(hjust = 0.5))
+taxon_dist_plot$mammal$`Functional richness (FR)` +
+    ggtitle(paste0("Mammal", " - ", "Functional richness (FR)")) +
+    theme(plot.title = element_text(hjust = 0.5))
+taxon_dist_plot$mammal$`Species richness (SR)` +
+    ggtitle(paste0("Mammal", " - ", "Species richness (SR)")) +
+    theme(plot.title = element_text(hjust = 0.5))
 ```
 
 # Discussion

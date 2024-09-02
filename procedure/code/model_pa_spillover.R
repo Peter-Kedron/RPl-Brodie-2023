@@ -60,7 +60,6 @@
 #
 ## -----------------------------------------------------------------------------
 
-
 model_pa_spillover <- function(dat, # leave outliers removal outside of function
                                mod_type = "connec", # 3A
                                taxon = "bird", # 2T
@@ -106,8 +105,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
     
     # Remove outliers
     if (!(length(outliers) == 1 & "auto" %in% outliers)){
-        dat <- dat %>% filter(!station %in% outliers)
-        dat <- dat %>% select(-station)
+        dat <- dat %>% dplyr::filter(!station %in% outliers)
+        dat <- dat %>% dplyr::select(-station)
         det_outlier_flag <- FALSE
     } else {
         det_outlier_flag <- TRUE
@@ -303,10 +302,10 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
         
         # Detect outliers if necessary
         if (det_outlier_flag){
-            message("Diagnose outliers.")
+            # message("Diagnose outliers.")
             outliers <- identify_outliers(dat, mod_efficacy)
-            dat <- dat %>% filter(!station %in% outliers)
-            dat <- dat %>% select(-station)
+            dat <- dat %>% dplyr::filter(!station %in% outliers)
+            dat <- dat %>% dplyr::select(-station)
             det_outlier_flag <- FALSE
         } else{
             break
