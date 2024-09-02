@@ -10,20 +10,26 @@
 
 ## Outputs:
 ## No output. Set up the computational environment.
+
+## WARNING:
+## Using groundhog may disrupt the usage as the permission or restart
+## issues. It will also cause issues with different R versions.
+## Keep observing other issues.
 ## -------------------------------------------------------------------
 
-kick_off <- function(code_dir){
-    # Load libraries
-    pkgs <- c("here", "sf", "dplyr", "terra", "wdpar", "countrycode", "stringr", 
-              "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", 
-              "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply")
-    for (pkg in pkgs){
-        if (!require(pkg, character.only = TRUE)) {
-            install.packages(pkg)
-            require(pkg, character.only = TRUE)
-        }
+kick_off <- function(code_dir, date = "2024-08-27"){
+    # Install groundhog
+    if (!require("groundhog", character.only = TRUE)) {
+        install.packages("groundhog")
+        require("groundhog")
     }
-    rm(pkgs, pkg)
+    
+    # Load libraries with specific version by groundhog
+    pkgs <- c("here", "sf", "dplyr", "terra", "wdpar", "countrycode", "stringr", 
+              "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", "lmerTest",
+              "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply")
+    groundhog.library(pkgs, date)
+    rm(pkgs)
     
     # Load functions
     functions <- c("clean_pa", "prep_dm", "calc_conn", "clean_data", 
