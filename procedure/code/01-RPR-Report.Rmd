@@ -780,7 +780,8 @@ coefs %>%
     # we are grouping them by effects
     pack_rows(effects[1], min(row_1), max(row_1)) %>%
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
-                     align = "c")
+                     align = "c") %>%
+    save_kable(here('results/figures/RPR-cor-eff-table.png'))
 ```
 
 
@@ -1071,7 +1072,8 @@ coefs %>%
     pack_rows(effects[1], min(row_1), max(row_1)) %>%
     pack_rows(effects[2], min(row_2), max(row_2)) %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
-                     align = "c")
+                     align = "c") %>%
+    save_kable(here('results/figures/RPR-cor-spill-table.png'))
 ```
 
 ### Comparison of Statistical Estimates
