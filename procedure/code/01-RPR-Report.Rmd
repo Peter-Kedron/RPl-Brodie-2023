@@ -10,7 +10,7 @@ editor_options:
   markdown:
     wrap: sentence
 knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/manuscript") })
 ---
 ```{r chunk setup, include = FALSE, message = FALSE}
 # record all the packages you are using here
@@ -627,10 +627,8 @@ efficacy_models <- c(bird_eff_models, mammals_eff_models)
 ```
 
 
-Wenxin's initial attempt to create a model result summary table.
-
-
-```{r rpr_cor_eff_tab, echo = FALSE, warning = FALSE, message = FALSE, eval=TRUE}
+```{r rpr_cor_eff_tab, echo = FALSE, warning = FALSE, message = FALSE, eval=FALSE}
+# Wenxin's initial attempt to create a model result summary table.
 # Insert code to construct a summary table of efficacy models like Brodie et al.
 # <<initial attempt>>
 # pro: simple
@@ -675,10 +673,11 @@ tab_eff
 ```
 
 
-Ultimately adapted Lei's code from the RPL report that's much more flexible.
+
 
 
 ```{r rpr_cor_eff_tab_final, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+# Ultimately adapted Lei's code from the RPL report that's much more flexible.
 # <<final table>>
 # edited from code chunk written by Lei Song in the RPL-Report.Rmd
 # pro: very flexible and customizable
@@ -780,8 +779,9 @@ coefs %>%
     # we are grouping them by effects
     pack_rows(effects[1], min(row_1), max(row_1)) %>%
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
-                     align = "c") %>%
-    save_kable(here('results/figures/RPR-cor-eff-table.png'))
+                     align = "c") 
+#%>%
+#    save_kable(here('results/figures/RPR-cor-eff-table.png'))
 ```
 
 
@@ -1072,8 +1072,9 @@ coefs %>%
     pack_rows(effects[1], min(row_1), max(row_1)) %>%
     pack_rows(effects[2], min(row_2), max(row_2)) %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
-                     align = "c") %>%
-    save_kable(here('results/figures/RPR-cor-spill-table.png'))
+                     align = "c") 
+# %>%
+#    save_kable(here('results/figures/RPR-cor-spill-table.png'))
 ```
 
 ### Comparison of Statistical Estimates
