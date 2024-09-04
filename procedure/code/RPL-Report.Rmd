@@ -42,7 +42,7 @@ knitr::write_bib(c(packages, "base"), file = here("software.bib"))
 knitr::opts_chunk$set(
   echo = FALSE, # Run code, show outputs (don't show code)
   fig.retina = 4,
-  fig.width = 8,
+  fig.width = 7,
   fig.path = paste0(here("results", "figures"), "/"),
   warning = FALSE,
   message = FALSE
@@ -108,7 +108,7 @@ We use the same computational environments, data, and data preparation procedure
 Complete details of the materials and methods use are available in *Reproduction Report for Brodie et al. (2023)* and can be evaluated in depth by examining the functions called throughout this document. 
 All materials and procedures are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
 
-```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = FALSE}
+```{r package setup, echo = TRUE, results = 'hide', message = FALSE, warning = FALSE, eval = TRUE}
 source(here("procedure/code/kick_off.R"))
 # Load required packages and scripts
 kick_off('procedure/code')
@@ -140,7 +140,7 @@ Preparation of our analytical data file followed the procedures outlined in Brod
 Because that analysis did not analyze connectivity, we appended our calculated connectivity measures to that datafile and scaled those variables following the procedures of the original authors.
 Finally, we identified and removed outlier values from each dataset using **PROCEDURE INFO** and a list provided by Brodie et al. 
 
-```{r clean_data, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+```{r clean_data, eval=TRUE, echo=TRUE, results='hide', message=FALSE}
 # Load Brodie outlier list
 ## For PA efficacy
 outliers_eff_bird <- list(
@@ -176,7 +176,7 @@ dat_clean_mammal <- clean_data("mammal", conn_metrics, src_dir, conn_dir, dst_di
 We first used propensity score matching and a linear mixed effects model to assessed whether the finding that PA preserve vertebrate biodiversity within their boundaries persisted when adjusting for connectivity.
 Here we report connectivity results using a 100km threshold.
 
-```{r rpl_eff, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+```{r rpl_eff, eval=TRUE, echo=TRUE, results='hide', message=FALSE}
 # Make a common catalog
 var_catalog <- data.frame(
     response_variable = c("asymptPD", "maxFRic", "SR.mean"), 
@@ -203,7 +203,7 @@ rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
 
 ## Linear Mixed Effects Model of PA Spillovers
 
-```{r rpl_spill, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+```{r rpl_spill, eval=TRUE, echo=TRUE, results='hide', message=FALSE}
 # Replicate spillover models for birds w/ connectivity
 ## Lei, we need to change the outlier procedure in this function
 rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
@@ -314,8 +314,8 @@ for (i in 1:nrow(bold_ids)){
 # Make the kable
 names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
 coefs %>%
-    kableExtra::kbl(escape = FALSE) %>% 
-    kable_classic(full_width = F) %>%
+    kableExtra::kbl(escape = FALSE, full_width = F) %>% 
+    kable_styling(latex_options="scale_down", font_size = 8) %>% 
     pack_rows(effects[1], min(row_1), max(row_1)) %>%
     pack_rows(effects[2], min(row_2), max(row_2)) %>% 
     pack_rows(effects[3], min(row_3), max(row_3)) %>% 
@@ -351,12 +351,15 @@ load(here("results/figures/plot_dist_effect_taxons.rda"))
 # Birds 3x3 efficacy result over distance
 taxon_dist_plot$bird$`Phylogenetic diveristy (PD)` +
     ggtitle(paste0("Bird", " - ", "Phylogenetic diveristy (PD)")) +
+    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$bird$`Functional richness (FR)` +
     ggtitle(paste0("Bird", " - ", "Functional richness (FR)")) +
+    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$bird$`Species richness (SR)` +
     ggtitle(paste0("Bird", " - ", "Species richness (SR)")) +
+    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -364,12 +367,15 @@ taxon_dist_plot$bird$`Species richness (SR)` +
 # Mammals 3x3 efficacy result over distance
 taxon_dist_plot$mammal$`Phylogenetic diveristy (PD)` +
     ggtitle(paste0("Mammal", " - ", "Phylogenetic diveristy (PD)")) +
+    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$mammal$`Functional richness (FR)` +
     ggtitle(paste0("Mammal", " - ", "Functional richness (FR)")) +
+    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$mammal$`Species richness (SR)` +
     ggtitle(paste0("Mammal", " - ", "Species richness (SR)")) +
+    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
