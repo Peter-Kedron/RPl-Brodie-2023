@@ -27,7 +27,8 @@ kick_off <- function(code_dir, date = "2024-08-27"){
     # Load libraries with specific version by groundhog
     pkgs <- c("here", "sf", "dplyr", "terra", "wdpar", "countrycode", "stringr", 
               "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", "lmerTest",
-              "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply")
+              "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply",
+              "ggthemes", "ggh4x")
     groundhog.library(pkgs, date)
     rm(pkgs)
     

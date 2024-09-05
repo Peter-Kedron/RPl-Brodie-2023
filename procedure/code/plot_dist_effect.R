@@ -27,7 +27,7 @@
 plot_dist_effect <- function(src_dir = "results",
                              dst_dir = "results/figures"){
     # Load associated models
-    fnames <- list.files(src_dir, pattern = ".rda$")
+    fnames <- list.files(src_dir, pattern = "[0-9]+.rda$")
     taxons <- unique(str_extract(fnames, "mammal|bird")) # Could just hard code
     
     # Tidy up the models
@@ -67,33 +67,39 @@ plot_dist_effect <- function(src_dir = "results",
     taxon_dist_plot <- lapply(taxons, function(txn){
         plot_list <- lapply(c("pd", "fr", "sr"), function(rsp){
             # Subset 
-            dat <- coefs %>% filter(taxon == txn) %>% 
-                filter(var_nm == rsp) %>% 
-                filter(term %in% c("PA", "connectivity.z", "PA:connectivity.z",
+            dat <- coefs %>% dplyr::filter(taxon == txn) %>% 
+                dplyr::filter(var_nm == rsp) %>% 
+                dplyr::filter(term %in% c("PA", "connectivity.z", "PA:connectivity.z",
                                 "BigPA", "BigPA:connectivity.z", "CloseToPA",
                                 "CloseToPA:connectivity.z")) %>% 
                 mutate(effect_nm = factor(
                     effect_nm, levels = c("efficacy", "size_spillover", "dist_spillover"),
-                    labels = c("PA efficacy", "PA size effect", "Distance to PA effect"))) %>% 
+                    labels = c("bold(PA~efficacy)", "bold(PA~size~effect)", "bold(Distance~to~PA~effect)"))) %>% 
                 mutate(term = ifelse(term == "connectivity.z", "Connectivity",
                                      ifelse(str_detect(term, ":connectivity.z"), "Interaction", term))) %>% 
                 mutate(term = factor(
                     term, levels = c("PA", "BigPA", "CloseToPA", "Connectivity", "Interaction"),
-                    labels = c("PA", "PA Size", "Distance to PA", "Connectivity", "Interaction")))
+                    labels = c("PA", "PA~Size", "Distance~to~PA", "Connectivity", "Interaction")))
             
-            # Plot 
+            # Plot
             ggplot(dat, 
                    aes(x = dist, y = estimate)) +
                 geom_pointrange(
                     size = 0.2,
                     aes(ymin = conf.low, ymax = conf.high),
                     position = position_dodge(width = 2)) +
-                facet_wrap(.~effect_nm + term, scales = "free_y") + 
-                scale_x_continuous(breaks = seq(10, 150, by = 10))+
+                geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+                facet_nested_wrap(.~effect_nm + term, scales = "free",
+                                  nest_line = element_line(colour = "darkgrey",
+                                                           linetype = "dotdash"),
+                                  labeller = label_parsed) +
+                scale_x_continuous(breaks = seq(10, 150, by = 30))+
                 xlab('Dispersal distance (km)') +
                 ylab('Eestimated effect') +
                 theme_tufte()+
-                theme(panel.border = element_rect(colour='white', fill=NA))
+                theme(panel.border = element_rect(colour = 'white', fill = NA),
+                      panel.spacing.y = unit(2, "lines"),
+                      strip.text = element_text(size = 12))
         })
         names(plot_list) <- c("Phylogenetic diveristy (PD)", 
                               "Functional richness (FR)",

@@ -303,7 +303,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
         # Detect outliers if necessary
         if (det_outlier_flag){
             # message("Diagnose outliers.")
-            outliers <- identify_outliers(dat, mod_efficacy)
+            outliers <- identify_outliers(dat, mod_spillover)
             dat <- dat %>% dplyr::filter(!station %in% outliers)
             dat <- dat %>% dplyr::select(-station)
             det_outlier_flag <- FALSE

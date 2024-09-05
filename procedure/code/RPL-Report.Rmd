@@ -9,6 +9,7 @@ output:
 editor_options:
   markdown:
     wrap: sentence
+  chunk_output_type: console
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
@@ -42,7 +43,8 @@ knitr::write_bib(c(packages, "base"), file = here("software.bib"))
 knitr::opts_chunk$set(
   echo = FALSE, # Run code, show outputs (don't show code)
   fig.retina = 4,
-  fig.width = 7,
+  fig.height = 7.5,
+  fig.width = 6.5,
   fig.path = paste0(here("results", "figures"), "/"),
   warning = FALSE,
   message = FALSE
@@ -126,8 +128,9 @@ p_{ij}=e^{-k*d_{ij}}
 where 
 $p_{ij}$ is the probability of dispersal between two sites $i$ and $j$, $k$ is a median dispersal distance at which $p_{ij} = 0.5$, and $d_{ij}$ is the observed distance between $i$ and $j$. 
 
-To construct our site and PA connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas [https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA).
-**Lei, insert description of how AWF was adapted to all sites here. Touch on processing of PAs, restricting mammals to land bodies, thresholds used, etc.**
+To construct our site and PA connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas [https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA). The WDPA PA dataset was pre-processed using several steps to ensure accuracy and relevance for the study. First, we used the `wdpa_fetch` and `wdpa_clean` functions from the R package `wdpar` to query and clean the data. This involved excluding PAs that were not yet implemented or had limited conservation value, replacing missing data codes with NA values, converting point-based PAs into circular shapes that correspond to their reported extent, fixing topological errors, and removing overlapping areas (More details can be found in `wdpa_clean` function). Next, we selected only terrestrial PAs within the study area and merged physically connected PAs while separating those labeled as the same PA but not physically connected. The dataset was then clipped to the coastline to retain only terrestrial portions, and the areas for the reorganized PAs were recalculated. Finally, tiny residual areas (<0.01 km²) from the clipping process were removed. For clustering, PAs on the same continent were grouped, under the assumption that mammals cannot cross disconnected landmasses, and only PAs within the same cluster were considered when calculating landscape connectivity. Under the assumption that mammals cannot cross disconnected landmasses, PAs located on the same continent were grouped into clusters. For the purposes of calculating landscape connectivity for mammals, only the PAs within the same cluster (i.e., on the same continent) were considered, ensuring that the analysis reflected realistic movement limitations imposed by geographical barriers.
+
+Once the PAs and their corresponding clusters were prepared, we began calculating the AWF for observation sites. As indicated by the equation, AWF calculation depends on the median dispersal distance. To assess the effect of varying dispersal distances, we computed AWF using a range of median dispersal distances: `r seq(10, 150, 10)`. For each specified dispersal distance, we identified the PAs within a buffer around each site, with the buffer size set to five times the given dispersal distance. For mammals, only PAs in the same continent as the observation site were included. The Euclidean distances between the observation site and the selected PAs were then used to calculate the AWF for that site.
 
 ```{r calculate_conn, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
 # Calculate site connectivity for birds and mammals
@@ -136,31 +139,12 @@ calc_conn(taxon = "mammal", src_dir = src_dir, dst_dir = dst_dir)
 ```
 
 ## Preparation of the Analytical Data Files
+
 Preparation of our analytical data file followed the procedures outlined in Brodie et al. (2023) and implemented in our computational reproduction. 
 Because that analysis did not analyze connectivity, we appended our calculated connectivity measures to that datafile and scaled those variables following the procedures of the original authors.
 Finally, we identified and removed outlier values from each dataset using **PROCEDURE INFO** and a list provided by Brodie et al. 
 
 ```{r clean_data, eval=TRUE, echo=TRUE, results='hide', message=FALSE}
-# Load Brodie outlier list
-## For PA efficacy
-outliers_eff_bird <- list(
-    "PD" = c("L2422371", "L3776738", "L2521761", 
-             "L6127181", "L3865754"),
-    "FR" = c("L921125", "L2422371", "L4331944", "L13465594"),
-    "SR" = c("L4789498", "L921125", "L1122096", 
-             "L7010824", "L3865754", "L3776738"))
-
-# For spillover
-outliers_spil_bird <- list(
-    "PD" = c("L1084299", "L4225511", "L3846512", "L2129865", "L3267752"),
-    "FR" = c("L4225511", "L5969878", "L3267752", 
-             "L4331944", "L13465594", "L1084299"),
-    "SR" = c("L4225511", "L5624588", "L3321319", "L14087870"))
-outliers_spil_mammal <- list(
-    "PD" = c("WM-OP009", "WM-HCV003", "C24A25", "C1A09", "C1B12"),
-    "FR" = c("Bal013a", "Bal017a", "C1CT21"),
-    "SR" = c("Bal011", "C1CT50", "C24A25"))
-
 # Clean data and remove outliers for bird and mammal models
 conn_metrics <- 'awf_ptg'
 src_dir <- "data/raw/public"
@@ -186,18 +170,14 @@ var_catalog <- data.frame(
 dat_clean_bird <- subset(dat_clean_bird, med_dist == 100)
 rpl_efficacy_bird <- lapply(1:nrow(var_catalog), function(i){
     model_pa_efficacy(dat_clean_bird, "connec", "bird",
-                      var_catalog[[i, "response_variable"]], 
-                      # set to auto for auto detection
-                      outliers_eff_bird[[var_catalog[[i, "name"]]]]) 
+                      var_catalog[[i, "response_variable"]], "auto") 
 }); names(rpl_efficacy_bird) <- sprintf("mod_bird_eff_%s", var_catalog$name)
 
 # Reproduce models for mammals
 dat_clean_mammal <- subset(dat_clean_mammal, med_dist == 50)
 rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
     model_pa_efficacy(dat_clean_mammal, "connec", "mammal",
-                      var_catalog[[i, "response_variable"]], 
-                      # set to auto for auto detection
-                      NULL)
+                      var_catalog[[i, "response_variable"]], "auto")
 }); names(rpl_efficacy_mammal) <- sprintf("mod_mammal_eff_%s", var_catalog$name)
 ```
 
@@ -209,30 +189,28 @@ rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
 rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
         model_pa_spillover(dat_clean_bird, "connec+", "bird", bnr_var, 
-                       var_catalog[[i, "response_variable"]], 
-                      outliers_spil_bird[[var_catalog[[i, "name"]]]])
+                       var_catalog[[i, "response_variable"]], "auto")
     })
-    names(mods) <- sprintf("mod_bird_%s_%s", 
-                           c("size", "dist"), var_catalog[[i, "name"]])
+    names(mods) <- sprintf("mod_bird_%s_%s", c("size", "dist"), 
+                           var_catalog[[i, "name"]])
     mods
-    
-})
-rpl_spill_bird <- do.call(c, rpl_spill_bird)
+}); rpl_spill_bird <- do.call(c, rpl_spill_bird)
 
 # Replicate spillover models for mammals w/ connectivity
 ## Lei, we need to change the outlier procedure in this function
 rpl_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
         model_pa_spillover(dat_clean_mammal, "connec+", "mammal", bnr_var, 
-                       var_catalog[[i, "response_variable"]], 
-                      outliers_spil_mammal[[var_catalog[[i, "name"]]]])
+                       var_catalog[[i, "response_variable"]], "auto")
     })
-    names(mods) <- sprintf("mod_mammal_%s_%s", 
-                           c("size", "dist"), var_catalog[[i, "name"]])
+    names(mods) <- sprintf("mod_mammal_%s_%s", c("size", "dist"), 
+                           var_catalog[[i, "name"]])
     mods
-    
-})
-rpl_spill_mammal <- do.call(c, rpl_spill_mammal)
+}); rpl_spill_mammal <- do.call(c, rpl_spill_mammal)
+
+# Concatenate them together
+mods <- list("bird" = do.call(c, list(rpl_efficacy_bird, rpl_spill_bird)), 
+             "mammal" = do.call(c, list(rpl_efficacy_mammal, rpl_spill_mammal)))
 ```
 
 ```{r rpl_spill_tab, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
@@ -249,8 +227,6 @@ var_cvt <- data.frame(
                  "PA size|Connectivity", "PA size", 
                  "Distance to PA (binary)", "Distance to PA|Connectivity"))
 
-mods <- list("bird" = do.call(c, list(rpl_efficacy_bird, rpl_spill_bird)), 
-             "mammal" = do.call(c, list(rpl_efficacy_mammal, rpl_spill_mammal)))
 coefs <- lapply(names(mods), function(taxon){
     models <- mods[[taxon]]
     lapply(names(models), function(nm){
@@ -266,7 +242,7 @@ coefs <- lapply(names(mods), function(taxon){
         # Do the tidy work
         broom.mixed::tidy(
             models[[nm]], effects='fixed', conf.int = TRUE) %>% 
-            mutate(report_value = sprintf("%.3f (%.3f; %.3f)", 
+            mutate(report_value = sprintf("%.3f\n(%.3f; %.3f)", 
                                           estimate, std.error, p.value)) %>% 
             select(term, report_value) %>% 
             rbind(c("R2", sprintf("%.3f", r_square)), .) %>% 
@@ -286,7 +262,8 @@ effects <- unique(coefs$Effect)
 row_1 <- which(coefs$Effect == effects[1])
 row_2 <- which(coefs$Effect == effects[2])
 row_3 <- which(coefs$Effect == effects[3])
-coefs <- coefs %>% select(-Effect)
+coefs <- coefs %>% select(-Effect) %>% 
+    mutate_all(linebreak)
 
 # Bold some cells
 row_ids <- which(coefs$Variable %in% 
@@ -306,28 +283,96 @@ bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
 for (i in 1:nrow(bold_ids)){
     for (j in 1:ncol(bold_ids)){
         if (bold_ids[i, j] == TRUE){
-            coefs[i, j] <- cell_spec(coefs[i, j], bold = T)
+            coefs[i, j] <- cell_spec(coefs[i, j], bold = T, escape = FALSE)
         }
     }
 }
 
 # Make the kable
 names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
+cap <- paste0("Results from mixed-effects linear regression for ",
+              "species richness (SR), functional richness (FR), ",
+              "and phylogenetic diversity (PD).")
 coefs %>%
-    kableExtra::kbl(escape = FALSE, full_width = F) %>% 
-    kable_styling(latex_options="scale_down", font_size = 8) %>% 
-    pack_rows(effects[1], min(row_1), max(row_1)) %>%
-    pack_rows(effects[2], min(row_2), max(row_2)) %>% 
-    pack_rows(effects[3], min(row_3), max(row_3)) %>% 
+    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE,
+                    caption = cap) %>% 
+    kable_paper() %>% 
+    kable_styling(latex_options = c("scale_down", "hold_position"), 
+                  font_size = 10) %>% 
+    pack_rows(effects[1], min(row_1), max(row_1), latex_gap_space = "1em") %>%
+    pack_rows(effects[2], min(row_2), max(row_2), latex_gap_space = "1em") %>% 
+    pack_rows(effects[3], min(row_3), max(row_3), latex_gap_space = "1em") %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
                      align = "c")
 ```
 
-**<< Insert Table comparing Replication and Brodie using simplified typology >>**
+```{r compare_eff, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+compare_eff <- data.frame(
+    Change = c("Direction", "Magnitude", "Significance"),
+    SR = c("$\\equiv$", "$\\downarrow$", "s $\\rightarrow$ ns"),
+    RF = c("$\\equiv$", "$\\downarrow$", "s $\\rightarrow$ ns"),
+    FD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ s")) %>% 
+    cbind(data.frame(
+    SR = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ ns"),
+    RF = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ ns"),
+    FD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns")))
 
-**<< Insert Table comparing Spillover Replication and Brodie using simplified typology >>**
+compare_eff %>%
+    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE,
+                    caption = "Comparison of PA effacicy") %>% 
+    kable_paper() %>% 
+    kable_styling(latex_options = c("scale_down", "hold_position"), 
+                  font_size = 10) %>% 
+    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
+                     align = "c") %>% 
+    footnote(general = paste0(
+        "s is for statistically significant, ",
+        "and ns is for not statistically significant.\\\n",
+        "$\\\\equiv$ indicates the same, $\\\\downarrow$ is ",
+        "for decrease, and $\\\\uparrow$ is for increase."),
+        escape = FALSE, threeparttable = TRUE)
+```
+
+```{r compare_spl, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+compare_spl <- data.frame(
+    Change = c("Direction", "Magnitude", "Significance"),
+    SR = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"),
+    RF = c("$\\equiv$", "$\\downarrow$", "s $\\rightarrow$ ns"),
+    FD = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ s")) %>% 
+    cbind(data.frame(
+        SR = c("$\\equiv$", "$\\uparrow$", "s $\\rightarrow$ ns"),
+        RF = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ s"),
+        FD = c("$\\equiv$", "$\\downarrow$", "s $\\rightarrow$ ns"))) %>% 
+    rbind(data.frame(
+        Change = c("Direction", "Magnitude", "Significance"),
+        SR = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ s"),
+        RF = c("$\\equiv$", "$\\uparrow$", "ns $\\rightarrow$ s"),
+        FD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns")) %>% 
+            cbind(data.frame(
+                SR = c("$\\equiv$", "$\\uparrow$", "ns $\\rightarrow$ s"),
+                RF = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"),
+                FD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"))))
+
+compare_spl %>%
+    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE,
+                    caption = "Comparison of PA spillover") %>% 
+    kable_paper() %>% 
+    kable_styling(latex_options = c("scale_down", "hold_position"), 
+                  font_size = 10) %>% 
+    pack_rows(effects[2], 1, 3, latex_gap_space = "1em") %>% 
+    pack_rows(effects[3], 4, 6, latex_gap_space = "1em") %>% 
+    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
+                     align = "c") %>% 
+    footnote(general = paste0(
+        "s is for statistically significant, ",
+        "and ns is for not statistically significant. ",
+        "$\\\\equiv$ indicates the same, $\\\\downarrow$ is ",
+        "for decrease, and $\\\\uparrow$ is for increase."),
+        escape = FALSE, threeparttable = TRUE)
+```
 
 # Sensitivity Analyses
+
 Compile models runs all the functions above and produces x...
 
 ```{r compile_models, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
@@ -351,15 +396,12 @@ load(here("results/figures/plot_dist_effect_taxons.rda"))
 # Birds 3x3 efficacy result over distance
 taxon_dist_plot$bird$`Phylogenetic diveristy (PD)` +
     ggtitle(paste0("Bird", " - ", "Phylogenetic diveristy (PD)")) +
-    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$bird$`Functional richness (FR)` +
     ggtitle(paste0("Bird", " - ", "Functional richness (FR)")) +
-    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$bird$`Species richness (SR)` +
     ggtitle(paste0("Bird", " - ", "Species richness (SR)")) +
-    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -367,15 +409,12 @@ taxon_dist_plot$bird$`Species richness (SR)` +
 # Mammals 3x3 efficacy result over distance
 taxon_dist_plot$mammal$`Phylogenetic diveristy (PD)` +
     ggtitle(paste0("Mammal", " - ", "Phylogenetic diveristy (PD)")) +
-    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$mammal$`Functional richness (FR)` +
     ggtitle(paste0("Mammal", " - ", "Functional richness (FR)")) +
-    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 taxon_dist_plot$mammal$`Species richness (SR)` +
     ggtitle(paste0("Mammal", " - ", "Species richness (SR)")) +
-    scale_x_continuous(breaks = seq(10, 150, 30)) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
