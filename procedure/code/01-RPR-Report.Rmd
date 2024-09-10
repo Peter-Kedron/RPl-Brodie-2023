@@ -47,7 +47,9 @@ knitr::opts_chunk$set(
   fig.path = paste0(here("results", "figures"), "/"),
   warning = FALSE,
   message = FALSE,
-  include = TRUE
+  include = TRUE,
+  tidy.opts = list(width.cutoff = 60),
+  tidy = TRUE
 )
 
 # set working directory as the project folder
@@ -63,13 +65,17 @@ This study is a *computational reproduction* of:
 Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
 
 In this reproduction, we attempt to identically reproduce the primary results of the original study. 
-The results of interest include 1) six measures of the effect of PA status on bird and mammal biodiversity, 2) six measures of the effect of adjacency to a large PA on bird and mammal biodiversity at unprotected sites, and 3) six measures of the effect of distance from a PA on bird and mammal biodiversity at unprotected sites.
-We attempt the reproduction twice. 
-First, we use the data and code published with author correction in April 2024. 
-Second, for completeness and because we had already begun our reproduction attempt before the correction was published, we attempt the reproduction using the code and data shared with the original publication in August 2023. 
+The results of interest include:
+
+1. six measures of the effect of PA status on bird and mammal biodiversity, 
+2. six measures of the effect of adjacency to a large PA on bird and mammal biodiversity at unprotected sites
+3. six measures of the effect of distance from a PA on bird and mammal biodiversity at unprotected sites.
+
+We attempt the reproduction using data and code files published with an author correction in April 2024. 
 A successful reproduction should recreate the numerical results published in Brodie et al. (2023), or the those published with the correction in April 2024. 
 
 All materials and procedures used in this reproduction are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
+That repository also contains a series of scripts and functions to re-execute this reproduction attempt and a related replication attempt.
 We implemented the reproduction in platform `r R.version$platform` using R programming language (Version `r paste0(R.version$major, ".", R.version$minor)`).
 Structural causal modeling was performed using the DAGITTY package (Version `r packageVersion('dagitty')`).
 We used the MatchIt package (Version `r packageVersion('matchit')`) to perform propensity score matching and the NLME package (Version `r packageVersion('nlme')`) to fit the linear mixed effects regression models.
@@ -91,7 +97,12 @@ The authors use three measures of bird and mammal biodiveristy as their response
 Bird observations were gathered from 1,079 sampling locations in the eBird database spanning the period between January 2015 and August 2021. 
 Mammal observations were assembled by the authors from camera traps 1,365 camera stations deployed across the region. 
 
-The primary predictors of interest were 1) a binary measure indicating whether a observation site was located inside or outside a PA, 2) a binary indicator that identified of the PA closest to an unprotected site as larger than 500 sq km, and 3) a binary indicator that identified if the PA closest to an unprotected site was within 2km. 
+The primary predictors of interest were:
+
+1. A binary measure indicating whether a observation site was located inside or outside a PA
+2. a binary indicator that identified of the PA closest to an unprotected site as larger than 500 sq km
+3. a binary indicator that identified if the PA closest to an unprotected site was within 2km. 
+
 Primary predictors measuring PA status were derived from the World Database of Protected Areas.
 Additional predictors used to deconfound for site accessibility, forest structure, understory density, and human development pressure were derived from the NASA Global Ecosystem Dynamics Investigation (GEDI) mission, and the UN Development program Human Development Index.
 Site accessibility was measured using circuit theory-based metrics of proximity to human development^["circuit theoretical models parameterized with human travel speeds across different terrains and the locations of populations centers and transportation networks" (Brodie et al. 2023)]. 
@@ -103,7 +114,7 @@ The authors completed two sets of statistical analyses.
 First, the authors estimated the the effect of a site being located inside or outside a PA on bird and mammal biodiversity. 
 In total, the authors fit six separate regression models - two response variable taxons (birds, mammals) for three biodiversity measures (SR, FR, PD) - testing the null hypothesis that:
 
-> OR-Ho-1: The protected area status of a site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+> OR-Ho-1: The protected area status of a site has no effect on the level of mammalian or avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
 
 Brodie et al. find evidence that the legal designation of PAs provides substantial and significant benefits to Southeast Asian bird biodiversity.
 The authors did not find the same effect for mammals. 
@@ -114,9 +125,9 @@ Within the subset of observation sites outside PA, the authors tested for these 
 In total, the authors fit 12 separate regression models - two response variable taxons (birds, mammals), by three biodiversity measures (SR, FR, PD), by two PA measures (area, distance). 
 The null hypothesis tested were:
 
-> OR-Ho-2a: Being located within 2km of a protected area of at least 500^km in size has no effect on the level of mammalian of avian biodiversity observed at an unprotected site when adjusting for the confounds of site accessibility, habitat condition, the socioeconomic development, and distance to that protected site.
+> OR-Ho-2a: Being located within 2km of a protected area of at least 500 $km^2$ in size has no effect on the level of mammalian of avian biodiversity observed at an unprotected site when adjusting for the confounds of site accessibility, habitat condition, the socioeconomic development, and distance to that protected site.
 
-> OR-Ho-2b: The distance to the protected area located closest to an unprotected observation site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
+> OR-Ho-2b: The distance to the protected area located closest to an unprotected observation site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, the socioeconomic development, and adjacency to a large protected area.
 
 Brodie et al find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, but that the effects for birds are smaller than those for mammals.
 The authors found that distance to the nearest PA was significantly associated with only mammal functional richness.
@@ -136,11 +147,8 @@ The authors found that distance to the nearest PA was significantly associated w
 
 
 ## Data-level Metadata
-We use two datasets provided by the Brodie et al. to conduct our reproduction. 
-Our primary analysis uses the author corrected dataset available at **INSERT DATASET LINK**.
-We also attempted to reproduce study results using the dataset originally provided by the authors, which is available at [https://doi.org/10.6084/m9.figshare.22527298.v1](https://doi.org/10.6084/m9.figshare.22527298.v1).
-The authors' originally published dataset is missing the country-level measure of the Human Development Index used in biodiversity modeling.
-We gathered this data from the United Nations Development program and merge it with the authors' original dataset.
+We use the author corrected dataset available at [https://figshare.com/authors/Jedediah_Brodie/9745991](https://figshare.com/authors/Jedediah_Brodie/9745991) to conduct our reproduction .
+The authors' originally published dataset (available at [https://doi.org/10.6084/m9.figshare.22527298.v1](https://doi.org/10.6084/m9.figshare.22527298.v1)) is missing the country-level measure of the Human Development Index used in biodiversity modeling.
 For completeness, we gathered and include here metadata on the datasets used by the original authors to construct their shared analytical datasets.
 
 
@@ -162,7 +170,7 @@ The authors did not provide scripts on how they derived the biodiversity metrics
 
 
 ### The World Database on Protected Areas
-The original study used protected area boundaries to derive the three treatment variables (Table 3). 
+The original study used protected area boundaries to derive the three treatment variables (Table 2). 
 Brodie et al. (2023) did not specify a data processing procedure or provide code from the preparation of protected area boundaries. 
 
 - `Title`: The World Database on Protected Areas (WDPA).
@@ -221,7 +229,8 @@ Clear reasoning for those adjustments was not provided in the note on author cor
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Unknown.
 
-*Table 1* Response, treatment, and predictor variables generated by Brodie et al (2023).
+\vspace(3cm)
+**Table 1** Response, treatment, and predictor variables generated by Brodie et al (2023).
 
 | **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
 | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
@@ -250,11 +259,12 @@ Note: HDI was not included in the data file shared by the original study. We gat
 
 ## Statistical Approach
 Brodie et al. use propensity score matching to control for the potential confounding effects of site accessibility and habitat quality when estimating the efficacy of protected areas at improving bird and mammal biodiversity. 
-In PA efficacy models, observations were matched based on their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. 
+In the PA efficacy models, observations were matched based on their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. 
 In spillover models, observations were matched based on these same factors and either adjacent PA size or distance to the nearest PA. 
 Weights produced by propensity score matching were then used in mixed-effects linear regression models that estimated the treatment effect - PA status, nearest PA size, nearest PA distance - while adjusting for forest canopy height, site accessibility, and HDI (Table 1).
 
-*Table 1*. Variables used in statistical modeling
+\vspace(3cm)
+**Table 2**. Variables used in statistical modeling
 
 | **Name** | **Source** | **Usage** |
 | :--: | :--: | :--: |
@@ -278,15 +288,19 @@ We noticed the following issues in the script and analysis file originally publi
 4) The procedure for identifying and eliminating outliers was not included in the script. Only a hand coded list of outliers was provided and removed in the code.
 
 The script and analysis file published by the authors with their correction in April 2024 addressed the first issue above. 
-However, the other issues remain.
-
-Other than adding the HDI variable to the original analytical file, we did not manipulate the data before beginning our reproduction attempt. 
+However, the other issues remain. 
+We did not manipulate the corrected data file before beginning our reproduction attempt. 
 
 
 # Reproduction Attempts
 
-We completed two reproduction attempts - 1) using the analysis data and script originally published by the authors and 2) using the analysis data and script published with the author correction. 
-Both analyses were conducted in R using the following packages.
+We were able to statistically reproduce the results of Brodie et al. using unaltered version of the their corrected data and code files.
+In an attempt to remain consisted with the original authors, we use the most recent package versions at the time of the author corrected analysis - April 26, 2024.
+No additional preparation was needed for our reproduction using these materials.
+
+For brevity and legibility, this rendered report suppresses the code used to prepare and re-execute the analysis.
+However, that code is recorded and accessible in the RNotebook file that forms the basis of this report. 
+That file and all related research materials are available in this projects online repository. 
 
 ```{r package setup, echo = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 # , results = 'hide', message = FALSE, warning = FALSE, eval = FALSE
@@ -305,8 +319,7 @@ lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns 
 here('')
 ```
 
-For completeness, we first reproduced the causal diagram underlying the original analysis. 
-We made not substantive changes to the authors original code. 
+For completeness, we first reproduced the causal diagram underlying the original analysis and used the diagram to identify the predictors necessary for estimation of the causal effect of the PA treatment.
 
 ```{r SCM, echo = FALSE} 
 # Create the directed acyclic graph (DAG) of potential causal 
@@ -363,14 +376,8 @@ adjustmentSets(dagBrodie)
 
 ```
 
-## Data Preparation
-Preparation of our analysis data followed the procedures outlined in Brodie et al. (2023).
-Complete details of the procedures are available in the called function headers and comments.
-All called functions are available with the project repository.
-No additional preparation was needed for our reproduction attempt using the author corrected analysis file and script.
 
-
-```{r clean_data, echo = TRUE}
+```{r clean_data, echo = FALSE}
 # results = 'hide', message = FALSE, eval = FALSE,
 # Load Revised Data ------------------------------------------------------------
 # Birds ------------------------------------------------------------------------
@@ -382,13 +389,13 @@ dat_mammals <- data.frame(read.csv(here("data/raw/public/training/mammal_data_co
 
 # Load and Clean Original Data -------------------------------------------------
 # Birds ------------------------------------------------------------------------
-m01<-mean(dat_birds$utm_east,na.rm=T);
-s01<-sd(dat_birds$utm_east,na.rm=T); 
-dat_birds$utm_east.z<-(dat_birds$utm_east-m01)/s01
+m01 <- mean(dat_birds$utm_east,na.rm = T);
+s01 <- sd(dat_birds$utm_east,na.rm = T); 
+dat_birds$utm_east.z <- (dat_birds$utm_east-m01)/s01
 
-m02<-mean(dat_birds$utm_north,na.rm=T);
-s02<-sd(dat_birds$utm_north,na.rm=T);
-dat_birds$utm_north.z<-(dat_birds$utm_north-m02)/s02
+m02 <- mean(dat_birds$utm_north,na.rm = T);
+s02 <- sd(dat_birds$utm_north,na.rm = T);
+dat_birds$utm_north.z <- (dat_birds$utm_north-m02)/s02
 
 m03<-mean(dat_birds$HDI,na.rm=T);
 s03<-sd(dat_birds$HDI,na.rm=T);
@@ -524,13 +531,14 @@ d_mammals1$gedi.m <- d_mammals1$rh_95_a0.pred.z
 d_mammals1 <- subset(d_mammals1, Hansen_recentloss == 0)
 ```
 
-
-## Reproduction Using Author Corrected Data and Code
-
 To assess **OR-Ho-1** we reproduced the propensity score matching procedure and linear mixed-effects modeling conducted by the Brodie et al. for each the three biodiversity response variables for each taxon. 
 This procedure resulted in six fitted regressions.
+Our results (Table 3) correspond to the top third of Table 1 of corrected supplemental materials presented by Brodie et al.. 
+While we were not able to computationally reproduce their exact coefficient values, our results are similar in magnitude, direction, and statistical significance. 
+Of principle interest, we were able to reproduce the statistical results for the PA treatment for both birds and mammals.
+Bird models produced significant positive effects for location within a PA, while no significant effects were observed for mammals.
 
-```{r rpr_cor_eff, echo = TRUE,  include = TRUE}
+```{r rpr_cor_eff, echo = FALSE,  include = TRUE}
 # Brodies efficacy code Bird ---------------------------------------------------
 #--------------------------- PD ------------------------------------------------
 d_birds1_pd <- d_birds1
@@ -627,61 +635,7 @@ efficacy_models <- c(bird_eff_models, mammals_eff_models)
 ```
 
 
-```{r rpr_cor_eff_tab, echo = FALSE, warning = FALSE, message = FALSE, eval=FALSE}
-# Wenxin's initial attempt to create a model result summary table.
-# Insert code to construct a summary table of efficacy models like Brodie et al.
-# <<initial attempt>>
-# pro: simple
-# con: difficult to customize
-
-# library(modelsummary)
-# library(kableExtra)
-
-# add one line of R squared at the very top
-# library(MuMIn)
-# library(tibble)
-getRsqd <- function(mod){
-    r_sqd <- r.squaredGLMM(mod)[[2]]
-    return(as.numeric(r_sqd))
-}
-
-rvals <- c(lapply(efficacy_models, getRsqd))
-# row_rvals <- c("estimates", "R2", "estimate", rvals)
-row_rsqd <- tribble(~term, ~PD,         ~FR,         ~SR,         ~PD, 
-                    ~FR,         ~SR,
-                    "R2",   rvals[1]$PD, rvals[2]$FR, rvals[3]$SR, rvals[4]$PD, 
-                     rvals[5]$FR, rvals[6]$SR)
-
-attr(row_rsqd, 'position') <- 1
-
-tab_eff <- msummary(efficacy_models, output = "kableExtra", fmt = 2, 
-         estimate = c("{estimate} ({std.error}, {p.value})"), 
-         statistic = NULL, # omit standard errors in parenthesis
-         gof_omit = "Num.Obs.|R2 Marg.|R2 Cond.|AIC|BIC|ICC|RMSE", # remove indices we don't need
-         coef_rename = c("(Intercept)" = "Intercept","gedi.m" = "Forest canopy height", 
-                         "access_log10.z" = "Site accessibility", "HDI.z" = "HDI"),
-         coef_omit = "SD*",
-         add_row = row_rsqd)
-
-tab_eff <- tab_eff %>%
-    # column labels
-    add_header_above(c(" " = 1, "Birds" = 3, "Mammals" = 3)) %>%
-    kable_styling(full_width = F) %>%
-    row_spec(6, bold = T)
-
-tab_eff
-```
-
-
-
-
-
 ```{r rpr_cor_eff_tab_final, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
-# Ultimately adapted Lei's code from the RPL report that's much more flexible.
-# <<final table>>
-# edited from code chunk written by Lei Song in the RPL-Report.Rmd
-# pro: very flexible and customizable
-# con: hard for me to write
 
 var_cvt <- data.frame(
     term = c("R2", "(Intercept)", "gedi.m", "access_log10.z", 
@@ -784,11 +738,13 @@ coefs %>%
 #    save_kable(here('results/figures/RPR-cor-eff-table.png'))
 ```
 
-
 To assess **OR-Ho-2a** and **OR-Ho-2b** we reproduced the propensity score matching procedure and linear mixed-effects modeling of PA size and PA distance spillovers for each the three biodiversity response variables for each taxon.
 This produced 12 fitted regressions.
+Our results (Table 4) match the bottom two-thirds of Table 1 of corrected supplemental materials presented by Brodie et al..
+We were again unable to computationally reproduce the exact coefficient values for the 'PA size' effects or the 'Distance to PA' effects, but did produce coefficients with similar directions, magnitudes, and statistical significance. 
+The one difference between our results and the original authors was the coefficient for the distance to PA estimated for birds using SR. 
 
-```{r rpr_cor_spill, echo = TRUE, results = 'hide', message = FALSE, eval = TRUE}
+```{r rpr_cor_spill, echo = FALSE, results = 'hide', message = FALSE, eval = TRUE}
 
 # Brodies spillover effect code Bird -------------------------------------------
 #--------------------------- PD ------------------------------------------------
@@ -990,9 +946,8 @@ mammals_dist_models <- list(PD_dist = mm02d_mammals_dist_pd, FR_dist = mm02d_mam
 # dist_models <- c(bird_dist_models, mammals_dist_models)
 ```
 
-```{r rpr_cor_spill_tab, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
-# similar to the previous table
-# Insert code to construct a summary table of efficacy models like Table 1 in Brodie et al.
+```{r rpr_cor_spill_tab, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+
 # Define variable convert table
 var_cvt <- data.frame(
     term = c("R2", "(Intercept)", "gedi.m", "access_log10.z", 
@@ -1077,38 +1032,23 @@ coefs %>%
 #    save_kable(here('results/figures/RPR-cor-spill-table.png'))
 ```
 
-### Comparison of Statistical Estimates
-
-**Build comparison table in with simplified symbology in Rmarkdown**
-
-
-
-### Comparison of Statistical Estimates
-
-**Build comparison table in with simplified symbology in Rmarkdown**
 
 # Discussion & Conclusion
 
-The goal of the report is to reproduce analysis and results from Brodie et al. (2023) on the effect of protected areas to preserve tropical bird and mammal biodiversity after removing confounding effects of site accessibility and forest structure. The original paper provided scripts and data which allowed for reproductions. The scripts were in general reproducible while missing data preprocessing steps such as cleaning protected area boundaries and computing secondary variables from raw data (e.g., GEDI metrics and circuit-based accessibiltiy metrics). The data file contained most information but did not include raw observation data, a meta data file, or include HDI.
+The goal of the report is to reproduce analysis and results from Brodie et al. (2023) on the effect of protected areas to preserve tropical bird and mammal biodiversity after removing confounding effects of site accessibility and forest structure. 
+The original paper provided scripts and data which allowed for reproductions. The scripts were in general reproducible while missing data preprocessing steps such as cleaning protected area boundaries and computing secondary variables from raw data (e.g., GEDI metrics and circuit-based accessibiltiy metrics). 
+The data file contained most information necessary to attempt the reproducetion, but did not include raw observation data or an extensive metadata file.
 
-While there are ways to improve the reproducibility of the original work, our reproduction found results that were consistent with the main findings of Brodie et al. (2023). We found supporting evidence for OR-H1 (i.e., similar coefficient values and significance) as the original study but were unable to reproduce exact results as Brodie et al. (2023). Reasons for the differences could be HDI values, data version issues, or computation environment.
-
-Through reconstructing the causal diagram and reproduction, we found that connectivity from sampling points to protected areas was not accounted for in the original study. We introduced hypothesis RPL-01 and tested it in our replication study.
+While there are ways to improve the reproducibility of the original work, our reproduction found results that were consistent with the main findings of Brodie et al. (2023). 
+We found supporting evidence for OR-H1 (i.e., similar coefficient values and significance) as the original study but were unable to reproduce exact results as Brodie et al. (2023). 
+Reasons for the differences could be data version issues or computation environment.
 
 ## Bias and threats to validity
 
 Given the research design as described in the original paper and primary data shared, we find that potential spatial autocorrelation of sample points were not addressed. In addition, uncertainty issues were not discussed thoroughly in the paper, which includes 1) the representativeness of biodiversity measures, 2) the validity of forest structure measures created through krigging, and 3) accessibility represented by country-level Human Development Index.
 
-// should we add a map/moran's I result here?
-// other concerns to add?
-
 
 # Acknowledgements
-
-- `Funding Name`: name of funding for the project
-- `Funding Title`: title of project grant
-- `Award info URI`: web address for award information
-- `Award number`: award number
 
 This report is based upon the template for Reproducible and Replicable Research in Human-Environment and Geographical Sciences, DOI:[10.17605/OSF.IO/W29MQ](https://doi.org/10.17605/OSF.IO/W29MQ)
 
