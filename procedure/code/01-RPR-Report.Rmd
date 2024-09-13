@@ -161,8 +161,8 @@ The authors did not provide scripts on how they derived the biodiversity metrics
 
 - `Title`: eBird.
 - `Abstract`: A community science platform for reporting bird sightings.
-- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
-- `Spatial Resolution`: Vector data model with point observations of species occurrence
+- `Spatial Coverage`: Tropical region (overlapping countries of Brunei, Cambodia, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Vector data model with point observations of species occurrence.
 - `Spatial Reference System`: Not specified.
 - `Temporal Coverage`: 2015/01 - 2021/08.
 - `Temporal Resolution`: Not applicable.
@@ -176,13 +176,13 @@ Brodie et al. assembled camera trap data in the study region and pre-processed t
 The authors did not provide scripts on how they derived the biodiversity metrics.
 
 - `Title`: Camera traps.
-- `Abstract`: A community science platform for reporting bird sightings.
-- `Spatial Coverage`: Southeast Asia (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
-- `Spatial Resolution`: Vector data model with point observations of species occurrence
+- `Abstract`: Data from 1,365 camera stations in 65 plots in the study region.
+- `Spatial Coverage`: Southeast Asia (overlapping countries of Brunei, Cambodia, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
+- `Spatial Resolution`: Cleaned to vector data model with point observations of species occurrence.
 - `Spatial Reference System`: Not specified.
-- `Temporal Coverage`: Not sepceified.
+- `Temporal Coverage`: Not specified.
 - `Temporal Resolution`: Not applicable.
-- `Lineage`: Brodie et al. (2023) cleaned, filtered, and standardzied data, and used data from the most recent year if a station contains multi-year information.
+- `Lineage`: Brodie et al. (2023) cleaned, filtered, and standardized data, and used data from the most recent year if a station contains records of more than one year.
 - `Distribution`: Not applicable.
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Unknown.
