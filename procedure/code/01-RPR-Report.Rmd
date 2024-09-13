@@ -130,6 +130,8 @@ The null hypothesis tested were:
 
 > OR-Ho-2b: The distance to the protected area located closest to an unprotected observation site has no effect on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, the socioeconomic development, and adjacency to a large protected area.
 
+\par
+
 Brodie et al find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, but that the effects for birds are smaller than those for mammals.
 The authors found that distance to the nearest PA was significantly associated with only mammal functional richness.
 
@@ -169,21 +171,21 @@ The authors did not provide scripts on how they derived the biodiversity metrics
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Although a direct data quality layer is not associated, Brodie et al. (2023) stated that they followed recommendations from existing studies to filter out data points.
 
-### Camera trap
-Brodie et al. placed camera traps and preprocessed these data to construct the biodiversity measures for mammals that are then used as response variables in statistical modeling. 
+### Camera traps
+Brodie et al. assembled camera trap data in the study region and pre-processed these data to construct the biodiversity measures for mammals that are then used as response variables in statistical modeling. 
 The authors did not provide scripts on how they derived the biodiversity metrics.
 
-- `Title`: Camera trap.
+- `Title`: Camera traps.
 - `Abstract`: A community science platform for reporting bird sightings.
 - `Spatial Coverage`: Southeast Asia (overlapping countries of Brunei, Cambodie, China, Indonesia, Laos, Malaysia, Singapore, Thailand, and Vietnam).
 - `Spatial Resolution`: Vector data model with point observations of species occurrence
 - `Spatial Reference System`: Not specified.
-- `Temporal Coverage`: 
+- `Temporal Coverage`: Not sepceified.
 - `Temporal Resolution`: Not applicable.
-- `Lineage`: Brodie et al. (2023) collected the data
+- `Lineage`: Brodie et al. (2023) cleaned, filtered, and standardzied data, and used data from the most recent year if a station contains multi-year information.
 - `Distribution`: Not applicable.
 - `Constraints`: Non-commercial use.
-- `Data Quality`: Although a direct data quality layer is not associated, Brodie et al. (2023) stated that they followed recommendations from existing studies to filter out data points.
+- `Data Quality`: Unknown.
 
 
 ### The World Database on Protected Areas
@@ -222,7 +224,7 @@ The authors did not provide code for the calculation of GEDI metrics.
 - `Spatial Reference System`: WGS 84.
 - `Temporal Coverage`: 2019/04/17 to 2022/04/12
 - `Temporal Resolution`: Not applicable.
-- `Lineage`: ???
+- `Lineage`: Brodie et al. (2023) used kriging to interpolate GEDI footprints into wall-to-wall raster data of 1-km resolution.
 - `Distribution`: Original GEDI L2 metrics can be derived from [NASA website](https://cmr.earthdata.nasa.gov/search/concepts/C1908348134-LPDAAC_ECS.html) and Brodie et al. (2023) shared krigged results on a [ webpage](https://rcdata.nau.edu/geode_data/SEA_vertebrate_diversity_rasters).
 - `Constraints`: Non-commercial use.
 - `Data Quality`: Original GEDI L2 metrics have quality and degrade flags and Brodie et al. (2023) kept only data points of satisfying quality.
@@ -247,11 +249,38 @@ Clear reasoning for those adjustments was not provided in the note on author cor
 - `Data Quality`: Unknown.
 
 \par
+
+## Statistical Approach
+Brodie et al. use propensity score matching to control for the potential confounding effects of site accessibility and habitat quality when estimating the efficacy of protected areas at improving bird and mammal biodiversity. 
+In the PA efficacy models, observations were matched based on their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. 
+In spillover models, observations were matched based on these same factors and either adjacent PA size or distance to the nearest PA. 
+Weights produced by propensity score matching were then used in mixed-effects linear regression models that estimated the treatment effect - PA status, nearest PA size, nearest PA distance - while adjusting for forest canopy height, site accessibility, and HDI (Table 1).
+
+
+## Observations Preceeding the Reproduction Attempt  
+
+Before beginning our reproduction attempt, we had observed the analysis file and code published by Brodie et al..
+We noticed the following issues in the script and analysis file originally published by the authors.
+
+1) The HDI measure was missing from the analysis file.
+2) The procedure for computing biodiversity metrics, GEDI metrics, and the circuit-based accessibility metric was not provided in the scripts and not presented in detail in the methodological supplement.
+3) The procedure for preparing PA boundaries for analysis was unclear.
+4) The procedure for identifying and eliminating outliers was not included in the script. Only a hand coded list of outliers was provided and removed in the code.
+
+The script and analysis file published by the authors with their correction in April 2024 addressed the first issue above. 
+However, the other issues remain. 
+We did not manipulate the corrected data file before beginning our reproduction attempt.
+
+\par
+
+\pagebreak
+
 **Table 1** Response, treatment, and predictor variables generated by Brodie et al (2023).
 
+\scriptsize
 | **Label** | **Alias** | **Definition** | **Type** | **Accuracy** | **Domain** | **Missing Data Value(s)** | **Missing Data Frequency** |
 | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| **eBird** |
+| **eBird & camera traps** |
 | SR.mean | Species richness | Number of species | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
 | maxFRic | Functional richness | Diversity of species functional traits | Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
 | asymptPD | Phylogenetic diversity | Cumulative evolutionary time of the species assemblage| Float | Unknown | Equal or greater than 0 | Not applicable | Unknown |
@@ -266,20 +295,13 @@ Clear reasoning for those adjustments was not provided in the note on author cor
 | rh_95_a0.pred | Relative height at 95% | Roughly the top canopy height (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
 | pavd_0_5.pred | Plant area volume density from 0 to 5 m | A proxy of understory forest density (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
 | pai_a0.pred | Plant area index | Cumulative PAI from ground to canopy (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
-| fhd_pai_1m_a0.pred | Foliage height diversity | Shannon's diversity of PAI across heights (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
+| fhd_pai_1m_a0. pred | Foliage height diversity | Shannon's diversity of PAI across heights (krigged) | Float | Unknown | Equal to or greater than 0 | Unknown | Unknown |
 | cover_a0.pred | Proportional coverage | Openness or closeness of canopy (krigged) | Float | Unknown | 0 to 1 | Unknown | Unknown |
 | **HDI** |
-| HDI | Human Development Index | Level of human development | Float | Unknown | 0 to 1 | Not applicable | Not applicable |
-
+| HDI | Human Development Index | Level of human development | Float | Unknown | 0 to 1 | Not applicable | Not applicable | 
+\normalsize
 Note: HDI was not included in the data file shared by the original study. We gathered HDI values for each country from the Human Development Report 2020.
 
-## Statistical Approach
-Brodie et al. use propensity score matching to control for the potential confounding effects of site accessibility and habitat quality when estimating the efficacy of protected areas at improving bird and mammal biodiversity. 
-In the PA efficacy models, observations were matched based on their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. 
-In spillover models, observations were matched based on these same factors and either adjacent PA size or distance to the nearest PA. 
-Weights produced by propensity score matching were then used in mixed-effects linear regression models that estimated the treatment effect - PA status, nearest PA size, nearest PA distance - while adjusting for forest canopy height, site accessibility, and HDI (Table 1).
-
-\par
 **Table 2**. Variables used in statistical modeling
 
 | **Name** | **Source** | **Usage** |
@@ -291,20 +313,6 @@ Weights produced by propensity score matching were then used in mixed-effects li
 | Circuit-based site accessibility (log transformed) | Authors | Predictor - site accessibility |
 | Human Development Index | Human Development Report 2020 | Predictor - Human development index |
 | Forest structure metrics | NASA GEDI L2A | Predictor - forest structure |
-
-## Observations Preceeding the Reproduction Attempt  
-
-Before beginning our reproduction attempt, we had observed the analysis file and code published by Brodie et al..
-We noticed the following issues in the script and analysis file originally published by the authors.
-
-1) The HDI measure was missing from the analysis file.
-2) The procedure for computing biodiversity metrics, GEDI metrics, and the circuit-based accessibility metric was not provided in the scripts and not presented in detail in the methodological supplement.
-3) The procedure for preparing PA boundaries for analysis was unclear.
-4) The procedure for identifying and eliminating outliers was not included in the script. Only a hand coded list of outliers was provided and removed in the code.
-
-The script and analysis file published by the authors with their correction in April 2024 addressed the first issue above. 
-However, the other issues remain. 
-We did not manipulate the corrected data file before beginning our reproduction attempt. 
 
 
 # Reproduction Attempts
@@ -336,7 +344,7 @@ here('')
 
 For completeness, we first reproduced the causal diagram underlying the original analysis and used the diagram to identify the predictors necessary for estimation of the causal effect of the PA treatment.
 
-```{r SCM, echo = FALSE, out.width = '60%'} 
+```{r SCM, echo = FALSE, out.width = '80%'} 
 # Create the directed acyclic graph (DAG) of potential causal 
 # Assign PA as the exposure and diversity as the outcome.
 dagBrodie <- dagitty("dag {
@@ -383,9 +391,9 @@ coordinates( dagBrodie ) <-  list(x = c(Diversity = 3,
                                         ))
 
 # Plot the DAG to confirm the visual structure and exposure
-ggdag_status(dagBrodie) + theme_dag() +
-    geom_dag_text(colour = "gray")
-
+ggdag_status(dagBrodie, text_col="#e2e4e6", text_size = 3.5, node_size = 20) + 
+    theme_dag() +
+    xlim(0, 6)
 # Identify the set of adjustment variables needed to identify 
 # the effect of PA on biodiversity 
 adjustmentSets(dagBrodie)
@@ -679,7 +687,7 @@ coefs <- lapply(names(mods), function(taxon){
             models[[nm]], effects='fixed', conf.int = TRUE) %>%
             # add a column into the dataframe called report_value to store
             # all statistics to be reported
-            mutate(report_value = sprintf("%.3f (%.3f; %.3f)", 
+            mutate(report_value = sprintf("%.3f\n(%.3f; %.3f)", 
                                           estimate, std.error, p.value)) %>% 
             # select columns to keep
             select(term, report_value) %>% 
@@ -711,7 +719,9 @@ effects <- unique(coefs$Effect)
 # identify which rows are results for which effect
 row_1 <- which(coefs$Effect == effects[1])
 # and then remove the column of Effect
-coefs <- coefs %>% select(-Effect)
+coefs <- coefs %>% 
+    select(-Effect) %>%
+    mutate_all(linebreak)
 
 # Bold cells that have significant treatment effects
 # first, get row ids for rows displaying results of the model of interest
@@ -735,19 +745,27 @@ bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
 for (i in 1:nrow(bold_ids)){
     for (j in 1:ncol(bold_ids)){
         if (bold_ids[i, j] == TRUE){
-            coefs[i, j] <- cell_spec(coefs[i, j], bold = T)
+            coefs[i, j] <- cell_spec(coefs[i, j], bold = T, escape = FALSE)
         }
     }
 }
 
 # Make the kable
 names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
+cap <- paste0("Reproduction results from mixed-effects linear regression for ",
+              "species richness (SR), functional richness (FR), ",
+              "and phylogenetic diversity (PD). Following Brodie et al., 
+              bolding indicates predictors with estimated coefficients with 
+              p<0.05")
 coefs %>%
-    kableExtra::kbl(escape = FALSE) %>% 
-    kable_classic(full_width = F) %>%
+    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE,
+                    caption = cap) %>% 
+    kable_paper() %>% 
+    kable_styling(latex_options = c("scale_down", "hold_position"), 
+                  font_size = 10) %>% 
     # pack_rows can group rows into a category 
     # we are grouping them by effects
-    pack_rows(effects[1], min(row_1), max(row_1)) %>%
+    pack_rows(effects[1], min(row_1), max(row_1), latex_gap_space = "1em") %>%
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
                      align = "c") 
 #%>%
@@ -991,7 +1009,7 @@ coefs <- lapply(names(mods), function(taxon){
         # Do the tidy work
         broom.mixed::tidy(
             models[[nm]], effects='fixed', conf.int = TRUE) %>% 
-            mutate(report_value = sprintf("%.3f (%.3f; %.3f)", 
+            mutate(report_value = sprintf("%.3f\n(%.3f; %.3f)", 
                                           estimate, std.error, p.value)) %>% 
             select(term, report_value) %>% 
             rbind(c("R2", sprintf("%.3f", r_square)), .) %>% 
@@ -1011,7 +1029,9 @@ coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
 effects <- unique(coefs$Effect)
 row_1 <- which(coefs$Effect == effects[1])
 row_2 <- which(coefs$Effect == effects[2])
-coefs <- coefs %>% select(-Effect)
+coefs <- coefs %>% 
+    select(-Effect) %>% 
+    mutate_all(linebreak)
 
 # Bold some cells
 row_ids <- which(coefs$Variable %in% 
@@ -1030,18 +1050,26 @@ bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
 for (i in 1:nrow(bold_ids)){
     for (j in 1:ncol(bold_ids)){
         if (bold_ids[i, j] == TRUE){
-            coefs[i, j] <- cell_spec(coefs[i, j], bold = T)
+            coefs[i, j] <- cell_spec(coefs[i, j], bold = T, escape = FALSE)
         }
     }
 }
 
 # Make the kable
 names(coefs) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
+cap <- paste0("Reproduction results from mixed-effects linear regression for ",
+              "species richness (SR), functional richness (FR), ",
+              "and phylogenetic diversity (PD) for spillover effects. Following Brodie et al., 
+              bolding indicates predictors with estimated coefficients with 
+              p<0.05")
 coefs %>%
-    kableExtra::kbl(escape = FALSE) %>% 
-    kable_classic(full_width = F) %>%
-    pack_rows(effects[1], min(row_1), max(row_1)) %>%
-    pack_rows(effects[2], min(row_2), max(row_2)) %>% 
+    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE,
+                    caption = cap) %>%     
+    kable_paper() %>% 
+    kable_styling(latex_options = c("scale_down", "hold_position"), 
+                  font_size = 10) %>% 
+    pack_rows(effects[1], min(row_1), max(row_1), latex_gap_space = "1em") %>%
+    pack_rows(effects[2], min(row_2), max(row_2), latex_gap_space = "1em") %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
                      align = "c") 
 # %>%
