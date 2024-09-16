@@ -16,17 +16,15 @@ knit: (function(inputFile, encoding) {
 
 ```{r chunk setup, include = FALSE, message = FALSE}
 # Record packages
-packages <- c("tidyverse", "here")
-
-# force all conflicts to become errors
-require(conflicted)
-library(here)
-library(kableExtra)
+## Use conflicted to force all conflicts to become errors
+packages <- c("here", "conflicted", "formatR", "groundhog", "kableExtra")
 
 # load and install required packages
-if (!require(groundhog)) {
-  install.packages("groundhog")
-  require(groundhog)
+for (pkg in packages){
+    if (!require(pkg, character.only = TRUE)) {
+        install.packages(pkg)
+        require(pkg, character.only = TRUE)
+    }
 }
 
 # record the R processing environment
@@ -42,6 +40,7 @@ knitr::write_bib(c(packages, "base"), file = here("software.bib"))
 # https://yihui.org/knitr/options/
 knitr::opts_chunk$set(
   echo = FALSE, # Run code, show outputs (don't show code)
+  eval = TRUE,
   fig.retina = 4,
   fig.height = 7.5,
   fig.width = 6.5,
@@ -76,7 +75,6 @@ This document is the produce of a computational notebook (RPL_Report.Rmd) availa
 That computational notebook contains the code used to produce the results presented in this report. 
 For brevity and legibility, we have suppressed some longer section of code here.
 A computational reproduction of the authors' original analysis is also available in the project repository - *Reproduction Report for Brodie et al. (2023)*.
-
 
 # Study design
 We adopt the statistical approach of the original analysis and test the sensitivity of the authors' findings to PA connectivity. 
@@ -121,8 +119,7 @@ The specifications of the mixed effects models testing for spillover or leakage 
 When the effect of the size of the adjacent PA is the focus, distance to that adjacent PA is controlled for. 
 When the effect of distance to the adjacent PA is the focus, the size of that adjacent PA is controlled for. 
 This approach reduces the ecological analysis of connectivity to the protected landscape adjacent to a site.
-However, there are several reasons why connections to other protected areas might effect these local effects and the efficacy of PAs - motivaing our extended analysis.
-
+However, there are several reasons why connections to other protected areas might effect these local effects and the efficacy of PAs - motivating our extended analysis.
 
 # Materials and Procedure
 
@@ -133,18 +130,15 @@ Complete details of the materials and methods used are available in *Reproductio
 Overall our workflow (Fig. 1) uses seven functions to prepare, process, and statistically analyze our data.
 Additional functions used to create figures are called in our computational notebook and available in the project repository.
 
-![**Fig 1.** Replication Workflow](/results/figures/Workflow_Diagram.png)
-
+![Replication Workflow](../../results/figures/Workflow_Diagram.png)
 
 ## Connectivity Measures
 We measure site connectivity as the area-weighted flux (AWF) of species observation sites and the surrounding landscape. 
 In this application, $AWF$ measures flow, weighted by PA area, between all observation sites as,
 
-\begin{align*}
-$AWF = \sum_{j}^{n}\sum_{j,i \ne j}^{n} p_{ij} \cdot a_i \cdot a_j$
-$p_{ij} = e^{- \theta \cdot  d_{ij}}$
-$\theta = \frac{-\ln(0.5)}{d_{med}} $
-\end{align*}
+$$AWF = \sum_{j}^{n}\sum_{j,i \ne j}^{n} p_{ij} \cdot a_i \cdot a_j$$
+$$p_{ij} = e^{- \theta \cdot  d_{ij}}$$
+$$\theta = \frac{-\ln(0.5)}{d_{med}}$$
 
 where 
 $p_{ij}$ is the probability of dispersal between two sites $i$ and $j$, $a_i$ and $a_j$ are the areas of PAs $i$ and $j$, $d_{ij}$ is the observed distance between $i$ and $j$, and $d_{med}$ is a median dispersal distance at which $p_{ij} = 0.5$. 
@@ -171,11 +165,15 @@ To assess the effect of varying dispersal distances, we computed $AWF$ using a r
 For each specified dispersal distance, we identified the PAs around each site and within a buffer set to five times the dispersal distance 
 For mammals, only PAs in the same continent as the observation site were included. The Euclidean distances between the observation site and the selected PAs were then used to calculate the AWF for that site.
 
-```{r calculate_conn, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
-
-# Set directory path
+```{r package setup, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+# Run these lines secretly
 source(here("procedure/code/kick_off.R"))
+# Load required packages and scripts
+kick_off('procedure/code')
+```
 
+```{r calculate_conn, eval=FALSE, echo=TRUE, results='hide', message=FALSE}
+source(here("procedure/code/kick_off.R"))
 # Load required packages and scripts
 kick_off('procedure/code')
 
@@ -184,13 +182,12 @@ calc_conn(taxon = "bird", src_dir = src_dir, dst_dir = dst_dir)
 calc_conn(taxon = "mammal", src_dir = src_dir, dst_dir = dst_dir)
 ```
 
-
 ## Preparation of the Analytical Data Files
 
 Preparation of our analytical data file followed the procedures outlined in Brodie et al. (2023) and implemented in our computational reproduction. 
 Because Brodie et al. did not directly analyze landscape connectivity, we appended our calculated connectivity measures to the authors' original datafile and scaled those variables following the procedures used for other predictors.
 
-```{r clean_data, eval=TRUE, echo=TRUE, results='hide', message=FALSE}
+```{r clean_data, echo=TRUE, results='hide', message=FALSE}
 # Clean data for statistical analysis
 conn_metrics <- 'awf_ptg'
 src_dir <- "data/raw/public"
@@ -200,8 +197,6 @@ dat_clean_bird <- clean_data("bird", conn_metrics, src_dir, conn_dir, dst_dir)
 dat_clean_mammal <- clean_data("mammal", conn_metrics, src_dir, conn_dir, dst_dir)
 ```
 
-
-
 # Statistical Results
 
 ## Implementation of the Linear Mixed Effects Model of PA Efficacy
@@ -209,7 +204,7 @@ We first use propensity score matching and a linear mixed effects model to asses
 Here we report connectivity results using a 100km threshold.
 Sensitivity analyses for alternative threshold are included in section 6.
 
-```{r rpl_eff, eval=TRUE, echo=TRUE, results='hide', message=FALSE}
+```{r rpl_eff, echo=TRUE, results='hide', message=FALSE}
 # Make a common catalog
 var_catalog <- data.frame(
     response_variable = c("asymptPD", "maxFRic", "SR.mean"), 
@@ -237,7 +232,7 @@ Accordingly, we match this procedure and use the same threshold values applied i
 For these specifications, we again report connectivity results using a 100km threshold.
 Sensitivity analyses for alternative threshold are included in section 6.
 
-```{r rpl_spill, eval=TRUE, echo=TRUE, results='hide', message=FALSE}
+```{r rpl_spill, echo=TRUE, results='hide', message=FALSE}
 # Replicate spillover models for birds w/ connectivity
 rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
@@ -265,9 +260,8 @@ mods <- list("bird" = do.call(c, list(rpl_efficacy_bird, rpl_spill_bird)),
              "mammal" = do.call(c, list(rpl_efficacy_mammal, rpl_spill_mammal)))
 ```
 
-
 ## Statistical Results of the Replication Attempts
-```{r rpl_spill_tab, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r rpl_spill_tab, echo = FALSE, message = FALSE, warning = FALSE}
 # Insert code to construct a summary table of efficacy models like Table 1 in Brodie et al.
 # Define variable convert table
 var_cvt <- data.frame(
@@ -287,10 +281,11 @@ coefs <- lapply(names(mods), function(taxon){
         # Extract names for identity
         var_nm <- toupper(strsplit(nm, "_")[[1]][4])
         effect_nm <- strsplit(nm, "_")[[1]][3]
-        effect_nm <- ifelse(effect_nm == "eff", "All sites",
-                            ifelse(effect_nm == 'size', 
-                                   "Outside protected areas - 'PA size' effect",
-                                   "Outside protected areas - 'Distance to PA' effect"))
+        effect_nm <- ifelse(
+            effect_nm == "eff", "All sites",
+            ifelse(effect_nm == 'size', 
+                   "Outside protected areas - 'PA size' effect",
+                   "Outside protected areas - 'Distance to PA' effect"))
         r_square <- r.squaredGLMM(models[[nm]])[[2]]
         
         # Do the tidy work
@@ -376,34 +371,19 @@ This final result is consistent with Brodie et al., who similarly found non-sign
 
 The magnitude of the estimate of PA size effect in the FR model for birds is less than one-half the size of the effect estimated by Brodie et al.  
 
-```{r compare_eff, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r compare_eff, echo = FALSE, message = FALSE, warning = FALSE}
 compare_eff <- data.frame(
     Change = c("Direction", "Magnitude", "Significance"),
     SR = c("$\\equiv$", "$\\downarrow$", "s $\\rightarrow$ ns"),
     FR = c("$\\equiv$", "$\\downarrow$", "s $\\rightarrow$ ns"),
     PD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ s")) %>% 
     cbind(data.frame(
-    SR = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ ns"),
-    FR = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ ns"),
-    PD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns")))
-
-compare_eff %>%
-    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE,
-                    caption = "Comparison of PA Efficacy") %>% 
-    kable_paper() %>% 
-    kable_styling(latex_options = c("scale_down", "hold_position"), 
-                  font_size = 10) %>% 
-    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
-                     align = "c") %>% 
-    footnote(general = paste0(
-        "s is for statistically significant, ",
-        "and ns is for not statistically significant.\\\n",
-        "$\\\\equiv$ indicates the same, $\\\\downarrow$ is ",
-        "for decrease, and $\\\\uparrow$ is for increase."),
-        escape = FALSE, threeparttable = TRUE)
+        SR = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ ns"),
+        FR = c("$\\equiv$", "$\\uparrow$", "$\\equiv$ ns"),
+        PD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns")))
 ```
 
-```{r compare_spl, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r compare_spl, echo = FALSE, message = FALSE, warning = FALSE}
 compare_spl <- data.frame(
     Change = c("Direction", "Magnitude", "Significance"),
     SR = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"),
@@ -420,17 +400,18 @@ compare_spl <- data.frame(
         PD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns")) %>% 
             cbind(data.frame(
                 SR = c("$\\equiv$", "$\\uparrow$", "ns $\\rightarrow$ s"),
-                RF = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"),
-                FD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"))))
+                FR = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"),
+                PD = c("$\\equiv$", "$\\downarrow$", "$\\equiv$ ns"))))
 
-compare_spl %>%
+rbind(compare_eff, compare_spl) %>%
     kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE,
-                    caption = "Comparison of PA spillover") %>% 
+                    caption = "Comparison of PA efficacy and spillover") %>% 
     kable_paper() %>% 
     kable_styling(latex_options = c("scale_down", "hold_position"), 
                   font_size = 10) %>% 
-    pack_rows(effects[2], 1, 3, latex_gap_space = "1em") %>% 
-    pack_rows(effects[3], 4, 6, latex_gap_space = "1em") %>% 
+    pack_rows(effects[1], 1, 3, latex_gap_space = "1em") %>%
+    pack_rows(effects[2], 4, 6, latex_gap_space = "1em") %>% 
+    pack_rows(effects[3], 7, 9, latex_gap_space = "1em") %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
                      align = "c") %>% 
     footnote(general = paste0(
@@ -463,7 +444,6 @@ for (dist in seq(10, 150, 10)){
 plot_dist_effect(src_dir = "results", dst_dir = "results/figures")
 ```
 
-
 ```{r, bird_eff_dist, echo = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
 load(here("results/figures/plot_dist_effect_taxons.rda"))
 
@@ -491,6 +471,3 @@ taxon_dist_plot$mammal$`Species richness (SR)` +
     ggtitle(paste0("Mammal", " - ", "Species richness (SR)")) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
-
-
-
