@@ -68,9 +68,9 @@ Using a causal framework that controls for forest structure, site accessibility,
 In this reproduction, we attempt to identically reproduce the primary results of the original study. 
 The results of interest include:
 
-1. six measures of the effect of PA status on bird and mammal biodiversity, 
-2. six measures of the effect of adjacency to a large PA on bird and mammal biodiversity at unprotected sites
-3. six measures of the effect of distance from a PA on bird and mammal biodiversity at unprotected sites.
+1. Six measures of the effect of PA status on bird and mammal biodiversity, 
+2. Six measures of the effect of adjacency to a large PA on bird and mammal biodiversity at unprotected sites
+3. Six measures of the effect of distance from a PA on bird and mammal biodiversity at unprotected sites.
 
 We attempt the reproduction using data and code files published with an author correction in April 2024. 
 A successful reproduction should recreate the numerical results published in Brodie et al. (2023), or the those published with the correction in April 2024. 
@@ -101,7 +101,7 @@ Mammal observations were assembled by the authors from camera traps 1,365 camera
 The primary predictors of interest were:
 
 1. A binary measure indicating whether a observation site was located inside or outside a PA
-2. a binary indicator that identified of the PA closest to an unprotected site as larger than 500 sq km
+2. a binary indicator that identified if the PA closest to an unprotected site as larger than 500 sq km
 3. a binary indicator that identified if the PA closest to an unprotected site was within 2km. 
 
 Primary predictors measuring PA status were derived from the World Database of Protected Areas.
@@ -110,19 +110,20 @@ Site accessibility was measured using circuit theory-based metrics of proximity 
 Forest structure and understory density were measured use three-dimensional metrics derived from GEDI mission.
 Code to produce these predictors was not provided by the authors. 
 
-Using propensity score matching to control for the confounds of location, site accessibility, and forest structure, Brodie et al. fit a linear mixed-effects models to estimate three PA related effects. 
+Using propensity score matching to control for the confounds of location, site accessibility, and forest structure, Brodie et al. fit a linear mixed-effects models to estimate the PA related effects. 
 The authors completed two sets of statistical analyses.
 First, the authors estimated the the effect of a site being located inside or outside a PA on bird and mammal biodiversity. 
-In total, the authors fit six separate regression models - two response variable taxons (birds, mammals) for three biodiversity measures (SR, FR, PD) - testing the null hypothesis that:
+In total, the authors fit six separate regression models - two taxons (birds, mammals) for three biodiversity measures (SR, FR, PD) - testing the null hypothesis that:
 
 > OR-Ho-1: The protected area status of a site has no effect on the level of mammalian or avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development.
 
-Brodie et al. find evidence that the legal designation of PAs provides substantial and significant benefits to Southeast Asian bird biodiversity.
+Brodie et al. find evidence that the legal designation of PAs provides statistically significant benefits to Southeast Asian bird biodiversity.
 The authors did not find the same effect for mammals. 
 None of the three measures of mammalian biodiversity was significantly different inside v. outside or PAs.
 
 Second, Brodie et al. tested whether the biodiversity preserving effects of PA status have positive (spillover) or negative (leakage) effects on the biodiversity of unprotected areas surrounding PAs. 
-Within the subset of observation sites outside PA, the authors tested for these effects using the same propensity score matching procedure and statistical framework presented above, but replaced the binary PA status predictor with the size of the nearest PA or the distance to the nearest PA in separate models.
+Within the subset of observation sites outside PA, the authors tested for these effects using the same propensity score matching procedure and statistical framework presented above, but replaced the binary PA status predictor with either the size of the nearest PA or the distance to the nearest PA in separate models.
+The authors also alternatively included nearest PA distance or size as a control in models testing one of these effects.
 In total, the authors fit 12 separate regression models - two response variable taxons (birds, mammals), by three biodiversity measures (SR, FR, PD), by two PA measures (area, distance). 
 The null hypothesis tested were:
 
@@ -132,8 +133,9 @@ The null hypothesis tested were:
 
 \par
 
-Brodie et al find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, but that the effects for birds are smaller than those for mammals.
-The authors found that distance to the nearest PA was significantly associated with only mammal functional richness.
+Brodie et al. find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas. 
+However, size effects were only observed for two of the three response variables for birds.
+The authors found that distance to the nearest PA was significantly associated with only the species richness of birds.
 
 
 ## Study-level metadata
@@ -254,7 +256,7 @@ Clear reasoning for those adjustments was not provided in the note on author cor
 Brodie et al. use propensity score matching to control for the potential confounding effects of site accessibility and habitat quality when estimating the efficacy of protected areas at improving bird and mammal biodiversity. 
 In the PA efficacy models, observations were matched based on their geographic locations (i.e., latitudes and longitudes), forest canopy height, accessibility, and HDI. 
 In spillover models, observations were matched based on these same factors and either adjacent PA size or distance to the nearest PA. 
-Weights produced by propensity score matching were then used in mixed-effects linear regression models that estimated the treatment effect - PA status, nearest PA size, nearest PA distance - while adjusting for forest canopy height, site accessibility, and HDI (Table 1).
+Weights produced by propensity score matching were then used in mixed-effects linear regression models that estimated the treatment effect - PA status, nearest PA size, or nearest PA distance - while adjusting for forest canopy height, site accessibility, and HDI (Table 1).
 
 
 ## Observations Preceeding the Reproduction Attempt  
@@ -262,7 +264,7 @@ Weights produced by propensity score matching were then used in mixed-effects li
 Before beginning our reproduction attempt, we had observed the analysis file and code published by Brodie et al..
 We noticed the following issues in the script and analysis file originally published by the authors.
 
-1) The HDI measure was missing from the analysis file.
+1) The HDI measure was missing from the original analysis file.
 2) The procedure for computing biodiversity metrics, GEDI metrics, and the circuit-based accessibility metric was not provided in the scripts and not presented in detail in the methodological supplement.
 3) The procedure for preparing PA boundaries for analysis was unclear.
 4) The procedure for identifying and eliminating outliers was not included in the script. Only a hand coded list of outliers was provided and removed in the code.
@@ -300,7 +302,7 @@ We did not manipulate the corrected data file before beginning our reproduction 
 | **HDI** |
 | HDI | Human Development Index | Level of human development | Float | Unknown | 0 to 1 | Not applicable | Not applicable | 
 \normalsize
-Note: HDI was not included in the data file shared by the original study. We gathered HDI values for each country from the Human Development Report 2020.
+
 
 **Table 2**. Variables used in statistical modeling
 
@@ -317,13 +319,14 @@ Note: HDI was not included in the data file shared by the original study. We gat
 
 # Reproduction Attempts
 
-We were able to statistically reproduce the results of Brodie et al. using unaltered version of the their corrected data and code files.
+We were able to statistically reproduce the results of Brodie et al. using an unaltered version of the their corrected data and code files.
 In an attempt to remain consisted with the original authors, we use the most recent package versions at the time of the author corrected analysis - April 26, 2024.
 No additional preparation was needed for our reproduction using these materials.
 
 For brevity and legibility, this rendered report suppresses the code used to prepare and re-execute the analysis.
 However, that code is recorded and accessible in the RNotebook file that forms the basis of this report. 
 That file and all related research materials are available in this projects online repository. 
+The computational setup for the analysis was:
 
 ```{r package setup, echo = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 # , results = 'hide', message = FALSE, warning = FALSE, eval = FALSE
@@ -557,7 +560,7 @@ d_mammals1 <- subset(d_mammals1, Hansen_recentloss == 0)
 
 To assess **OR-Ho-1** we reproduced the propensity score matching procedure and linear mixed-effects modeling conducted by the Brodie et al. for each the three biodiversity response variables for each taxon. 
 This procedure resulted in six fitted regressions.
-Our results (Table 3) correspond to the top third of Table 1 of corrected supplemental materials presented by Brodie et al.. 
+Our results (Table 3) correspond to the top third of Table 1 of the corrected supplemental materials presented by Brodie et al.. 
 While we were not able to computationally reproduce their exact coefficient values, our results are similar in magnitude, direction, and statistical significance. 
 Of principle interest, we were able to reproduce the statistical results for the PA treatment for both birds and mammals.
 Bird models produced significant positive effects for location within a PA, while no significant effects were observed for mammals.
@@ -794,23 +797,38 @@ d_birds3b <- subset(d_birds3b, station != "L4225511")
 d_birds3b <- subset(d_birds3b, station != "L3846512")
 d_birds3b <- subset(d_birds3b, station != "L2129865")
 d_birds3b <- subset(d_birds3b, station != "L3267752")
-matchb_birds_size_pd <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
-	dist_to_PA.z, data = d_birds3b, method = "full", distance = "glm",
-	link = "probit", replace = F)
+matchb_birds_size_pd <- MatchIt::matchit(BigPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + dist_to_PA.z, 
+                                         data = d_birds3b, 
+                                         method = "full", 
+                                         distance = "glm",
+                                         link = "probit", 
+                                         replace = F)
 dmatchb_birds_size_pd <- match.data(matchb_birds_size_pd)
 mm02b_birds_size_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + dist_to_PA.z + BigPA, random = list(~1 | country),
 	data = dmatchb_birds_size_pd, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
 
 # PA distance ------------------------------------------------------------------
 d_birds3b$dist_to_PA <- (d_birds3b$dist_to_PA.z * s45_birds) + m45_birds
+
 PA_dist_threshold <- 2 # threshold distance (km)
+
 d_birds3b$CloseToPA <- ifelse(d_birds3b$dist_to_PA > PA_dist_threshold, 0, 1)
-match2_birds_dist_pd <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + 
-	PA_size_km2.z, data = d_birds3b, method = "full", distance = "glm",
-	link = "probit", replace = F)
+
+match2_birds_dist_pd <- MatchIt::matchit(CloseToPA ~ utm_north.z + utm_east.z + gedi.m + access_log10.z + HDI.z + PA_size_km2.z, 
+                                         data = d_birds3b, 
+                                         method = "full", 
+                                         distance = "glm",
+                                         link = "probit", 
+                                         replace = F)
+
 dmatch_birds_dist_pd <- match.data(match2_birds_dist_pd)
-mm02d_birds_dist_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA, random = list(~1 | country),
-	data = dmatch_birds_dist_pd, weights = ~I(1/weights), correlation = corExp(form = ~utm_east + utm_north, nugget = TRUE))
+
+mm02d_birds_dist_pd <- nlme::lme(y ~ gedi.m + access_log10.z + HDI.z + PA_size_km2.z + CloseToPA,
+                                 random = list(~1 | country),
+                                 data = dmatch_birds_dist_pd, 
+                                 weights = ~I(1/weights), 
+                                 correlation = corExp(form = ~utm_east + utm_north, 
+                                                      nugget = TRUE))
 
 #--------------------------- FR ------------------------------------------------
 # PA size ----------------------------------------------------------------------
@@ -1080,16 +1098,23 @@ coefs %>%
 # Discussion & Conclusion
 
 The goal of the report is to reproduce analysis and results from Brodie et al. (2023) on the effect of protected areas to preserve tropical bird and mammal biodiversity after removing confounding effects of site accessibility and forest structure. 
-The original paper provided scripts and data which allowed for reproductions. The scripts were in general reproducible while missing data preprocessing steps such as cleaning protected area boundaries and computing secondary variables from raw data (e.g., GEDI metrics and circuit-based accessibiltiy metrics). 
-The data file contained most information necessary to attempt the reproducetion, but did not include raw observation data or an extensive metadata file.
+Our statistical reproduction produced results that were consistent with the main findings of Brodie et al. (2023). 
+Our numerical results similarly supported rejection of OR-H0-1 (i.e., similar coefficient values and significance), although we were unable to reproduce exact results as Brodie et al. (2023).
+Our numerical results similarly supported rejection of OR-H0-2a and a failure to reject OR-H02b.
 
-While there are ways to improve the reproducibility of the original work, our reproduction found results that were consistent with the main findings of Brodie et al. (2023). 
-We found supporting evidence for OR-H1 (i.e., similar coefficient values and significance) as the original study but were unable to reproduce exact results as Brodie et al. (2023). 
-Reasons for the differences could be data version issues or computation environment.
+While our numerical results aligned with those of Brodie et al., the limited information about how variables were constructed restricted our ability to directly assess the outcomes and interpretations of the original paper. 
+The scripts can be used to recreate the numerical results, but did not include data preprocessing steps such as the procedure for cleaning protected area boundaries, or computing secondary variables from raw data (e.g., GEDI metrics and circuit-based accessibility metrics).
+Provided datafiles also did not include raw observation data needed to recreate variables, or an extensive metadata file documenting those data sources.
+Omission of the processing steps used to create the analytical datafile meant that we could only directly assess the statistical analysis of the authors, as we could not retrace the variable creation process. 
+
 
 ## Bias and threats to validity
 
-Given the research design as described in the original paper and primary data shared, we find that potential spatial autocorrelation of sample points were not addressed. In addition, uncertainty issues were not discussed thoroughly in the paper, which includes 1) the representativeness of biodiversity measures, 2) the validity of forest structure measures created through krigging, and 3) accessibility represented by country-level Human Development Index.
+There remain minor concerns about statistical bias and construct validity.
+The original models account for location and potential spatial autocorrelation in both the matching procedure and the clustering of errors in regression models.
+However, the authors did not present any formal testing of remaining spatial autocorrelation in the residuals. 
+The paper does not include an extensive discussion of measurement uncertainty issues that could lead to concerns about construct validity (e.g., biodiversity measures, forest structure measures created through kriging,)
+Independent investigation of these issues cannot be easily undertaken given the lack of documenation of variable construction and processing.
 
 
 # Acknowledgements
