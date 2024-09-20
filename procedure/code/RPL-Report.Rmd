@@ -105,8 +105,7 @@ Brodie et al. find evidence that large PAs are associated with higher biodiversi
 The authors found that distance to the nearest PA was significantly associated with only mammal biodiversity.
 Our primary hypotheses are:
 
-> HA-2a: The total area of the protected area located closest to an unprotected observation site
-alters the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development, **and protected area connectivity**.
+> HA-2a: The total area of the protected area located closest to an unprotected observation site alters the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development, **and protected area connectivity**.
 
 > HA-2b: The distance to the protected area located closest to an unprotected observation site
 alters on the level of mammalian of avian biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, and the socioeconomic development, **and protected area connectivity**..
@@ -123,7 +122,7 @@ However, there are several reasons why connections to other protected areas migh
 
 # Materials and Procedure
 
-## Computational Reproduction
+## Replication Workflow
 This replication attempt builds on our computational reproduction of Brodie et al. (2023).
 We use the same computational environments, data, and data preparation procedure adopted in that work. 
 Complete details of the materials and methods used are available in *Reproduction Report for Brodie et al. (2023)* and can be evaluated in depth by examining the functions called throughout this document. 
@@ -143,8 +142,8 @@ $$\theta = \frac{-\ln(0.5)}{d_{med}}$$
 where 
 $p_{ij}$ is the probability of dispersal between two sites $i$ and $j$, $a_i$ and $a_j$ are the areas of PAs $i$ and $j$, $d_{ij}$ is the observed distance between $i$ and $j$, and $d_{med}$ is a median dispersal distance at which $p_{ij} = 0.5$. 
 
-To construct our site connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas [https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA). 
-The WDPA PA dataset was pre-processed using several steps to ensure accuracy and relevance for the study. 
+To construct our site connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas ([https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA)). 
+The WDPA dataset was pre-processed using several steps to ensure accuracy and relevance for the study. 
 First, we used the `wdpa_fetch` and `wdpa_clean` functions from the R package `wdpar` to query and clean the data. 
 This process excluded PAs that were not yet implemented or had limited conservation value, replaced missing data codes with NA values, converted point-based PAs into circular shapes that correspond to their reported extent, fixed topological errors, and removed overlapping areas 
 Details about this procedures are available in the `wdpa_clean` function. 
@@ -156,7 +155,7 @@ The areas for the reorganized PAs were recalculated.
 This created PAs that better matched real world conditions and provided more representative measures of PA size for spillover and connectivity analyses.
 
 Finally, small residual areas (<0.01 km²) from the clipping process were removed. 
-We then grouped PAs on the same contiguous landmass, under the assumption that mammals cannot cross locations disconnected by large water bodies.  
+We then grouped PAs on the same contiguous landmass, under the assumption that mammals cannot cross locations disconnected by large water bodies.
 Only PAs located on the same landmass were considered when calculating landscape connectivity for mammals to allow the analysis to reflect realistic movement limitations imposed by geographical barriers.
 
 Once the PAs and their corresponding clusters were prepared, we began calculating the $AWF$ for observation sites. 
@@ -164,6 +163,8 @@ Calculation of $AWF$ depends on the specification of a median dispersal distance
 To assess the effect of varying dispersal distances, we computed $AWF$ using a range of median dispersal distances between 10km and 150km. 
 For each specified dispersal distance, we identified the PAs around each site and within a buffer set to five times the dispersal distance 
 For mammals, only PAs in the same continent as the observation site were included. The Euclidean distances between the observation site and the selected PAs were then used to calculate the AWF for that site.
+
+This procedure is implemented as:
 
 ```{r package setup, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 # Run these lines secretly
@@ -212,6 +213,7 @@ var_catalog <- data.frame(
 
 # Reproduce models for birds
 dat_clean_bird <- subset(dat_clean_bird, med_dist == 100)
+
 rpl_efficacy_bird <- lapply(1:nrow(var_catalog), function(i){
     model_pa_efficacy(dat_clean_bird, "connec", "bird",
                       var_catalog[[i, "response_variable"]], "auto") 
@@ -219,6 +221,7 @@ rpl_efficacy_bird <- lapply(1:nrow(var_catalog), function(i){
 
 # Reproduce models for mammals
 dat_clean_mammal <- subset(dat_clean_mammal, med_dist == 50)
+
 rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
     model_pa_efficacy(dat_clean_mammal, "connec", "mammal",
                       var_catalog[[i, "response_variable"]], "auto")
@@ -278,6 +281,7 @@ var_cvt <- data.frame(
 coefs <- lapply(names(mods), function(taxon){
     models <- mods[[taxon]]
     lapply(names(models), function(nm){
+        
         # Extract names for identity
         var_nm <- toupper(strsplit(nm, "_")[[1]][4])
         effect_nm <- strsplit(nm, "_")[[1]][3]
