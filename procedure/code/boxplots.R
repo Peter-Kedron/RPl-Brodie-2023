@@ -1,4 +1,3 @@
-## step 1 read in the model objects
 pkgs <- c("tidyverse", "hrbrthemes", "viridis", "plotly", "stats",
           "scales", "ggplot2")
 lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
