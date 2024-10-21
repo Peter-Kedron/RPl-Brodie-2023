@@ -96,7 +96,7 @@ eff2 <- "PAs"
 
 0.90*max(as.data.frame(bird_models$pd_efficacy_brodie$fitted)$fixed) # 0.94, 0.92
 saveBoxPlot(bird_models$pd_efficacy_brodie, eff_mod, eff1, eff2, 
-            4.2, 3.9, 0, "PD",
+            4.2, 3.92, c(1, 4.5), "PD",
             "results/figures/boxplot/brodie_birds_pd.png")
 saveBoxPlot(bird_models$fr_efficacy_brodie, eff_mod, eff1, eff2, 
             365, 340, 0, "FR",
