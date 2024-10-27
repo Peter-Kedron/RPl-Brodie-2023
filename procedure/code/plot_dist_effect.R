@@ -44,7 +44,6 @@ plot_dist_effect <- function(src_dir = "results",
             # Select relevant models
             nms <- names(models)
             nms <- nms[!str_detect(nms, "brodie")]
-            nms <- nms[!str_detect(nms, "spillover_connec$")]
             
             # Per model
             lapply(nms, function(nm){
@@ -69,17 +68,15 @@ plot_dist_effect <- function(src_dir = "results",
             # Subset 
             dat <- coefs %>% dplyr::filter(taxon == txn) %>% 
                 dplyr::filter(var_nm == rsp) %>% 
-                dplyr::filter(term %in% c("PA", "connectivity.z", "PA:connectivity.z",
-                                "BigPA", "BigPA:connectivity.z", "CloseToPA",
-                                "CloseToPA:connectivity.z")) %>% 
+                dplyr::filter(term %in% c("PA", "connectivity.z",
+                                "BigPA", "CloseToPA")) %>% 
                 mutate(effect_nm = factor(
                     effect_nm, levels = c("efficacy", "size_spillover", "dist_spillover"),
                     labels = c("bold(PA~efficacy)", "bold(PA~size~effect)", "bold(Distance~to~PA~effect)"))) %>% 
-                mutate(term = ifelse(term == "connectivity.z", "Connectivity",
-                                     ifelse(str_detect(term, ":connectivity.z"), "Interaction", term))) %>% 
+                mutate(term = ifelse(term == "connectivity.z", "Connectivity", term)) %>% 
                 mutate(term = factor(
-                    term, levels = c("PA", "BigPA", "CloseToPA", "Connectivity", "Interaction"),
-                    labels = c("PA", "PA~Size", "Distance~to~PA", "Connectivity", "Interaction")))
+                    term, levels = c("PA", "BigPA", "CloseToPA", "Connectivity"),
+                    labels = c("PA", "PA~Size", "Distance~to~PA", "Connectivity")))
             
             # Plot
             ggplot(dat, 
@@ -92,7 +89,7 @@ plot_dist_effect <- function(src_dir = "results",
                 facet_nested_wrap(.~effect_nm + term, scales = "free",
                                   nest_line = element_line(colour = "darkgrey",
                                                            linetype = "dotdash"),
-                                  labeller = label_parsed) +
+                                  labeller = label_parsed, ncol = 2) +
                 scale_x_continuous(breaks = seq(10, 150, by = 30))+
                 xlab('Dispersal distance (km)') +
                 ylab('Eestimated effect') +
