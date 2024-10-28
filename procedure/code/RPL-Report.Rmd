@@ -62,7 +62,7 @@ This study is a *replication* of:
 > Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). [https://doi.org/10.1038/s41586-023-06410-z](https://doi.org/10.1038/s41586-023-06410-z)
 
 Using a causal framework that controls for forest structure, site accessibility, and geographic location through matching, Brodie et al. (2023) find evidence that protected areas (PA) preserve vertebrate biodiversity within their boundaries and in the adjacent unprotected landscape. 
-While Brodie et al. provide evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by the connectedness of the protected area network.
+While Brodie et al. provide statistical evidence of the efficacy of protected area status, they do not assess whether the effect they observe is altered by the connectedness of the protected area network.
 PA connectivity is widely recognized as a component of effective conservation, a guiding principle of the 30x30 initiative, and a possible confound of the effect of protection on biodiversity. 
 Ecologically, the connectedness of a PA network may affect biodiversity by facilitating gene flow across locations, which may moderate the effect of protection on biodiversity.
 
@@ -96,9 +96,7 @@ Brodie et al. find evidence that the legal designation of PAs enhances Southeast
 The authors did not find the same effect for mammals. 
 Our primary hypotheses are:
 
-> HA-1a: The protected area status of a site alters the level of mammal and bird biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, socioeconomic development, **and protected area connectivity**.
-
-> HA-1b: How connected a site is to surrounding protected areas moderates the effect protected area status has on the level of mammal and bird biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, socioeconomic development.
+> HA-1: The protected area status of a site alters the level of mammal and bird biodiversity observed at that site when adjusting for the confounds of site accessibility, habitat condition, socioeconomic development, **and protected area connectivity**.
 
 Second, we examine whether the beneficial spillover effects observed around PAs persist when adjusting for PA connectivity.
 Brodie et al. find evidence that large PAs are associated with higher biodiversities for mammals and birds in surrounding unprotected areas, but also that the effects for birds are smaller than those for mammals.
@@ -200,7 +198,7 @@ dat_clean_mammal <- clean_data("mammal", conn_metrics, src_dir, conn_dir, dst_di
 # Statistical Results
 
 ## Implementation of the Linear Mixed Effects Model of PA Efficacy
-We first use propensity score matching and a linear mixed effects model to assess whether the finding that PA preserve vertebrate biodiversity within their boundaries persisted when adjusting for connectivity (**HA-1a**) and whether connectivity moderates any PA effects (**HA-1b**).
+We first use propensity score matching and a linear mixed effects model to assess whether the finding that PA preserve vertebrate biodiversity within their boundaries persisted when adjusting for connectivity (**HA-1**).
 Here we report connectivity results using a 100km threshold.
 Sensitivity analyses for alternative threshold are included in section 6.
 
@@ -232,7 +230,9 @@ We use propensity score matching and a linear mixed effects model to assess whet
 It is worth noting that although the text and data file of the original article identify PA size and PA distance as continuous measures, they are in fact converted to binary indicators in the authors' code file. 
 Accordingly, we match this procedure and use the same threshold values applied in the binary conversion by Brodie et al. 
 For these specifications, we again report connectivity results using a 100km threshold.
-Sensitivity analyses for alternative threshold are included in section 6.
+The authors did however include non-binary size and distance alternatively in their models - the PA size effect model included a continuous measure of distance as a control, the distance to PA model included a continuous measure of PA size as a control. 
+To control for multicollinearity between connectivity and continuous measures of PA size and distance to the nearest PA, we removed these measures from our models.
+
 
 ```{r rpl_spill, echo=TRUE, results='hide', message=FALSE}
 # Replicate spillover models for birds w/ connectivity
@@ -360,17 +360,34 @@ coefs %>%
 
 Overall, the statistical results of our replication (Table 1) were generally similar to those produced in the original analyses of Brodie et al. (Table 2).
 Focusing on the primary predictors of interest for the all sites PA efficacy model, our analysis preserved the direction of the originally estimated PA effects for both birds and mammals. 
-However, we also observed shifts in the estimated magnitude of the PA effect for the bird models and a change in the statistical significance of the PA effect for bird models estimated with SR and FR. 
-Specifically, the estimated magnitude of the PA effect for the SR model dropped to 28 percent of the originally estimated value, while the same effect estimate in the FR model dropped to 66 percent of the originally estimated value. 
-These new estimates were also not statistically significant at the p=0.05 level the original authors used to interpret their results.
 
-Connectivity was not a consistent predictor of bird biodiversty across the three response variables. 
-The estimated coefficients were negative and non-signficant for SD, negative and significant for FR, and positive and significant for PD. 
-Estimated coefficients of the interaction of PA status and connectivity also had different directions for different response variables, but all were non-significant. 
-Neither PA effects, connectivity, nor the PA-connectivity interaction were statistically significant for any of the mammal models.
-This final result is consistent with Brodie et al., who similarly found non-significant PA effects for mammals.
+For the all sites model testing **H1**, the PA effect estimates for mammals remained statistically indistinguishable from zero.  
+However, we observed shifts in the estimated magnitude of the PA effect for the bird models and a change in the statistical significance of the PA effect for bird models estimated with FR. 
+Specifically, the estimated magnitude of the PA effect for birds dropped to 58 percent, 68 percent, 89 percent of the originally estimated value respectively for SR, FR, and PD.
+FR also became statistically indistinguishable from zero at the p=0.05 level adopted by the original authors.
+This observed shift in bird model coefficients is consistent with connectivity acting as a confound of the PA effect.  
 
-The magnitude of the estimate of PA size effect in the FR model for birds is less than one-half the size of the effect estimated by Brodie et al.  
+Connectivity was not a consistent predictor of bird or mammal biodiversity across the three response variables. 
+While estimated coefficients for mammals we positive, only FR was statistically significantly different from zero. 
+Estimated coefficients for bird models were negative and significant for SD, negative and non-significant for FR, and positive and significant for PD. 
+This estimate inconsistency may be the product of several factors. 
+First, by design biodiversity measures include a large number of species likely to have different habitat preferences and dispersal distances. 
+Without richer data, the use of a single connectivity cannot match that variation possible leading to the misestimation of effect sizes. 
+Second, the specifications used in the original analysis are simplifications of the biodiversity data generating process. 
+These models likely omit important factors that may well be correlated with connectivity and many of the other measures included in the analysis. 
+
+The result of our 'PA-size' models testing **H2-a** were consistent with those of the original authors. 
+Controlling for connectivity, our estimates for the PA size effect for birds where of the same direction, general magnitude, and significance as those of the original authors.  
+We also found connectivity to have a significant positive relationship with the SR and PD measures of bird biodiversity. 
+Interestingly, connectivity had the opposite sign of the continuous distance to PA measures included by the original authors. 
+The results of our mammal models were similarly consistent. 
+While the direction of our coefficient estimates changes for mammal SR and FR, both also remained statistically indistinguishable from zero. 
+The statistical relationship between connectivity and mammal biodiversity was also not distinguishable from zero.  
+
+The results of our 'Distance to PA' models testing **H2-b** were the least consistent with those of the original authors. 
+While we estimated coefficients with consistent directions, we observed shifts in statistical significance for the SR and FR bird models and for the FR and PD mammal models. 
+Location close to a PA became a significant positive predictor of mammal FR and PD in our models. 
+Connectivity itself demonstrated a consistently positive relationship across all models and for birds and mammals, but was only statistically significant for the mammal FR model. 
 
 ```{r compare_eff, echo = FALSE, message = FALSE, warning = FALSE}
 compare_eff <- data.frame(
