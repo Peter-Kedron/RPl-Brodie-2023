@@ -97,8 +97,8 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
         if (mod_type == "brodie"){
             # Perform propensity score matching following the DAG developed in the 
             # structural causal modeling and retrieve the matched dataset
-            match_mod <- matchit(PA ~ utm_east.z + utm_north.z + forest_structure + 
-                                     access_log10.z + HDI.z,
+            match_mod <- matchit(PA ~ utm_east.z + utm_north.z + 
+                                     forest_structure + access_log10.z + HDI.z,
                                  data = dat, method = "full", 
                                  distance = "glm", link = "probit", replace = F)
             dat_matched <- match.data(match_mod)
@@ -135,7 +135,7 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
             if (taxon == "bird"){
                 mod_efficacy <- lme(
                     y ~ forest_structure + access_log10.z 
-                    + HDI.z + PA + connectivity.z + connectivity.z:PA, 
+                    + HDI.z + PA + connectivity.z, 
                     random = list(~1 | country), data = dat_matched, 
                     weights = ~I(1/weights), 
                     correlation = corExp(form = ~utm_east + utm_north, 
@@ -143,7 +143,7 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
             } else if (taxon == "mammal"){
                 mod_efficacy <- lme(
                     y ~ forest_structure + access_log10.z 
-                    + HDI.z + PA + connectivity.z + connectivity.z:PA, 
+                    + HDI.z + PA + connectivity.z, 
                     random = list(~1 | country, ~1 | study_area), 
                     data = dat_matched, weights = ~I(1/weights), 
                     correlation = corExp(form = ~utm_east + utm_north, 

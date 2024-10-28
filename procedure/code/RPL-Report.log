@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.15)  15 SEP 2024 17:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.15)  26 OCT 2024 19:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -569,21 +569,21 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 <../../results/figures/Workflow_Diagram.png, id=22, 383.031pt x 311.7246pt>
 File: ../../results/figures/Workflow_Diagram.png Graphic file (type png)
 <use ../../results/figures/Workflow_Diagram.png>
-Package pdftex.def Info: ../../results/figures/Workflow_Diagram.png  used on input line 287.
+Package pdftex.def Info: ../../results/figures/Workflow_Diagram.png  used on input line 286.
 (pdftex.def)             Requested size: 383.0359pt x 311.72858pt.
 
 
 [3{/Users/pinot/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/Users/pinot/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/Users/pinot/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}{/Users/pinot/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <../../results/figures/Workflow_Diagram.png>]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 312.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 311.
 (/Users/pinot/Library/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 330.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 329.
 (/Users/pinot/Library/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 351.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 352.
 
 
 [4{/Users/pinot/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
@@ -598,82 +598,58 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 [6]
-Underfull \vbox (badness 10000) detected at line 616
- []
-
-
-Underfull \vbox (badness 10000) detected at line 616
- []
-
-
 
 [7]
-</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-1.pdf, id=72, 469.755pt x 542.025pt>
-File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-1.pdf Graphic file (type pdf)
-<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-1.pdf>
-Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-1.pdf  used on input line 618.
-(pdftex.def)             Requested size: 469.75386pt x 542.02367pt.
-</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-2.pdf, id=73, 469.755pt x 542.025pt>
-File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-2.pdf Graphic file (type pdf)
-<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-2.pdf>
-Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-2.pdf  used on input line 619.
-(pdftex.def)             Requested size: 469.75386pt x 542.02367pt.
-</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-3.pdf, id=74, 469.755pt x 542.025pt>
-File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-3.pdf Graphic file (type pdf)
-<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-3.pdf>
-Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-3.pdf  used on input line 620.
-(pdftex.def)             Requested size: 469.75386pt x 542.02367pt.
-
-Underfull \hbox (badness 10000) in paragraph at lines 618--621
-[][]
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 618--621
-[]
- []
-
+</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist1-1.pdf, id=72, 325.215pt x 542.025pt>
+File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist1-1.pdf Graphic file (type pdf)
+<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist1-1.pdf>
+Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist1-1.pdf  used on input line 620.
+(pdftex.def)             Requested size: 325.22412pt x 542.0402pt.
 
 
 [8]
-
-[9 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-1.pdf>]
-
-[10 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-2.pdf>]
-</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-1.pdf, id=102, 469.755pt x 542.025pt>
-File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-1.pdf Graphic file (type pdf)
-<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-1.pdf>
-Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-1.pdf  used on input line 622.
-(pdftex.def)             Requested size: 469.75386pt x 542.02367pt.
-</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-2.pdf, id=103, 469.755pt x 542.025pt>
-File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-2.pdf Graphic file (type pdf)
-<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-2.pdf>
-Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-2.pdf  used on input line 623.
-(pdftex.def)             Requested size: 469.75386pt x 542.02367pt.
-</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-3.pdf, id=104, 469.755pt x 542.025pt>
-File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-3.pdf Graphic file (type pdf)
-<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-3.pdf>
-Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-3.pdf  used on input line 624.
-(pdftex.def)             Requested size: 469.75386pt x 542.02367pt.
-
-Underfull \hbox (badness 10000) in paragraph at lines 622--625
-[][]
- []
+</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist2-1.pdf, id=78, 325.215pt x 542.025pt>
+File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist2-1.pdf Graphic file (type pdf)
+<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist2-1.pdf>
+Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist2-1.pdf  used on input line 622.
+(pdftex.def)             Requested size: 325.22412pt x 542.0402pt.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 622--625
-[]
- []
+[9 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist1-1.pdf>]
+</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist3-1.pdf, id=90, 325.215pt x 542.025pt>
+File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist3-1.pdf Graphic file (type pdf)
+<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist3-1.pdf>
+Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist3-1.pdf  used on input line 624.
+(pdftex.def)             Requested size: 325.22412pt x 542.0402pt.
 
 
+[10 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist2-1.pdf>]
+</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist1-1.pdf, id=102, 325.215pt x 542.025pt>
+File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist1-1.pdf Graphic file (type pdf)
+<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist1-1.pdf>
+Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist1-1.pdf  used on input line 626.
+(pdftex.def)             Requested size: 325.22412pt x 542.0402pt.
 
-[11 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist-3.pdf>]
 
-[12 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-1.pdf>]
+[11 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/bird_eff_dist3-1.pdf>]
+</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist2-1.pdf, id=114, 325.215pt x 542.025pt>
+File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist2-1.pdf Graphic file (type pdf)
+<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist2-1.pdf>
+Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist2-1.pdf  used on input line 628.
+(pdftex.def)             Requested size: 325.22412pt x 542.0402pt.
 
-[13 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-2.pdf>]
 
-[14 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist-3.pdf>] (./RPL-Report.aux)
+[12 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist1-1.pdf>]
+</Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist3-1.pdf, id=126, 325.215pt x 542.025pt>
+File: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist3-1.pdf Graphic file (type pdf)
+<use /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist3-1.pdf>
+Package pdftex.def Info: /Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist3-1.pdf  used on input line 630.
+(pdftex.def)             Requested size: 325.22412pt x 542.0402pt.
+
+
+[13 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist2-1.pdf>]
+
+[14 </Users/pinot/Library/CloudStorage/Dropbox/research/RPl-Brodie-2023/results/figures/mammal_eff_dist3-1.pdf>] (./RPL-Report.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
@@ -681,14 +657,14 @@ L3 programming layer <2024-08-30>
  ) 
 Here is how much of TeX's memory you used:
  13434 strings out of 475539
- 213408 string characters out of 5776751
- 671743 words of memory out of 5000000
+ 213456 string characters out of 5776751
+ 660737 words of memory out of 5000000
  35798 multiletter control sequences out of 15000+600000
  612799 words of font info for 82 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  89i,18n,93p,927b,481s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi5.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></Users/pinot/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtti10.pfb>
-Output written on RPL-Report.pdf (14 pages, 468585 bytes).
+Output written on RPL-Report.pdf (14 pages, 445993 bytes).
 PDF statistics:
  273 PDF objects out of 1000 (max. 8388607)
  206 compressed objects within 3 object streams
