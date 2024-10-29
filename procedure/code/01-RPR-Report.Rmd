@@ -1119,7 +1119,7 @@ Independent investigation of these issues cannot be easily undertaken given the 
 
 # Acknowledgements
 
-This report is based upon the template for Reproducible and Replicable Research in Human-Environment and Geographical Sciences, DOI:[10.17605/OSF.IO/W29MQ](https://doi.org/10.17605/OSF.IO/W29MQ)
+This report is based upon the template for Reproducible and Replicable Research in Human-Environment and Geographical Sciences, <https://doi.org/10.17605/OSF.IO/W29MQ>.
 
 # References
 Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). <https://doi.org/10.1038/s41586-023-06410-z>
