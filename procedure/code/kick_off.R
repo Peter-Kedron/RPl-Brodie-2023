@@ -29,13 +29,8 @@ kick_off <- function(code_dir, date = "2024-08-27"){
               "tidyverse", "cowplot", "here", "dagitty", "ggdag", "Hmisc", "lmerTest",
               "MatchIt", "modelsummary", "optmatch", "nlme", "MuMIn", "pbapply",
               "ggthemes", "ggh4x")
-    for (pkg in pkgs){
-        if (!require(pkg, character.only = TRUE)) {
-            install.packages(pkg)
-            require(pkg, character.only = TRUE)
-        }
-    }
-    rm(pkgs, pkg)
+    groundhog.library(pkgs, date)
+    rm(pkgs)
     
     # Load functions
     functions <- c("clean_pa", "prep_dm", "calc_conn", "clean_data", 

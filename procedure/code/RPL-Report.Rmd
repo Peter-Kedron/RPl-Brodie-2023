@@ -22,7 +22,7 @@ packages <- c("here", "conflicted", "formatR", "groundhog", "kableExtra")
 # load and install required packages
 for (pkg in packages){
     if (!require(pkg, character.only = TRUE)) {
-        install.packages(pkg)
+        install.packages(pkg, repos = "http://cran.us.r-project.org")
         require(pkg, character.only = TRUE)
     }
 }
