@@ -67,14 +67,16 @@ PA connectivity is widely recognized as a component of effective conservation, a
 Ecologically, the connectedness of a PA network may affect biodiversity by facilitating gene flow across locations, which may moderate the effect of protection on biodiversity.
 
 To adjust for effect of connectivity on PA efficacy, we computationally reproduced the findings of Brodie et al. using the data shared by the authors, and extended the original analysis by introducing habitat connectivity as an independent predictor of biodiversity and a moderator of the PA effect.
-We find that ...
+we find connectivity to be a likely confound of the relationship between PA status and biodiversity outcomes. 
+Introducing connectivity altered the estimated magnitude of PA effects on biodiversity and made some previously significant effects statistically indistinguishable from zero. We observed a similar reduction in the magnitude of spillover effects near large PAs. 
 
 This document presents our replication and extension of Brodie et al. (2023). 
-All data and materials needed to fully reproduce the results of this paper are publicly available in an Open Science Framework project repository with the identifier PROJECT DOI that links to GitHub (LINK)  and data and results stored on figshare (LINK) with the identifier DATA DOI.
+All data and materials needed to fully reproduce the results of this paper are publicly available in an [Open Science Framework project repository](https://osf.io/qdbu2/) with the identifier PROJECT DOI. 
 This document is the produce of a computational notebook (RPL_Report.Rmd) available in that project repository. 
 That computational notebook contains the code used to produce the results presented in this report. 
 For brevity and legibility, we have suppressed some longer section of code here.
 A computational reproduction of the authors' original analysis is also available in the project repository - *Reproduction Report for Brodie et al. (2023)*.
+
 
 # Study design
 We adopt the statistical approach of the original analysis and test the sensitivity of the authors' findings to PA connectivity. 
@@ -84,7 +86,7 @@ The response variables were derived from 1,079 sampling locations in the eBird d
 
 The primary predictor of interest was binary measures indicating whether a observation site was located inside or outside a PA.
 The primary predictors of interest for a secondary analysis of spillover and leakage effects in areas surrounding PAs were the size of the nearest PA and the distance to the nearest PA.
-This secondary analysis was conducted only for observatio sites located outside PAs.
+This secondary analysis was conducted only for observation sites located outside PAs.
 Primary predictors measuring PA status were derived from the World Database of Protected
 Areas. 
 Additional predictors used to deconfound for site accessibility, forest structure, understory density, and human development pressure were derived from the NASA Global Ecosystem Dynamics Investigation (GEDI) mission, and the UN Development program Human Development Index. Site accessibility was measured using circuit theory-based metrics of proximity to human development1. Forest structure and understory density were measured use three-dimensional metrics derived from GEDI mission.
@@ -143,7 +145,8 @@ $p_{ij}$ is the probability of dispersal between two sites $i$ and $j$, $a_i$ an
 To construct our site connectivity measures, we independently gathered data on PA geographies from the the World Database on Protected Areas ([https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA)). 
 The WDPA dataset was pre-processed using several steps to ensure accuracy and relevance for the study. 
 First, we used the `wdpa_fetch` and `wdpa_clean` functions from the R package `wdpar` to query and clean the data. 
-This process excluded PAs that were not yet implemented or had limited conservation value, replaced missing data codes with NA values, converted point-based PAs into circular shapes that correspond to their reported extent, fixed topological errors, and removed overlapping areas. Details about this procedures are available in the `wdpa_clean` function. 
+This process excluded PAs that were not yet implemented or had limited conservation value, replaced missing data codes with NA values, converted point-based PAs into circular shapes that correspond to their reported extent, fixed topological errors, and removed overlapping areas. 
+Details about this procedures are available in the `wdpa_clean` function. 
 
 Next, we restricted our analysis by subsetting to those terrestrial PAs located within the study area. 
 We then merged administratively distinct, but physically connected PAs and segmented PAs that were part of the same administrative unit, but not physically connected. 
@@ -198,6 +201,7 @@ dat_clean_mammal <- clean_data("mammal", conn_metrics, src_dir, conn_dir, dst_di
 # Statistical Results
 
 ## Implementation of the Linear Mixed Effects Model of PA Efficacy
+
 We first use propensity score matching and a linear mixed effects model to assess whether the finding that PA preserve vertebrate biodiversity within their boundaries persisted when adjusting for connectivity (**HA-1**).
 Here we report connectivity results using a 100km threshold.
 Sensitivity analyses for alternative threshold are included in section 6.
@@ -226,6 +230,7 @@ rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
 ```
 
 ## Implementation of the Linear Mixed Effects Models of PA Spillovers
+
 We use propensity score matching and a linear mixed effects model to assess whether The the spillover effects of the total area of the nearest PA (**HA-2a**) or distance to the nearest PA (**HA-2b**) persist when accounting for PA connectivity to the larger PA network.
 It is worth noting that although the text and data file of the original article identify PA size and PA distance as continuous measures, they are in fact converted to binary indicators in the authors' code file. 
 Accordingly, we match this procedure and use the same threshold values applied in the binary conversion by Brodie et al. 
@@ -380,9 +385,8 @@ The result of our 'PA-size' models testing **H2-a** were consistent with those o
 Controlling for connectivity, our estimates for the PA size effect for birds where of the same direction, general magnitude, and significance as those of the original authors.  
 We also found connectivity to have a significant positive relationship with the SR and PD measures of bird biodiversity. 
 Interestingly, connectivity had the opposite sign of the continuous distance to PA measures included by the original authors. 
-The results of our mammal models were similarly consistent. 
-While the direction of our coefficient estimates changes for mammal SR and FR, both also remained statistically indistinguishable from zero. 
-The statistical relationship between connectivity and mammal biodiversity was also not distinguishable from zero.  
+The results of our mammal models were less consistent. 
+The direction of our PA size coefficient estimates changed in the FR and PD models  as did their statistical significance.  
 
 The results of our 'Distance to PA' models testing **H2-b** were the least consistent with those of the original authors. 
 While we estimated coefficients with consistent directions, we observed shifts in statistical significance for the SR and FR bird models and for the FR and PD mammal models. 
@@ -442,13 +446,29 @@ rbind(compare_eff, compare_spl) %>%
 
 # Discussion
 
-- PA size statistics. What is the difference in the mean PA sizes between brodie and our combined PAs? Std? Could this link with the PA size effects?
+Collectively our statistical findings are consistent with connectivity confounding the effect of protection on biodiversity, which also aligns with the existing ecological theory and PA site selection guidelines. 
+However, the observed differences in model estimates may also be the product of both analytical decisions and the use of a causal model that necessarily simplifies the complexity of a diverse, geographically extensive ecosystem.
+Unresolved questions about the data processing and analytical implementation of the authors' original analysis are documented in our reproduction report, so we will not repeat them here. 
+However, we reiterate two of those concerns here. 
+First, it was unclear how Brodie et al. processed their spatial PA data. 
+We were unable to determine whether the authors similarly merged and refined PAs that in the original data set are administratively distinct, but geographically adjacent. 
+We were similarly unable to identify whether the authors removed marine overlaps from their terrestrial PAs. 
+These issues may impact the original estimation of size-based PA spillover effects. 
+Second, 
 
-# Sensitivity Analyses
 
-Compile models runs all the functions above and produces x...
+# Appendix {-}
 
-```{r compile_models, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+# A1. Sensitivity Analyses {-}
+
+To test the sensitivity of our results to the selection of dispersal distance, we varied this parameter between 10km and 150km in out connectivity calculations.
+Here we report ceofficient estimates for the primary effect of interest and our connectivity measure for each taxon-response-hypothesis combination. 
+Reading these figures mirrors reading down the taxon columns, across hypotheses in Table 1. 
+For most combinations, the results of regressions estimated with different dispersal distances are consistent with those reported at the 100km dispersal distance. 
+Exceptions to this pattern include the PA size effect estimated for mammal FR and PD, and the Distance to PA effect estimated for Bird FR. 
+
+
+```{r compile_models, echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE}
 for (dist in seq(10, 150, 10)){
     try({
         message(paste0(dist, " - bird"))
@@ -472,42 +492,42 @@ plot_dist_effect(src_dir = "results", dst_dir = "results/figures")
 load(here("results/figures/plot_dist_effect_taxons.rda"))
 ```
 
-```{r, bird_eff_dist1, echo = FALSE, message = FALSE, warning = FALSE}
-# Birds 3x3 efficacy result over distance
-taxon_dist_plot$bird$`Phylogenetic diveristy (PD)` +
-    ggtitle(paste0("Bird", " - ", "Phylogenetic diveristy (PD)")) +
+```{r, bird_eff_dist3, echo = FALSE, message = FALSE, warning = FALSE}
+taxon_dist_plot$bird$`Species richness (SR)` +
+    ggtitle(paste0("Figure A.1. Sensitivity of PA effects on Bird Species richness (SR) to dispersal distance")) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r, bird_eff_dist2, echo = FALSE, message = FALSE, warning = FALSE}
 taxon_dist_plot$bird$`Functional richness (FR)` +
-    ggtitle(paste0("Bird", " - ", "Functional richness (FR)")) +
+    ggtitle(paste0("Figure A.2. Sensitivity of PA effects on Bird Functional richness (FR) to dispersal distance")) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
-```{r, bird_eff_dist3, echo = FALSE, message = FALSE, warning = FALSE}
-taxon_dist_plot$bird$`Species richness (SR)` +
-    ggtitle(paste0("Bird", " - ", "Species richness (SR)")) +
-    theme(plot.title = element_text(hjust = 0.5))
-```
-
-```{r, mammal_eff_dist1, echo = FALSE, message = FALSE, warning = FALSE}
-# Mammals 3x3 efficacy result over distance
-taxon_dist_plot$mammal$`Phylogenetic diveristy (PD)` +
-    ggtitle(paste0("Mammal", " - ", "Phylogenetic diveristy (PD)")) +
-    theme(plot.title = element_text(hjust = 0.5))
-```
-
-```{r, mammal_eff_dist2, echo = FALSE, message = FALSE, warning = FALSE}
-# Mammals 3x3 efficacy result over distance
-taxon_dist_plot$mammal$`Functional richness (FR)` +
-    ggtitle(paste0("Mammal", " - ", "Functional richness (FR)")) +
+```{r, bird_eff_dist1, echo = FALSE, message = FALSE, warning = FALSE}
+# Birds 3x3 efficacy result over distance
+taxon_dist_plot$bird$`Phylogenetic diveristy (PD)` +
+    ggtitle(paste0("Figure A.3. Sensitivity of PA effects on Bird Phylogenetic diveristy (PD) to dispersal distance")) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r, mammal_eff_dist3, echo = FALSE, message = FALSE, warning = FALSE}
 # Mammals 3x3 efficacy result over distance
 taxon_dist_plot$mammal$`Species richness (SR)` +
-    ggtitle(paste0("Mammal", " - ", "Species richness (SR)")) +
+    ggtitle(paste0("Figure A.4. Sensitivity of PA effects on Mammal Species richness (SR) to dispersal distance")) +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, mammal_eff_dist2, echo = FALSE, message = FALSE, warning = FALSE}
+# Mammals 3x3 efficacy result over distance
+taxon_dist_plot$mammal$`Functional richness (FR)` +
+    ggtitle(paste0("Figure A.5. Sensitivity of PA effects on Mammal Functional richness (FR) to dispersal distance")) +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, mammal_eff_dist1, echo = FALSE, message = FALSE, warning = FALSE}
+# Mammals 3x3 efficacy result over distance
+taxon_dist_plot$mammal$`Phylogenetic diveristy (PD)` +
+    ggtitle(paste0("Figure A.6. Sensitivity of PA effects on Bird Phylogenetic diveristy (PD) to dispersal distance")) +
     theme(plot.title = element_text(hjust = 0.5))
 ```
