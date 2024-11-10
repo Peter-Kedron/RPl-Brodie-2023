@@ -78,6 +78,10 @@ plot_dist_effect <- function(src_dir = "results",
                     term, levels = c("PA", "BigPA", "CloseToPA", "Connectivity"),
                     labels = c("PA", "PA~Size", "Distance~to~PA", "Connectivity")))
             
+            if (txn == "bird"){
+                dat_selected <- dat %>% filter(dist == 100)
+            } else dat_selected <- dat %>% filter(dist == 50)
+            
             # Plot
             ggplot(dat, 
                    aes(x = dist, y = estimate)) +
@@ -86,6 +90,10 @@ plot_dist_effect <- function(src_dir = "results",
                     aes(ymin = conf.low, ymax = conf.high),
                     position = position_dodge(width = 2)) +
                 geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+                geom_pointrange(data = dat_selected,
+                    size = 0.2,
+                    aes(ymin = conf.low, ymax = conf.high),
+                    position = position_dodge(width = 2), color = "blue") +
                 facet_nested_wrap(.~effect_nm + term, scales = "free",
                                   nest_line = element_line(colour = "darkgrey",
                                                            linetype = "dotdash"),

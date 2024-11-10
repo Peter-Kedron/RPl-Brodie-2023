@@ -304,7 +304,12 @@ coefs <- lapply(names(mods), function(taxon){
             left_join(var_cvt, by = "term") %>% 
             mutate(var_nm = var_nm, Effect = effect_nm) %>% 
             select(Effect, Variable, report_value, var_nm)
-        rbind(vals[1:5, ], vals[7, ], vals[6, ])
+        
+        if (effect_nm == "All sites"){
+            vals <- rbind(vals[1:5, ], vals[7, ], vals[6, ])
+        }
+        
+        vals
     }) %>% bind_rows() %>% 
         mutate(var_nm = factor(var_nm, levels = c("SR", "FR", "PD"))) %>% 
         arrange(var_nm) %>% 
