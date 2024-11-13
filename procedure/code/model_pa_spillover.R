@@ -136,9 +136,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control = lmeControl(opt = 'optim', 
-                                             optimMethod = "L-BFGS-B"))
+                                             nugget = TRUE))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
@@ -146,9 +144,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country, ~1 | study_area), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control = lmeControl(opt = 'optim', 
-                                             optimMethod = "L-BFGS-B"))
+                                             nugget = TRUE))
                 }
             } else {
                 if ("dist_to_PA.z" %in% names(dat)){
@@ -174,9 +170,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control = lmeControl(opt = 'optim', 
-                                             optimMethod = "L-BFGS-B"))
+                                             nugget = TRUE))
                 } else if (taxon == "mammal"){
                     tryCatch({
                         mod_spillover <- lme(
@@ -185,9 +179,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                             random = list(~1 | country, ~1 | study_area), 
                             data = dat_matched, weights = ~I(1/weights), 
                             correlation = corExp(form = ~utm_east + utm_north, 
-                                                 nugget = TRUE),
-                            control = lmeControl(opt = 'optim', 
-                                                 optimMethod = "L-BFGS-B"))
+                                                 nugget = TRUE))
                     }, error = function(e){
                         mod_spillover <- lme(
                             y ~ forest_structure + access_log10.z 
@@ -195,7 +187,8 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                             random = list(~1 | country, ~1 | study_area), 
                             data = dat_matched, weights = ~I(1/weights), 
                             correlation = corExp(form = ~utm_east + utm_north, 
-                                                 nugget = TRUE))
+                                                 nugget = TRUE),
+                            control = lmeControl(opt = 'optim'))
                     })
                 }
             }
@@ -221,9 +214,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control = lmeControl(opt = 'optim', 
-                                             optimMethod = "L-BFGS-B"))
+                                             nugget = TRUE))
                 } else if (taxon == "mammal"){
                     mod_spillover <- lme(
                         y ~ forest_structure + access_log10.z 
@@ -232,8 +223,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
                                              nugget = TRUE),
-                        control = lmeControl(opt = 'optim', 
-                                             optimMethod = "L-BFGS-B"))
+                        control = lmeControl(opt = 'optim'))
                 }
             } else {
                 if ("PA_size_km2.z" %in% names(dat)){
@@ -260,9 +250,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         random = list(~1 | country), 
                         data = dat_matched, weights = ~I(1/weights), 
                         correlation = corExp(form = ~utm_east + utm_north, 
-                                             nugget = TRUE),
-                        control = lmeControl(opt = 'optim', 
-                                             optimMethod = "L-BFGS-B"))
+                                             nugget = TRUE))
                 } else if (taxon == "mammal"){
                     tryCatch({
                         mod_spillover <- lme(
@@ -271,9 +259,7 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                             random = list(~1 | country, ~1 | study_area), 
                             data = dat_matched, weights = ~I(1/weights), 
                             correlation = corExp(form = ~utm_east + utm_north, 
-                                                 nugget = TRUE),
-                            control = lmeControl(opt = 'optim', 
-                                                 optimMethod = "L-BFGS-B"))
+                                                 nugget = TRUE))
                     }, error = function(e){
                         mod_spillover <- lme(
                             y ~ forest_structure + access_log10.z 

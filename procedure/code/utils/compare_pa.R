@@ -3,7 +3,7 @@
 ## -------------------------------------------------------------------
 
 # Load libraries
-pkgs <- c("sf", "dplyr", "terra", "stringr", "ggplot2")
+pkgs <- c("sf", "dplyr", "terra", "stringr", "ggplot2", "tidyverse")
 sapply(pkgs, require, character.only = TRUE)
 
 # Set directories
@@ -13,33 +13,53 @@ dst_dir <- 'data/derived/public'
 # Load datasets
 pts_bird <- st_read(file.path(dst_dir, "pts_bird.geojson"))
 pts_mammal <- st_read(file.path(dst_dir, "pts_mammal.geojson"))
-pts_all <- rbind(pts_bird %>% mutate(taxon = "bird"), 
-                 pts_mammal %>% mutate(taxon = "mammal"))
 clean_pas <- st_read(file.path(dst_dir, "clean_pas.geojson"))
 pa_groups <- st_read(file.path(dst_dir, "pa_groups.shp"))
 
 ########################### Check PA attributes ################################
-# Check if point is in/out PAs
-pts_all <- st_join(pts_all, clean_pas %>% select(index))
-pts_all <- pts_all %>% mutate(PA_ours = ifelse(is.na(index), 0, 1)) %>% 
-    select(-index)
-
 # Check if point is not/close to big PA
-ids_pa <- st_nearest_feature(pts_all, clean_pas)
-dists <- sapply(1:nrow(pts_all), function(id){
-    st_distance(pts_all[id, ], clean_pas[ids_pa[id], ]) %>% units::set_units("km")
+## bird
+ids_pa <- st_nearest_feature(pts_bird, clean_pas)
+dists <- sapply(1:nrow(pts_bird), function(id){
+    st_distance(pts_bird[id, ], clean_pas[ids_pa[id], ]) %>% units::set_units("km")
 })
 
-pts_all <- pts_all %>% 
-    mutate(dist_to_PA_ours = dists,
+pts_bird <- pts_bird %>% 
+    mutate(taxon = "bird",
+           dist_to_PA_ours = dists,
            PA_size_km2_ours = clean_pas[ids_pa, ]$REP_AREA)
+pts_bird <- st_join(pts_bird, clean_pas %>% select(index))
+pts_bird <- pts_bird %>% mutate(PA_ours = ifelse(is.na(index), 0, 1)) %>% 
+    select(-index)
+
+## Mammal
+pts_mammal <- pts_mammal %>% st_join(pa_groups)
+pts_mammal <- lapply(1:nrow(pts_mammal), function(i){
+    pts_this <- pts_mammal %>% slice(i)
+    pa_this <- clean_pas %>% filter(group %in% pts_this$group)
+    id_this <- st_nearest_feature(pts_this, pa_this)
+    
+    dist <- st_distance(pts_this, pa_this[id_this, ]) %>% units::set_units("km")
+    
+    pts_this <- pts_this %>% 
+        mutate(taxon = "mammal",
+               dist_to_PA_ours = dist,
+               PA_size_km2_ours = pa_this[id_this, ]$REP_AREA)
+    
+    pts_this <- st_join(pts_this, pa_this %>% select(index))
+    pts_this %>% mutate(PA_ours = ifelse(is.na(index), 0, 1)) %>% 
+        select(-index)
+}) %>% bind_rows()
+
+# Check if point is in/out PAs
+pts_all <- rbind(pts_bird, pts_mammal %>% select(-group))
 
 # Load Brodie data
 dat_brodie <- read.csv(
-    file.path(src_dir, "training/bird_data_230326.csv"), 
+    file.path(src_dir, "training/bird_data_corrected_240122.csv"), 
     header = T) %>% select(station, PA, dist_to_PA, PA_size_km2) %>% 
     rbind(read.csv(
-        file.path(src_dir, "training/mammal_data_230326.csv"), 
+        file.path(src_dir, "training/mammal_data_corrected_240122.csv"), 
         header = T) %>% select(station, PA, dist_to_PA, PA_size_km2))
 
 pts_all <- left_join(pts_all, dat_brodie, by = "station")
@@ -52,48 +72,15 @@ pts_all <- pts_all %>%
            CloseToPA = ifelse(dist_to_PA > 2, 0, 1))
 
 ################## Check Connectivity index distribution #######################
-## Use our calculation to keep consistent.
-
-# Read flux
-awf <- lapply(c("bird", "mammal"), function(taxon){
-    read.csv(file.path(dst_dir, sprintf("conn_flux_%s_10_150.csv", taxon))) %>% 
-        select(station, awf_ptg, med_dist)
-}) %>% bind_rows()
-
-awf <- left_join(awf, pts_all %>% st_drop_geometry() %>% 
-                     select(station, taxon, PA_ours),
-                 by = "station")
-
-# Check the distribution
-ggplot(awf, aes(x = as.factor(med_dist), y = awf_ptg), outlier.size = 0.8) + 
-    geom_boxplot(aes(fill = as.factor(PA_ours))) +
-    facet_wrap(~taxon, nrow = 2) +
-    xlab("Median dispersal distance (km)") +
-    ylab("Area weighted flux (point to polygon)") +
-    labs(fill = "Inside PA\n(0|1, out | in)") +
-    theme_light() +
-    theme(text = element_text(size = 10),
-          strip.text = element_text(
-              size = 12, color = "blue"))
-# ggsave("results/figures/sd_awf_pa.png", width = 8, height = 10)
-
-# PAs distribution
-ggplot() +
-    geom_sf(data = pa_groups, aes(fill = as.factor(group)), 
-            lwd = 0, show.legend = FALSE) +
-    geom_sf(data = clean_pas, fill = "transparent", color = 'black') +
-    geom_sf(data = pts_bird %>% mutate(Taxon = "Bird") %>% 
-                rbind(pts_mammal %>% mutate(Taxon = "Mammal")), 
-            aes(color = Taxon), size = 0.6) +
-    scale_color_manual(values = c("yellow", "blue")) +
-    theme_bw()+
-    theme(text = element_text(size = 10))
-# ggsave("results/figures/pas_stations.png", width = 8, height = 8)
-
 # Compare with original values
 pa_sizes <- pts_all %>% st_drop_geometry() %>% 
-    select(taxon, PA_size_km2_ours, PA_size_km2) %>% 
-    pivot_longer(2:3, names_to = "type") %>% 
+    select(taxon, PA_ours, PA, PA_size_km2_ours, PA_size_km2) 
+pa_sizes <- data.frame(value = pa_sizes$PA_size_km2_ours[pa_sizes$PA_ours == 0],
+                  type = "PA_size_km2_ours",
+                  taxon = pa_sizes$taxon[pa_sizes$PA_ours == 0]) %>% 
+    rbind(data.frame(value = pa_sizes$PA_size_km2[pa_sizes$PA == 0],
+                     type = "PA_size_km2",
+                     taxon = pa_sizes$taxon[pa_sizes$PA == 0])) %>% 
     mutate(type = factor(type, levels = c("PA_size_km2", "PA_size_km2_ours"),
                          labels = c("Original", "Updated")))
 
@@ -111,8 +98,14 @@ ggplot(pa_sizes, aes(x = taxon, y = value, fill = type)) +
 ggsave("results/figures/pa_size_compare.png", width = 6, height = 6)
 
 pa_dists <- pts_all %>% st_drop_geometry() %>% 
-    select(taxon, dist_to_PA_ours, dist_to_PA) %>% 
-    pivot_longer(2:3, names_to = "type") %>% 
+    select(taxon, PA_ours, PA, dist_to_PA_ours, dist_to_PA)
+
+pa_dists <- data.frame(value = pa_dists$dist_to_PA_ours[pa_dists$PA_ours == 0],
+                       type = "dist_to_PA_ours",
+                       taxon = pa_dists$taxon[pa_dists$PA_ours == 0]) %>% 
+    rbind(data.frame(value = pa_dists$dist_to_PA[pa_dists$PA == 0],
+                     type = "dist_to_PA",
+                     taxon = pa_dists$taxon[pa_dists$PA == 0])) %>% 
     mutate(type = factor(type, levels = c("dist_to_PA", "dist_to_PA_ours"),
                          labels = c("Original", "Updated")))
 
@@ -129,18 +122,43 @@ ggplot(pa_dists, aes(x = taxon, y = value, fill = type)) +
           legend.position = "top")
 ggsave("results/figures/dist_pa_compare.png", width = 6, height = 6)
 
-big_pa <- pts_all %>% st_drop_geometry() %>% 
-    select(taxon, BigPA_ours, BigPA) %>% 
+pa_inout <- pts_all %>% st_drop_geometry() %>% 
+    select(taxon, PA_ours, PA) %>% 
     pivot_longer(2:3, names_to = "type") %>%
     group_by(taxon, type, value) %>% 
     summarise(n = n()) %>% 
+    mutate(type = factor(type, levels = c("PA", "PA_ours"),
+                         labels = c("Original", "Updated")))
+# Not too different. Good! Likely the increase in bird because of the added 
+# circular PAs. Decrease in mammals results from the reduction because of 
+# not same group.
+
+big_pa <- pts_all %>% st_drop_geometry() %>% 
+    select(taxon, PA_ours, PA, BigPA_ours, BigPA)
+
+big_pa <- data.frame(value = big_pa$BigPA_ours[big_pa$PA_ours == 0],
+                       type = "BigPA_ours",
+                       taxon = big_pa$taxon[big_pa$PA_ours == 0]) %>% 
+    rbind(data.frame(value = big_pa$BigPA[big_pa$PA == 0],
+                     type = "BigPA",
+                     taxon = big_pa$taxon[big_pa$PA == 0])) %>% 
+    group_by(taxon, type, value) %>% 
+    summarise(n = n()) %>%
     mutate(type = factor(type, levels = c("BigPA", "BigPA_ours"),
                          labels = c("Original", "Updated")))
+# 1 increase, make sense
 
 closeto_pa <- pts_all %>% st_drop_geometry() %>% 
-    select(taxon, CloseToPA_ours, CloseToPA) %>% 
-    pivot_longer(2:3, names_to = "type") %>%
+    select(taxon, PA_ours, PA, CloseToPA_ours, CloseToPA)
+
+closeto_pa <- data.frame(value = closeto_pa$CloseToPA_ours[closeto_pa$PA_ours == 0],
+                     type = "CloseToPA_ours",
+                     taxon = closeto_pa$taxon[closeto_pa$PA_ours == 0]) %>% 
+    rbind(data.frame(value = closeto_pa$CloseToPA[closeto_pa$PA == 0],
+                     type = "CloseToPA",
+                     taxon = closeto_pa$taxon[closeto_pa$PA == 0])) %>% 
     group_by(taxon, type, value) %>% 
     summarise(n = n()) %>%
     mutate(type = factor(type, levels = c("CloseToPA", "CloseToPA_ours"),
                          labels = c("Original", "Updated")))
+# Consistent with PA, good

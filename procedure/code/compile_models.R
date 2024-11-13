@@ -17,16 +17,16 @@
 ## dst_dir (character): The directory to save files to.
 
 ## Outputs:
-## A list of 24 lme model object. The names are: 
-## pd_efficacy_brodie, pd_efficacy_connec, 
-## fr_efficacy_brodie, fr_efficacy_connec,
-## sr_efficacy_brodie, sr_efficacy_connec, 
-## pd_size_spillover_brodie, pd_size_spillover_connec,
-## fr_size_spillover_brodie, fr_size_spillover_connec,
-## sr_size_spillover_brodie, sr_size_spillover_connec,
-## pd_dist_spillover_brodie, pd_dist_spillover_connec,
-## fr_dist_spillover_brodie, fr_dist_spillover_connec,
-## sr_dist_spillover_brodie, sr_dist_spillover_connec,
+## A list of 12 lme model object. The names are: 
+## pd_efficacy_connec, 
+## fr_efficacy_connec,
+## sr_efficacy_connec, 
+## pd_size_spillover_connec,
+## fr_size_spillover_connec,
+## sr_size_spillover_connec,
+## pd_dist_spillover_connec,
+## fr_dist_spillover_connec,
+## sr_dist_spillover_connec,
 ## Details
 ## [A]_efficacy_[B]: The PA efficacy models. A means independent variables. pd
 ## for phylogenetic diversity, fr for Functional Richness, and sr for
@@ -36,12 +36,13 @@
 ## pd for phylogenetic diversity, fr for Functional Richness, and sr for
 ## species richness. B means binary variable to check spillover. size for PA size
 ## and dist for distance to PA. C means means model type. brodie for brodie 
-## model setting, connec for only including connectivity, and connec+ for 
+## model setting, and connec for 
 ## including both connectivity and interaction between connectivity and binary.
 ## -------------------------------------------------------------------
 
 compile_models <- function(taxon = "bird",
                            outliers = "brodie", # auto or brodie
+                           mod_type = "connec",
                            med_dist = 100, 
                            src_dir,
                            dst_dir){
@@ -89,18 +90,11 @@ compile_models <- function(taxon = "bird",
         }
         
         dat_clean <- subset(dat, med_dist == dist)
-        mods <- lapply(c("brodie", "connec"), function(mod_type){
-            message(paste0("--- ", mod_type))
-            model_pa_efficacy(dat_clean, mod_type, taxon, rv, outliers)
-        })
-        
-        # Set names and return
-        nm <- sprintf("%s_efficacy", tolower(str_extract(rv, "[A-Z]{2}")))
-        names(mods) <- paste(nm, c("brodie", "connec"), sep = "_")
-        mods
+        model_pa_efficacy(dat_clean, mod_type, taxon, rv, outliers)
     })
     # Concatenate results
-    efficacy_models <- do.call(c, efficacy_models)
+    nm <- sprintf("%s_efficacy", c("pd", "fr", "sr"))
+    names(efficacy_models) <- nm
     
     # Run models for spillover by binary_var, independent var, model type,
     # and dispersal distance
@@ -138,22 +132,14 @@ compile_models <- function(taxon = "bird",
                    }
                    
                    dat_clean <- subset(dat, med_dist == dist)
-                   mods <- lapply(c("brodie", "connec"), 
-                                  function(mod_type){
-                       message(paste0("---- ", mod_type))
-                       model_pa_spillover(
-                           dat_clean, mod_type, taxon, bnr_var, rv, outliers)
-                   })
-                   
-                   # Set names and return
-                   nm <- sprintf("%s_%s_spillover", 
-                                 tolower(str_extract(rv, "[A-Z]{2}")),
-                                 ifelse(bnr_var == "BigPA", "size", "dist"))
-                   names(mods) <- paste(nm, c("brodie", "connec"), sep = "_")
-                   mods
+                   model_pa_spillover(dat_clean, mod_type, 
+                                      taxon, bnr_var, rv, outliers)
                })
         
-        mods <- do.call(c, mods)
+        # Set names and return
+        nm <- sprintf("%s_%s_spillover", c("pd", "fr", "sr"),
+                      ifelse(bnr_var == "BigPA", "size", "dist"))
+        names(mods) <- nm
         mods
     })
     # Concatenate results
@@ -161,6 +147,11 @@ compile_models <- function(taxon = "bird",
     
     # Concatenate models and save out
     models <- c(efficacy_models, spillover_models)
-    fname <- file.path(dst_dir, sprintf("models_%s_%s.rda", taxon, med_dist))
+    if (mod_type == "brodie"){
+        fname <- file.path(dst_dir, sprintf("models_%s_brodie_updated.rda", taxon))
+    } else{
+        fname <- file.path(dst_dir, sprintf("models_%s_%s.rda", taxon, med_dist))
+    }
+    
     save(models, file = fname)
 }
