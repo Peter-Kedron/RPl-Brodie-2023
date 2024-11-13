@@ -477,13 +477,13 @@ Exceptions to this pattern include the PA size effect estimated for mammal FR an
 for (dist in seq(10, 150, 10)){
     try({
         message(paste0(dist, " - bird"))
-        compile_models(taxon = "bird", 
-                       outliers = "auto", med_dist = dist,
+        compile_models(taxon = "bird", outliers = "auto", 
+                       mod_type = "connec", med_dist = dist,
                        src_dir = "data/derived/public", 
                        dst_dir = "results")
         message(paste0(dist, " - mammal"))
-        compile_models(taxon = "mammal", 
-                       outliers = "auto", med_dist = dist,
+        compile_models(taxon = "mammal", outliers = "auto", 
+                       mod_type = "connec", med_dist = dist,
                        src_dir = "data/derived/public", 
                        dst_dir = "results")  
     })

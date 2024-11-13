@@ -135,7 +135,7 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
             if (taxon == "bird"){
                 mod_efficacy <- lme(
                     y ~ forest_structure + access_log10.z 
-                    + HDI.z + PA + connectivity.z, 
+                    + HDI.z + connectivity.z + PA, 
                     random = list(~1 | country), data = dat_matched, 
                     weights = ~I(1/weights), 
                     correlation = corExp(form = ~utm_east + utm_north, 
@@ -143,7 +143,7 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
             } else if (taxon == "mammal"){
                 mod_efficacy <- lme(
                     y ~ forest_structure + access_log10.z 
-                    + HDI.z + PA + connectivity.z, 
+                    + HDI.z + connectivity.z + PA, 
                     random = list(~1 | country, ~1 | study_area), 
                     data = dat_matched, weights = ~I(1/weights), 
                     correlation = corExp(form = ~utm_east + utm_north, 
@@ -153,7 +153,6 @@ model_pa_efficacy <- function(dat, # leave outliers removal outside of function
         
         # Detect outliers if necessary
         if (det_outlier_flag){
-            # message("Diagnose outliers.")
             outliers <- identify_outliers(dat, mod_efficacy)
             dat <- dat %>% dplyr::filter(!station %in% outliers)
             dat <- dat %>% dplyr::select(-station)

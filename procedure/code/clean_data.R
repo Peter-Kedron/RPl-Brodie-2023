@@ -93,7 +93,7 @@ clean_data <- function(taxon,
       pts <- pts %>% st_join(pa_groups)
       pts <- lapply(1:nrow(pts), function(i){
           pts_this <- pts %>% slice(i)
-          pa_this <- clean_pas %>% filter(group %in% pts_this$group)
+          pa_this <- clean_pas %>% dplyr::filter(group %in% pts_this$group)
           id_this <- st_nearest_feature(pts_this, pa_this)
           
           dist <- st_distance(pts_this, pa_this[id_this, ]) %>% 

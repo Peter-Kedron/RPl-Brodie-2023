@@ -172,17 +172,15 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         correlation = corExp(form = ~utm_east + utm_north, 
                                              nugget = TRUE))
                 } else if (taxon == "mammal"){
-                    tryCatch({
-                        mod_spillover <- lme(
-                            y ~ forest_structure + access_log10.z 
+                    mod_spillover <- tryCatch({
+                        lme(y ~ forest_structure + access_log10.z 
                             + HDI.z + connectivity.z + BigPA, 
                             random = list(~1 | country, ~1 | study_area), 
                             data = dat_matched, weights = ~I(1/weights), 
                             correlation = corExp(form = ~utm_east + utm_north, 
                                                  nugget = TRUE))
                     }, error = function(e){
-                        mod_spillover <- lme(
-                            y ~ forest_structure + access_log10.z 
+                        lme(y ~ forest_structure + access_log10.z 
                             + HDI.z + connectivity.z + BigPA, 
                             random = list(~1 | country, ~1 | study_area), 
                             data = dat_matched, weights = ~I(1/weights), 
@@ -252,17 +250,15 @@ model_pa_spillover <- function(dat, # leave outliers removal outside of function
                         correlation = corExp(form = ~utm_east + utm_north, 
                                              nugget = TRUE))
                 } else if (taxon == "mammal"){
-                    tryCatch({
-                        mod_spillover <- lme(
-                            y ~ forest_structure + access_log10.z 
+                    mod_spillover <- tryCatch({
+                        lme(y ~ forest_structure + access_log10.z 
                             + HDI.z + connectivity.z + CloseToPA, 
                             random = list(~1 | country, ~1 | study_area), 
                             data = dat_matched, weights = ~I(1/weights), 
                             correlation = corExp(form = ~utm_east + utm_north, 
                                                  nugget = TRUE))
                     }, error = function(e){
-                        mod_spillover <- lme(
-                            y ~ forest_structure + access_log10.z 
+                        lme(y ~ forest_structure + access_log10.z 
                             + HDI.z + connectivity.z + CloseToPA, 
                             random = list(~1 | country, ~1 | study_area), 
                             data = dat_matched, weights = ~I(1/weights), 

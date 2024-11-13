@@ -122,7 +122,13 @@ ggplot(pa_dists, aes(x = taxon, y = value, fill = type)) +
           legend.position = "top")
 ggsave("results/figures/dist_pa_compare.png", width = 6, height = 6)
 
-pa_inout <- pts_all %>% st_drop_geometry() %>% 
+pts_all %>% st_drop_geometry() %>% 
+    select(taxon, PA_ours, PA) %>% 
+    mutate(change = PA_ours - PA) %>% 
+    group_by(change) %>% 
+    summarise(n = n())
+
+pts_all %>% st_drop_geometry() %>% 
     select(taxon, PA_ours, PA) %>% 
     pivot_longer(2:3, names_to = "type") %>%
     group_by(taxon, type, value) %>% 
