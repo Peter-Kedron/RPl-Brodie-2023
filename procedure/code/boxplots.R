@@ -1,7 +1,8 @@
 pkgs <- c("tidyverse", "hrbrthemes", "viridis", "plotly", "stats",
-          "scales", "ggplot2")
+          "scales", "ggplot2", "here")
 lapply(pkgs, library, character.only=TRUE) # use this line if groundhog returns error
 here('')
+
 
 saveBoxPlot <- function(model, modtype, exp1, exp2, y1, y2, yadjust,
                         ylabel, outpath){
@@ -10,20 +11,21 @@ saveBoxPlot <- function(model, modtype, exp1, exp2, y1, y2, yadjust,
     # exp2: the other expression
     # outpath: output path, including the name of the plot
     df <- as.data.frame(model$fitted)
-    if("country" %in% colnames(df)){
-        df$val <- df$fixed + df$country
-    } else if("study_area" %in% colnames(df)){
-        df$val <- df$fixed + df$study_area
-    }
+    df$fitted <- fitted(model)
     
     df$iftrtmt <- model$data[modtype]
+    df$orig <- model$data$y
+    
     df <- df %>% mutate(
         trtmt = ifelse(iftrtmt==0, exp1, exp2)
     )
     df$trtmt <- factor(df$trtmt, levels = c(exp1, exp2))
     
-    l1 <- df[df$trtmt==exp1, ]$fixed
-    l2 <- df[df$trtmt==exp2, ]$fixed
+    df1 <- df[df$trtmt==exp1, ]
+    df2 <- df[df$trtmt==exp2, ]
+    
+    l1 <- df[df$trtmt==exp1, ]$fitted
+    l2 <- df[df$trtmt==exp2, ]$fitted
     
     pval <- t.test(l1, l2)$p.value
     if(pval < 0.001){
@@ -32,7 +34,8 @@ saveBoxPlot <- function(model, modtype, exp1, exp2, y1, y2, yadjust,
         str_pval = paste(" =", as.character(round(pval, digits = 3)))
     }
     
-    dltxb <- 100*abs((mean(l1)-mean(l2))*2/(mean(l1)+mean(l2)))
+    #dltxb <- 100*abs((mean(l1)-mean(l2))*2/(mean(l1)+mean(l2)))
+    dltxb <- 100*abs(mean(l2)-mean(l1))/mean(l2)
     str_dltxb <- paste(" = ", as.character(round(dltxb, digits = 1)), "%", sep = "")
     
     lab_pval <- bquote(italic("P") ~ .(str_pval))
@@ -81,6 +84,8 @@ saveBoxPlot <- function(model, modtype, exp1, exp2, y1, y2, yadjust,
 rm(list = ls())
 bird_mods_path <- 'data/derived/models_bird_100.rda'
 mammal_mods_path <- 'data/derived/models_mammal_100.rda'
+bird_brodie_path <- 'data/derived/models_bird_brodie_orig.rda'
+mammal_brodie_path <- 'data/derived/models_mammal_brodie_orig.rda'
 
 load(bird_mods_path)
 bird_models <- models
@@ -88,6 +93,15 @@ rm(models)
 
 load(mammal_mods_path)
 mammal_models <- models
+rm(models)
+
+
+load(bird_brodie_path)
+brodie_bird_models <- models
+rm(models)
+
+load(mammal_brodie_path)
+brodie_mammal_models <- models
 rm(models)
 # ----------------------- brodie efficacy models -------------------------------
 eff_mod <- "PA"
