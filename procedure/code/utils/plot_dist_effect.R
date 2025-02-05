@@ -44,7 +44,6 @@ plot_dist_effect <- function(src_dir = "results",
             # Select relevant models
             nms <- names(models)
             nms <- nms[!str_detect(nms, "brodie")]
-            nms <- nms[!str_detect(nms, "spillover_connec$")]
             
             # Per model
             lapply(nms, function(nm){
@@ -69,17 +68,19 @@ plot_dist_effect <- function(src_dir = "results",
             # Subset 
             dat <- coefs %>% dplyr::filter(taxon == txn) %>% 
                 dplyr::filter(var_nm == rsp) %>% 
-                dplyr::filter(term %in% c("PA", "connectivity.z", "PA:connectivity.z",
-                                "BigPA", "BigPA:connectivity.z", "CloseToPA",
-                                "CloseToPA:connectivity.z")) %>% 
+                dplyr::filter(term %in% c("PA", "connectivity.z",
+                                "BigPA", "CloseToPA")) %>% 
                 mutate(effect_nm = factor(
                     effect_nm, levels = c("efficacy", "size_spillover", "dist_spillover"),
                     labels = c("bold(PA~efficacy)", "bold(PA~size~effect)", "bold(Distance~to~PA~effect)"))) %>% 
-                mutate(term = ifelse(term == "connectivity.z", "Connectivity",
-                                     ifelse(str_detect(term, ":connectivity.z"), "Interaction", term))) %>% 
+                mutate(term = ifelse(term == "connectivity.z", "Connectivity", term)) %>% 
                 mutate(term = factor(
-                    term, levels = c("PA", "BigPA", "CloseToPA", "Connectivity", "Interaction"),
-                    labels = c("PA", "PA~Size", "Distance~to~PA", "Connectivity", "Interaction")))
+                    term, levels = c("PA", "BigPA", "CloseToPA", "Connectivity"),
+                    labels = c("PA", "PA~Size", "Distance~to~PA", "Connectivity")))
+            
+            if (txn == "bird"){
+                dat_selected <- dat %>% filter(dist == 100)
+            } else dat_selected <- dat %>% filter(dist == 50)
             
             # Plot
             ggplot(dat, 
@@ -89,10 +90,14 @@ plot_dist_effect <- function(src_dir = "results",
                     aes(ymin = conf.low, ymax = conf.high),
                     position = position_dodge(width = 2)) +
                 geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+                geom_pointrange(data = dat_selected,
+                    size = 0.2,
+                    aes(ymin = conf.low, ymax = conf.high),
+                    position = position_dodge(width = 2), color = "blue") +
                 facet_nested_wrap(.~effect_nm + term, scales = "free",
                                   nest_line = element_line(colour = "darkgrey",
                                                            linetype = "dotdash"),
-                                  labeller = label_parsed) +
+                                  labeller = label_parsed, ncol = 2) +
                 scale_x_continuous(breaks = seq(10, 150, by = 30))+
                 xlab('Dispersal distance (km)') +
                 ylab('Eestimated effect') +

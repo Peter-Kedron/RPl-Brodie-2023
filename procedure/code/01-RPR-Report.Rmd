@@ -75,7 +75,7 @@ The results of interest include:
 We attempt the reproduction using data and code files published with an author correction in April 2024. 
 A successful reproduction should recreate the numerical results published in Brodie et al. (2023), or the those published with the correction in April 2024. 
 
-All materials and procedures used in this reproduction are publicly available at GitHub **(LINK)** with the identifier **PROJECT DOI**.
+All data and materials needed to fully reproduce the results of this paper are publicly available in an [Open Science Framework project repository](https://osf.io/qdbu2/) with the identifier PROJECT DOI. 
 That repository also contains a series of scripts and functions to re-execute this reproduction attempt and a related replication attempt.
 We implemented the reproduction in platform `r R.version$platform` using R programming language (Version `r paste0(R.version$major, ".", R.version$minor)`).
 Structural causal modeling was performed using the DAGITTY package (Version `r packageVersion('dagitty')`).
@@ -1107,6 +1107,18 @@ The scripts can be used to recreate the numerical results, but did not include d
 Provided datafiles also did not include raw observation data needed to recreate variables, or an extensive metadata file documenting those data sources.
 Omission of the processing steps used to create the analytical datafile meant that we could only directly assess the statistical analysis of the authors, as we could not retrace the variable creation process. 
 
+Similarly, because procedural information and code were not provided for the authors' figures, we were only able to partially reproduce these elements. 
+For example, we were unable to recreate the estimated mean differences in biodiversity levels reported in Figures 3, 4, and 5. 
+This issue may be due to our use of the authors corrected data file and code. 
+While the authors updated these components of the project, we were unable to find correspondingly updated figures of difference estimates. 
+Those published in the paper appear to be estimated from the authors original models, and therefore do not reflect the new models used in the correction and in our reproduction attempts. 
+We were unable to verify this issue using the original data because of the incomplete nature of that file. 
+
+Finally, we were unable to identify how the authors processed their spatial PA data. 
+We were unable to determine whether the authors merged and refined PAs that in the original data set are administratively distinct, but geographically adjacent. 
+We were also unable to identify whether the authors removed marine overlaps from their terrestrial PAs. 
+These issues may impact the original estimation of size-based PA spillover effects. 
+
 
 ## Bias and threats to validity
 
@@ -1114,12 +1126,12 @@ There remain minor concerns about statistical bias and construct validity.
 The original models account for location and potential spatial autocorrelation in both the matching procedure and the clustering of errors in regression models.
 However, the authors did not present any formal testing of remaining spatial autocorrelation in the residuals. 
 The paper does not include an extensive discussion of measurement uncertainty issues that could lead to concerns about construct validity (e.g., biodiversity measures, forest structure measures created through kriging,)
-Independent investigation of these issues cannot be easily undertaken given the lack of documenation of variable construction and processing.
+Independent investigation of these issues cannot be easily undertaken given the lack of documentation of variable construction and processing.
 
 
 # Acknowledgements
 
-This report is based upon the template for Reproducible and Replicable Research in Human-Environment and Geographical Sciences, DOI:[10.17605/OSF.IO/W29MQ](https://doi.org/10.17605/OSF.IO/W29MQ)
+This report is based upon the template for Reproducible and Replicable Research in Human-Environment and Geographical Sciences, <https://doi.org/10.17605/OSF.IO/W29MQ>.
 
 # References
 Brodie, J.F., Mohd-Azlan, J., Chen, C. et al. Landscape-scale benefits of protected areas for tropical biodiversity. Nature 620, 807–812 (2023). <https://doi.org/10.1038/s41586-023-06410-z>

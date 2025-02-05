@@ -51,8 +51,6 @@ pts_all <- pts_all %>%
     mutate(CloseToPA_ours = ifelse(dist_to_PA_ours > 2, 0, 1),
            CloseToPA = ifelse(dist_to_PA > 2, 0, 1))
 
-st_write(pts_all, file.path(dst_dir, 'PA_attributes_compare.geojson'))
-
 ################## Check Connectivity index distribution #######################
 ## Use our calculation to keep consistent.
 
@@ -66,8 +64,6 @@ awf <- left_join(awf, pts_all %>% st_drop_geometry() %>%
                      select(station, taxon, PA_ours),
                  by = "station")
 
-write.csv(awf, file.path(dst_dir, "awf_ptg_collection.csv"), row.names = FALSE)
-
 # Check the distribution
 ggplot(awf, aes(x = as.factor(med_dist), y = awf_ptg), outlier.size = 0.8) + 
     geom_boxplot(aes(fill = as.factor(PA_ours))) +
@@ -79,7 +75,7 @@ ggplot(awf, aes(x = as.factor(med_dist), y = awf_ptg), outlier.size = 0.8) +
     theme(text = element_text(size = 10),
           strip.text = element_text(
               size = 12, color = "blue"))
-ggsave("sd_awf_pa.png", width = 8, height = 10)
+# ggsave("results/figures/sd_awf_pa.png", width = 8, height = 10)
 
 # PAs distribution
 ggplot() +
@@ -92,4 +88,59 @@ ggplot() +
     scale_color_manual(values = c("yellow", "blue")) +
     theme_bw()+
     theme(text = element_text(size = 10))
-ggsave("pas_stations.png", width = 8, height = 8)
+# ggsave("results/figures/pas_stations.png", width = 8, height = 8)
+
+# Compare with original values
+pa_sizes <- pts_all %>% st_drop_geometry() %>% 
+    select(taxon, PA_size_km2_ours, PA_size_km2) %>% 
+    pivot_longer(2:3, names_to = "type") %>% 
+    mutate(type = factor(type, levels = c("PA_size_km2", "PA_size_km2_ours"),
+                         labels = c("Original", "Updated")))
+
+ggplot(pa_sizes, aes(x = taxon, y = value, fill = type)) +
+    geom_boxplot(outliers = FALSE) +
+    scale_fill_brewer(name = "", palette = "Dark2") +
+    xlab("Taxon group") +
+    ylab("PA size (square km)") +
+    theme_classic()+
+    theme(panel.spacing.y = unit(2, "lines"),
+          axis.text = element_text(size = 12, color = "black"),
+          axis.title = element_text(size = 12, color = "black"),
+          legend.text = element_text(size = 12, color = "black"),
+          legend.position = "top")
+ggsave("results/figures/pa_size_compare.png", width = 6, height = 6)
+
+pa_dists <- pts_all %>% st_drop_geometry() %>% 
+    select(taxon, dist_to_PA_ours, dist_to_PA) %>% 
+    pivot_longer(2:3, names_to = "type") %>% 
+    mutate(type = factor(type, levels = c("dist_to_PA", "dist_to_PA_ours"),
+                         labels = c("Original", "Updated")))
+
+ggplot(pa_dists, aes(x = taxon, y = value, fill = type)) +
+    geom_boxplot(outliers = FALSE) +
+    scale_fill_brewer(name = "", palette = "Dark2") +
+    xlab("Taxon group") +
+    ylab("Distance to PA (km)") +
+    theme_classic()+
+    theme(panel.spacing.y = unit(2, "lines"),
+          axis.text = element_text(size = 12, color = "black"),
+          axis.title = element_text(size = 12, color = "black"),
+          legend.text = element_text(size = 12, color = "black"),
+          legend.position = "top")
+ggsave("results/figures/dist_pa_compare.png", width = 6, height = 6)
+
+big_pa <- pts_all %>% st_drop_geometry() %>% 
+    select(taxon, BigPA_ours, BigPA) %>% 
+    pivot_longer(2:3, names_to = "type") %>%
+    group_by(taxon, type, value) %>% 
+    summarise(n = n()) %>% 
+    mutate(type = factor(type, levels = c("BigPA", "BigPA_ours"),
+                         labels = c("Original", "Updated")))
+
+closeto_pa <- pts_all %>% st_drop_geometry() %>% 
+    select(taxon, CloseToPA_ours, CloseToPA) %>% 
+    pivot_longer(2:3, names_to = "type") %>%
+    group_by(taxon, type, value) %>% 
+    summarise(n = n()) %>%
+    mutate(type = factor(type, levels = c("CloseToPA", "CloseToPA_ours"),
+                         labels = c("Original", "Updated")))

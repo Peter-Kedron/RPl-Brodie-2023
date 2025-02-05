@@ -21,12 +21,12 @@
 ## pd_efficacy_brodie, pd_efficacy_connec, 
 ## fr_efficacy_brodie, fr_efficacy_connec,
 ## sr_efficacy_brodie, sr_efficacy_connec, 
-## pd_size_spillover_brodie, pd_size_spillover_connec, pd_size_spillover_connec+,
-## fr_size_spillover_brodie, fr_size_spillover_connec, fr_size_spillover_connec+, 
-## sr_size_spillover_brodie, sr_size_spillover_connec, sr_size_spillover_connec+, 
-## pd_dist_spillover_brodie, pd_dist_spillover_connec, pd_dist_spillover_connec+, 
-## fr_dist_spillover_brodie, fr_dist_spillover_connec, fr_dist_spillover_connec+, 
-## sr_dist_spillover_brodie, sr_dist_spillover_connec, sr_dist_spillover_connec+
+## pd_size_spillover_brodie, pd_size_spillover_connec,
+## fr_size_spillover_brodie, fr_size_spillover_connec,
+## sr_size_spillover_brodie, sr_size_spillover_connec,
+## pd_dist_spillover_brodie, pd_dist_spillover_connec,
+## fr_dist_spillover_brodie, fr_dist_spillover_connec,
+## sr_dist_spillover_brodie, sr_dist_spillover_connec,
 ## Details
 ## [A]_efficacy_[B]: The PA efficacy models. A means independent variables. pd
 ## for phylogenetic diversity, fr for Functional Richness, and sr for
@@ -60,7 +60,9 @@ compile_models <- function(taxon = "bird",
     dat <- read.csv(file.path(src_dir, sprintf("dat_analysis_%s.csv", taxon)))
     
     # Run models for efficacy by independent var, model type, and dispersal distance
+    message("- Efficacy")
     efficacy_models <- lapply(c("asymptPD", "maxFRic", "SR.mean"), function(rv){
+        message(paste0("-- ", rv))
         # Set outliers for each response variable if using brodie
         if (outliers == "brodie"){
             if (rv == "asymptPD"){
@@ -88,6 +90,7 @@ compile_models <- function(taxon = "bird",
         
         dat_clean <- subset(dat, med_dist == dist)
         mods <- lapply(c("brodie", "connec"), function(mod_type){
+            message(paste0("--- ", mod_type))
             model_pa_efficacy(dat_clean, mod_type, taxon, rv, outliers)
         })
         
@@ -101,9 +104,12 @@ compile_models <- function(taxon = "bird",
     
     # Run models for spillover by binary_var, independent var, model type,
     # and dispersal distance
+    message("- Spillover")
     spillover_models <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
+        message(paste0("-- ", bnr_var))
         mods <- lapply(c("asymptPD", "maxFRic", "SR.mean"), 
                function(rv){
+                   message(paste0("--- ", rv))
                    # Set outliers for each response variable if using brodie
                    if (outliers == "brodie"){
                        if (rv == "asymptPD"){
@@ -132,8 +138,9 @@ compile_models <- function(taxon = "bird",
                    }
                    
                    dat_clean <- subset(dat, med_dist == dist)
-                   mods <- lapply(c("brodie", "connec", "connec+"), 
+                   mods <- lapply(c("brodie", "connec"), 
                                   function(mod_type){
+                       message(paste0("---- ", mod_type))
                        model_pa_spillover(
                            dat_clean, mod_type, taxon, bnr_var, rv, outliers)
                    })
@@ -142,7 +149,7 @@ compile_models <- function(taxon = "bird",
                    nm <- sprintf("%s_%s_spillover", 
                                  tolower(str_extract(rv, "[A-Z]{2}")),
                                  ifelse(bnr_var == "BigPA", "size", "dist"))
-                   names(mods) <- paste(nm, c("brodie", "connec", "connec+"), sep = "_")
+                   names(mods) <- paste(nm, c("brodie", "connec"), sep = "_")
                    mods
                })
         
