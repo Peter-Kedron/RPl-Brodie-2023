@@ -73,7 +73,9 @@ The results of interest include:
 3. Six measures of the effect of distance from a PA on bird and mammal biodiversity at unprotected sites.
 
 We attempt the reproduction using data and code files published with an author correction in April 2024. 
+We minimized any changes to the data processing and analysis procedures used in the reproduction attempt because we wish to assess whether we can computationally reproduce the results of the original authors.
 A successful reproduction should recreate the numerical results published in Brodie et al. (2023), or the those published with the correction in April 2024. 
+Executing the attempt will also allow us to identify questions about the approach of the original authors.
 
 All data and materials needed to fully reproduce the results of this paper are publicly available in an [Open Science Framework project repository](https://osf.io/qdbu2/) with the identifier PROJECT DOI. 
 That repository also contains a series of scripts and functions to re-execute this reproduction attempt and a related replication attempt.
@@ -261,16 +263,17 @@ Weights produced by propensity score matching were then used in mixed-effects li
 
 ## Observations Preceeding the Reproduction Attempt  
 
-Before beginning our reproduction attempt, we had observed the analysis file and code published by Brodie et al..
-We noticed the following issues in the script and analysis file originally published by the authors.
+Before beginning our reproduction attempt, we observed the analysis file and code published by Brodie et al..
+We identified the following issues in the published analysis file, associated metadata, and script.
 
-1) The HDI measure was missing from the original analysis file.
-2) The procedure for computing biodiversity metrics, GEDI metrics, and the circuit-based accessibility metric was not provided in the scripts and not presented in detail in the methodological supplement.
-3) The procedure for preparing PA boundaries for analysis was unclear.
-4) The procedure for identifying and eliminating outliers was not included in the script. Only a hand coded list of outliers was provided and removed in the code.
+1) Only the analysis file was made available. Source files that permit examination and extension of data processing procedures were not published.
+2) The procedure for computing the three main response variables was not presented in the script.
+3) The procedure for constructing the three main treatment variables was unclear. Specifically, information about how PA boundaries were processed for analysis was not provided.
+4) The procedures for computing predictor variables designed to control for key confounds of protection - forest structure, the circuit-based accessibility - were not provided in the scripts and not presented in detail in the methodological supplement.
+5) The procedure for identifying and eliminating outliers was not included in the script. A hand coded list of outliers was provided and removed in the code.
+6) The HDI measure was missing from the original analysis file. The script and analysis file published by the authors with their correction in April 2024 addressed this issue. 
+7) Metadata provided minimal information about the data and did not follow a widely adopted standard.
 
-The script and analysis file published by the authors with their correction in April 2024 addressed the first issue above. 
-However, the other issues remain. 
 We did not manipulate the corrected data file before beginning our reproduction attempt.
 
 \par
