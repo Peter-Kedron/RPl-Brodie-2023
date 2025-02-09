@@ -7,6 +7,8 @@ source(here("procedure/code/kick_off.R"))
 kick_off(here('procedure/code'))
 
 ## Build the models
+type <- "brodie" # connec
+name <- "reproduce" # replicate
 conn_metrics <- 'awf_ptg'
 src_dir <- "data/raw/public"
 conn_dir <- "data/derived/public"
@@ -23,7 +25,7 @@ var_catalog <- data.frame(
 dat_clean_bird <- subset(dat_clean_bird, med_dist == 100)
 
 rpl_efficacy_bird <- lapply(1:nrow(var_catalog), function(i){
-    model_pa_efficacy(dat_clean_bird, "connec", "bird",
+    model_pa_efficacy(dat_clean_bird, type, "bird",
                       var_catalog[[i, "response_variable"]], "auto") 
 }); names(rpl_efficacy_bird) <- sprintf("mod_bird_eff_%s", var_catalog$name)
 
@@ -31,14 +33,14 @@ rpl_efficacy_bird <- lapply(1:nrow(var_catalog), function(i){
 dat_clean_mammal <- subset(dat_clean_mammal, med_dist == 50)
 
 rpl_efficacy_mammal <- lapply(1:nrow(var_catalog), function(i){
-    model_pa_efficacy(dat_clean_mammal, "connec", "mammal",
+    model_pa_efficacy(dat_clean_mammal, type, "mammal",
                       var_catalog[[i, "response_variable"]], "auto")
 }); names(rpl_efficacy_mammal) <- sprintf("mod_mammal_eff_%s", var_catalog$name)
 
 ### Replicate spillover models for birds w/ connectivity
 rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_clean_bird, "connec", "bird", bnr_var, 
+        model_pa_spillover(dat_clean_bird, type, "bird", bnr_var, 
                            var_catalog[[i, "response_variable"]], "auto")
     })
     names(mods) <- sprintf("mod_bird_%s_%s", c("size", "dist"), 
@@ -49,7 +51,7 @@ rpl_spill_bird <- lapply(1:nrow(var_catalog), function(i){
 ### Replicate spillover models for mammals w/ connectivity
 rpl_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
     mods <- lapply(c("BigPA", "CloseToPA"), function(bnr_var){
-        model_pa_spillover(dat_clean_mammal, "connec", "mammal", bnr_var, 
+        model_pa_spillover(dat_clean_mammal, type, "mammal", bnr_var, 
                            var_catalog[[i, "response_variable"]], "auto")
     })
     names(mods) <- sprintf("mod_mammal_%s_%s", c("size", "dist"), 
@@ -60,6 +62,7 @@ rpl_spill_mammal <- lapply(1:nrow(var_catalog), function(i){
 # Concatenate the model results
 mods <- list("bird" = do.call(c, list(rpl_efficacy_bird, rpl_spill_bird)), 
              "mammal" = do.call(c, list(rpl_efficacy_mammal, rpl_spill_mammal)))
+save(mods, file = sprintf('results/models_%s.rda', name))
 
 ## Insert code to construct a summary table of efficacy models 
 ## like Table 1 in Brodie et al.
@@ -149,11 +152,13 @@ coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
 
 coefs_efcy <- coefs %>% filter(Effect == "All sites") %>% select(-Effect)
 
-write.csv(coefs_efcy, 'results/tables/coefs_efficacy.csv', row.names = FALSE)
+write.csv(coefs_efcy, sprintf('results/tables/coefs_efficacy_%s.csv', name), 
+          row.names = FALSE)
 
 coefs_size <- coefs %>% filter(Effect != "All sites") %>% select(-Effect)
 
-write.csv(coefs_size, 'results/tables/coefs_spillover_size.csv', row.names = FALSE)
+write.csv(coefs_size, sprintf('results/tables/coefs_spillover_size_%s.csv', name), 
+          row.names = FALSE)
 
 ## Make the kable
 # Bold some cells
@@ -185,7 +190,7 @@ coefs_efcy %>%
                   font_size = 10) %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
                      align = "c") %>% 
-    save_kable("results/figures/coefs_efficacy.pdf")
+    save_kable(sprintf("results/figures/coefs_efficacy_%s.pdf", name))
 
 
 # Bold some cells
@@ -216,4 +221,4 @@ coefs_size %>%
                   font_size = 10) %>% 
     add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
                      align = "c") %>% 
-    save_kable("results/figures/coefs_spillover_size.pdf")
+    save_kable(sprintf("results/figures/coefs_spillover_size_%s.pdf", name))

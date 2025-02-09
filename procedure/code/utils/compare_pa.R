@@ -79,7 +79,7 @@ ggdensity(pa_sizes, x = "value",
     ylab("Density") +
     theme(legend.text = element_text(size = 12, color = "black"))
      
-ggsave("results/figures/pa_size_compare.png", width = 6, height = 6)
+ggsave("results/figures/pa_size_compare.png", width = 4, height = 4)
 
 pa_dists <- pts_all %>% st_drop_geometry() %>% 
     select(taxon, dist_to_PA_ours, dist_to_PA) %>% 
@@ -95,7 +95,7 @@ ggdensity(pa_dists, x = "value",
     xlab("Distance to PA (km)") +
     ylab("Density") +
     theme(legend.text = element_text(size = 12, color = "black"))
-ggsave("results/figures/dist_pa_compare.png", width = 6, height = 6)
+ggsave("results/figures/dist_pa_compare.png", width = 4, height = 4)
 
 # PA or not PA
 sum(pts_all$PA_ours != pts_all$PA) / nrow(pts_all) * 100
