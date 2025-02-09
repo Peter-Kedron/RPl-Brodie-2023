@@ -3,7 +3,8 @@
 ## -------------------------------------------------------------------
 
 # Load libraries
-pkgs <- c("sf", "dplyr", "terra", "stringr", "ggplot2")
+pkgs <- c("sf", "dplyr", "terra", "stringr", "ggplot2", 
+          "tidyverse", "rnaturalearth")
 sapply(pkgs, require, character.only = TRUE)
 
 # Set directories
@@ -44,103 +45,97 @@ dat_brodie <- read.csv(
 
 pts_all <- left_join(pts_all, dat_brodie, by = "station")
 
-# Add BigPA and CloseToPA
+# Query country boundaries
+cnts <- ne_countries(continent = "Asia") %>% 
+    st_transform(st_crs(pts_all)) %>% 
+    filter(subunit %in% unique(pts_all$country)) %>% 
+    st_intersection(st_convex_hull(st_union(clean_pas)))
+
+# Add BigPA and CloseToPA,
+# and keep values to just outside of PAs.
 pts_all <- pts_all %>% 
-    mutate(BigPA_ours = ifelse(PA_size_km2_ours < 500, 0, 1),
-           BigPA = ifelse(PA_size_km2 < 500, 0, 1)) %>% 
-    mutate(CloseToPA_ours = ifelse(dist_to_PA_ours > 2, 0, 1),
-           CloseToPA = ifelse(dist_to_PA > 2, 0, 1))
-
-################## Check Connectivity index distribution #######################
-## Use our calculation to keep consistent.
-
-# Read flux
-awf <- lapply(c("bird", "mammal"), function(taxon){
-    read.csv(file.path(dst_dir, sprintf("conn_flux_%s_10_150.csv", taxon))) %>% 
-        select(station, awf_ptg, med_dist)
-}) %>% bind_rows()
-
-awf <- left_join(awf, pts_all %>% st_drop_geometry() %>% 
-                     select(station, taxon, PA_ours),
-                 by = "station")
-
-# Check the distribution
-ggplot(awf, aes(x = as.factor(med_dist), y = awf_ptg), outlier.size = 0.8) + 
-    geom_boxplot(aes(fill = as.factor(PA_ours))) +
-    facet_wrap(~taxon, nrow = 2) +
-    xlab("Median dispersal distance (km)") +
-    ylab("Area weighted flux (point to polygon)") +
-    labs(fill = "Inside PA\n(0|1, out | in)") +
-    theme_light() +
-    theme(text = element_text(size = 10),
-          strip.text = element_text(
-              size = 12, color = "blue"))
-# ggsave("results/figures/sd_awf_pa.png", width = 8, height = 10)
-
-# PAs distribution
-ggplot() +
-    geom_sf(data = pa_groups, aes(fill = as.factor(group)), 
-            lwd = 0, show.legend = FALSE) +
-    geom_sf(data = clean_pas, fill = "transparent", color = 'black') +
-    geom_sf(data = pts_bird %>% mutate(Taxon = "Bird") %>% 
-                rbind(pts_mammal %>% mutate(Taxon = "Mammal")), 
-            aes(color = Taxon), size = 0.6) +
-    scale_color_manual(values = c("yellow", "blue")) +
-    theme_bw()+
-    theme(text = element_text(size = 10))
-# ggsave("results/figures/pas_stations.png", width = 8, height = 8)
+    mutate(PA_size_km2_ours = ifelse(PA_ours == 1, NA, PA_size_km2_ours),
+           PA_size_km2 = ifelse(PA == 1, NA, PA_size_km2),
+           dist_to_PA_ours = ifelse(PA_ours == 1, NA, dist_to_PA_ours),
+           dist_to_PA = ifelse(PA == 1, NA, dist_to_PA)) %>% 
+    mutate(BigPA_ours = ifelse(PA_ours == 1, NA, ifelse(PA_size_km2_ours < 500, 0, 1)),
+           BigPA = ifelse(PA == 1, NA, ifelse(PA_size_km2 < 500, 0, 1))) %>% 
+    mutate(CloseToPA_ours = ifelse(PA_ours == 1, NA, ifelse(dist_to_PA_ours > 2, 0, 1)),
+           CloseToPA = ifelse(PA == 1, NA, ifelse(dist_to_PA > 2, 0, 1)))
 
 # Compare with original values
 pa_sizes <- pts_all %>% st_drop_geometry() %>% 
     select(taxon, PA_size_km2_ours, PA_size_km2) %>% 
-    pivot_longer(2:3, names_to = "type") %>% 
-    mutate(type = factor(type, levels = c("PA_size_km2", "PA_size_km2_ours"),
+    pivot_longer(2:3, names_to = "Type") %>% 
+    mutate(Type = factor(Type, levels = c("PA_size_km2", "PA_size_km2_ours"),
                          labels = c("Original", "Updated")))
 
-ggplot(pa_sizes, aes(x = taxon, y = value, fill = type)) +
-    geom_boxplot(outliers = FALSE) +
-    scale_fill_brewer(name = "", palette = "Dark2") +
-    xlab("Taxon group") +
-    ylab("PA size (square km)") +
-    theme_classic()+
-    theme(panel.spacing.y = unit(2, "lines"),
-          axis.text = element_text(size = 12, color = "black"),
-          axis.title = element_text(size = 12, color = "black"),
-          legend.text = element_text(size = 12, color = "black"),
-          legend.position = "top")
+ggdensity(pa_sizes, x = "value",
+          add = "mean", rug = TRUE,
+          color = "Type", fill = "Type",
+          palette = c("#00AFBB", "#E7B800"),
+          na.rm = TRUE) +
+    xlab("PA size (square km)") +
+    ylab("Density") +
+    theme(legend.text = element_text(size = 12, color = "black"))
+     
 ggsave("results/figures/pa_size_compare.png", width = 6, height = 6)
 
 pa_dists <- pts_all %>% st_drop_geometry() %>% 
     select(taxon, dist_to_PA_ours, dist_to_PA) %>% 
-    pivot_longer(2:3, names_to = "type") %>% 
-    mutate(type = factor(type, levels = c("dist_to_PA", "dist_to_PA_ours"),
+    pivot_longer(2:3, names_to = "Type") %>% 
+    mutate(Type = factor(Type, levels = c("dist_to_PA", "dist_to_PA_ours"),
                          labels = c("Original", "Updated")))
 
-ggplot(pa_dists, aes(x = taxon, y = value, fill = type)) +
-    geom_boxplot(outliers = FALSE) +
-    scale_fill_brewer(name = "", palette = "Dark2") +
-    xlab("Taxon group") +
-    ylab("Distance to PA (km)") +
-    theme_classic()+
-    theme(panel.spacing.y = unit(2, "lines"),
-          axis.text = element_text(size = 12, color = "black"),
-          axis.title = element_text(size = 12, color = "black"),
-          legend.text = element_text(size = 12, color = "black"),
-          legend.position = "top")
+ggdensity(pa_dists, x = "value",
+          add = "mean", rug = TRUE,
+          color = "Type", fill = "Type",
+          palette = c("#00AFBB", "#E7B800"),
+          na.rm = TRUE) +
+    xlab("Distance to PA (km)") +
+    ylab("Density") +
+    theme(legend.text = element_text(size = 12, color = "black"))
 ggsave("results/figures/dist_pa_compare.png", width = 6, height = 6)
 
-big_pa <- pts_all %>% st_drop_geometry() %>% 
-    select(taxon, BigPA_ours, BigPA) %>% 
-    pivot_longer(2:3, names_to = "type") %>%
-    group_by(taxon, type, value) %>% 
-    summarise(n = n()) %>% 
-    mutate(type = factor(type, levels = c("BigPA", "BigPA_ours"),
-                         labels = c("Original", "Updated")))
+# PA or not PA
+sum(pts_all$PA_ours != pts_all$PA) / nrow(pts_all) * 100
 
-closeto_pa <- pts_all %>% st_drop_geometry() %>% 
-    select(taxon, CloseToPA_ours, CloseToPA) %>% 
-    pivot_longer(2:3, names_to = "type") %>%
-    group_by(taxon, type, value) %>% 
-    summarise(n = n()) %>%
-    mutate(type = factor(type, levels = c("CloseToPA", "CloseToPA_ours"),
-                         labels = c("Original", "Updated")))
+vals <- pts_all %>% st_drop_geometry() %>% 
+    select(PA, PA_ours) %>% 
+    mutate(PA = as.factor(PA), PA_ours = as.factor(PA_ours))
+
+cm <- confusionMatrix(vals$PA, vals$PA_ours)
+cm$table[1, 2] / nrow(pts_all) * 100 # from 1 to 0
+cm$table[2, 1] / nrow(pts_all) * 100 # from 0 to 1
+
+# BigPA or not BigPA
+sum(paste(pts_all$BigPA_ours) != paste(pts_all$BigPA)) / nrow(pts_all) * 100
+
+vals <- pts_all %>% st_drop_geometry() %>% 
+    select(BigPA, BigPA_ours) %>% 
+    mutate(BigPA = as.factor(paste(BigPA)), 
+           BigPA_ours = as.factor(paste(BigPA_ours)))
+
+cm <- confusionMatrix(vals$BigPA, vals$BigPA_ours)
+cm$table[1, 2] / nrow(pts_all) * 100 # from 1 to 0
+cm$table[3, 2] / nrow(pts_all) * 100 # from 1 to NA
+cm$table[2, 1] / nrow(pts_all) * 100 # from 0 to 1
+cm$table[3, 1] / nrow(pts_all) * 100 # from 0 to NA
+cm$table[1, 3] / nrow(pts_all) * 100 # from NA to 0
+cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
+
+# CloseToPA or not CloseToPA
+sum(paste(pts_all$CloseToPA_ours) != paste(pts_all$CloseToPA)) / nrow(pts_all) * 100
+
+vals <- pts_all %>% st_drop_geometry() %>% 
+    select(CloseToPA, CloseToPA_ours) %>% 
+    mutate(CloseToPA = as.factor(paste(CloseToPA)), 
+           CloseToPA_ours = as.factor(paste(CloseToPA_ours)))
+
+cm <- confusionMatrix(vals$CloseToPA, vals$CloseToPA_ours)
+cm$table[1, 2] / nrow(pts_all) * 100 # from 1 to 0
+cm$table[3, 2] / nrow(pts_all) * 100 # from 1 to NA
+cm$table[2, 1] / nrow(pts_all) * 100 # from 0 to 1
+cm$table[3, 1] / nrow(pts_all) * 100 # from 0 to NA
+cm$table[1, 3] / nrow(pts_all) * 100 # from NA to 0
+cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
