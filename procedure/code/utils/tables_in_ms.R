@@ -7,8 +7,8 @@ source(here("procedure/code/kick_off.R"))
 kick_off(here('procedure/code'))
 
 ## Build the models
-type <- "brodie" # connec
-name <- "reproduce" # replicate
+type <- "connec" # connec, brodie
+name <- "replicate" # replicate, updatePA
 conn_metrics <- 'awf_ptg'
 src_dir <- "data/raw/public"
 conn_dir <- "data/derived/public"
@@ -81,7 +81,6 @@ coefs <- lapply(names(mods), function(taxon){
     models_orig <- models; rm(models); names_org <- names(models_orig)
     models <- mods[[taxon]]
     lapply(names(models)[c(1:3, 4, 6, 8)], function(nm){
-        
         # Extract names for identity
         var_nm <- toupper(strsplit(nm, "_")[[1]][4])
         effect_nm <- strsplit(nm, "_")[[1]][3]
@@ -134,7 +133,7 @@ coefs <- lapply(names(mods), function(taxon){
             vals <- rbind(vals[1:5, ], vals[7, ], vals[6, ])
         }
         
-        diffs <- data.frame(Variable = c("Brodie", "Replicate"),
+        diffs <- data.frame(Variable = c("Reproduce", "Replicate"),
                             report_value = sprintf("%.1f%%", (c(diff_orig, diff))),
                             var_nm = var_nm, Effect = effect_nm) %>% 
             select(Effect, Variable, report_value, var_nm)
@@ -144,8 +143,9 @@ coefs <- lapply(names(mods), function(taxon){
         
     }) %>% bind_rows() %>% 
         mutate(var_nm = factor(var_nm, levels = c("SR", "FR", "PD"))) %>% 
-        arrange(var_nm) %>% 
+        arrange(var_nm) %>% na.omit() %>% 
         pivot_wider(names_from = var_nm, values_from = report_value)
+        
 })
 coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
                    suffix = sprintf(".%s", c("Birds", "Mammals")))
