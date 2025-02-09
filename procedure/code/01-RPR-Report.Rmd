@@ -10,7 +10,7 @@ editor_options:
   markdown:
     wrap: sentence
 knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/manuscript") })
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
 ```{r chunk setup, include = FALSE, message = FALSE}
 # record all the packages you are using here
