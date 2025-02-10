@@ -7,8 +7,8 @@ source(here("procedure/code/kick_off.R"))
 kick_off(here('procedure/code'))
 
 ## Build the models
-type <- "connec" # connec, brodie
-name <- "replicate" # replicate, updatePA
+type <- "brodie" # connec, brodie
+name <- "updatePA" # replicate, updatePA
 conn_metrics <- 'awf_ptg'
 src_dir <- "data/raw/public"
 conn_dir <- "data/derived/public"
@@ -80,7 +80,7 @@ coefs <- lapply(names(mods), function(taxon){
     load(sprintf("results/models_%s_brodie_orig.rda", taxon))
     models_orig <- models; rm(models); names_org <- names(models_orig)
     models <- mods[[taxon]]
-    lapply(names(models)[c(1:3, 4, 6, 8)], function(nm){
+    lapply(names(models), function(nm){
         # Extract names for identity
         var_nm <- toupper(strsplit(nm, "_")[[1]][4])
         effect_nm <- strsplit(nm, "_")[[1]][3]
@@ -91,7 +91,9 @@ coefs <- lapply(names(mods), function(taxon){
         
         effect_nm <- ifelse(
             effect_nm == "eff", "All sites",
-                   "Outside protected areas - 'PA size' effect")
+            ifelse(effect_nm == "size", 
+                   "Outside protected areas - 'PA size' effect",
+                   "Outside protected areas - 'Dist to PA' effect"))
         r_square <- r.squaredGLMM(models[[nm]])[[2]]
         
         # Do the tidy work
@@ -117,6 +119,16 @@ coefs <- lapply(names(mods), function(taxon){
             pred_npa <- pred[models[[nm]]$data$BigPA == 0]
             diff <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
             
+        } else if ("CloseToPA" %in% names(models[[nm]]$data)){
+            pred <- models_orig[[mod_to_load]]$fitted
+            pred_pa <- pred[models_orig[[mod_to_load]]$data$CloseToPA == 1]
+            pred_npa <- pred[models_orig[[mod_to_load]]$data$CloseToPA == 0]
+            diff_orig <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
+            
+            pred <- models[[nm]]$fitted
+            pred_pa <- pred[models[[nm]]$data$CloseToPA == 1]
+            pred_npa <- pred[models[[nm]]$data$CloseToPA == 0]
+            diff <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
         } else {
             pred <- models_orig[[mod_to_load]]$fitted
             pred_pa <- pred[models_orig[[mod_to_load]]$data$PA == 1]
@@ -139,13 +151,11 @@ coefs <- lapply(names(mods), function(taxon){
             select(Effect, Variable, report_value, var_nm)
         
         rbind(vals, diffs)
-        
-        
     }) %>% bind_rows() %>% 
         mutate(var_nm = factor(var_nm, levels = c("SR", "FR", "PD"))) %>% 
         arrange(var_nm) %>% na.omit() %>% 
         pivot_wider(names_from = var_nm, values_from = report_value)
-        
+    
 })
 coefs <- left_join(coefs[[1]], coefs[[2]], by = c("Variable", "Effect"),
                    suffix = sprintf(".%s", c("Birds", "Mammals")))
@@ -155,70 +165,17 @@ coefs_efcy <- coefs %>% filter(Effect == "All sites") %>% select(-Effect)
 write.csv(coefs_efcy, sprintf('results/tables/coefs_efficacy_%s.csv', name), 
           row.names = FALSE)
 
-coefs_size <- coefs %>% filter(Effect != "All sites") %>% select(-Effect)
+coefs_size <- coefs %>% 
+    filter(Effect == "Outside protected areas - 'PA size' effect") %>% 
+    select(-Effect)
 
 write.csv(coefs_size, sprintf('results/tables/coefs_spillover_size_%s.csv', name), 
           row.names = FALSE)
 
-## Make the kable
-# Bold some cells
-row_ids <- which(coefs_efcy$Variable %in% 
-                     c("PA", "Connectivity",
-                       "PA size (binary)"))
-detec_sig <- coefs_efcy[row_ids, -1]
-detec_sig <- do.call(cbind, lapply(1:ncol(detec_sig), function(i){
-    as.numeric(sapply(detec_sig[[i]], function(x){
-        str_extract(x, "(?<=;[[:space:]]).*?(?=\\))")}))
-}))
-detec_sig <- detec_sig <= 0.05
-bold_ids <- matrix(data = FALSE, nrow = nrow(coefs_efcy), ncol = ncol(coefs_efcy))
-bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
+coefs_dist <- coefs %>% 
+    filter(Effect == "Outside protected areas - 'Dist to PA' effect") %>% 
+    select(-Effect)
 
-for (i in 1:nrow(bold_ids)){
-    for (j in 1:ncol(bold_ids)){
-        if (bold_ids[i, j] == TRUE){
-            coefs_efcy[i, j] <- cell_spec(coefs_efcy[i, j], bold = T, escape = FALSE)
-        }
-    }
-}
-
-names(coefs_efcy) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
-coefs_efcy %>%
-    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE) %>% 
-    kable_paper(html_font = "Helvetica") %>% 
-    kable_styling(latex_options = c("scale_down", "hold_position"), 
-                  font_size = 10) %>% 
-    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
-                     align = "c") %>% 
-    save_kable(sprintf("results/figures/coefs_efficacy_%s.pdf", name))
-
-
-# Bold some cells
-row_ids <- which(coefs_size$Variable %in% 
-                     c("PA", "Connectivity",
-                       "PA size (binary)"))
-detec_sig <- coefs_size[row_ids, -1]
-detec_sig <- do.call(cbind, lapply(1:ncol(detec_sig), function(i){
-    as.numeric(sapply(detec_sig[[i]], function(x){
-        str_extract(x, "(?<=;[[:space:]]).*?(?=\\))")}))
-}))
-detec_sig <- detec_sig <= 0.05
-bold_ids <- matrix(data = FALSE, nrow = nrow(coefs_size), ncol = ncol(coefs_size))
-bold_ids[row_ids, 1:ncol(detec_sig) + 1] <- detec_sig
-
-for (i in 1:nrow(bold_ids)){
-    for (j in 1:ncol(bold_ids)){
-        if (bold_ids[i, j] == TRUE){
-            coefs_size[i, j] <- cell_spec(coefs_size[i, j], bold = T, escape = FALSE)
-        }
-    }
-}
-names(coefs_size) <- c("Variable", "SR", "FR", "PD", "SR", "FR", "PD")
-coefs_size %>%
-    kableExtra::kbl(escape = FALSE, full_width = FALSE, booktabs = TRUE) %>% 
-    kable_paper(html_font = "Helvetica") %>% 
-    kable_styling(latex_options = c("scale_down", "hold_position"), 
-                  font_size = 10) %>% 
-    add_header_above(c(" " = 1, "Bird" = 3, "Mammal" = 3),
-                     align = "c") %>% 
-    save_kable(sprintf("results/figures/coefs_spillover_size_%s.pdf", name))
+write.csv(
+    coefs_dist, sprintf('results/tables/coefs_spillover_distance_%s.csv', name), 
+    row.names = FALSE)
