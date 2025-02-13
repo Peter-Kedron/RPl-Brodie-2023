@@ -4,7 +4,7 @@
 
 # Load libraries
 pkgs <- c("sf", "dplyr", "terra", "stringr", "ggplot2", 
-          "tidyverse", "rnaturalearth")
+          "tidyverse", "rnaturalearth", "ggpubr", "caret")
 sapply(pkgs, require, character.only = TRUE)
 
 # Set directories
@@ -70,16 +70,11 @@ pa_sizes <- pts_all %>% st_drop_geometry() %>%
     mutate(Type = factor(Type, levels = c("PA_size_km2", "PA_size_km2_ours"),
                          labels = c("Original", "Updated")))
 
-ggdensity(pa_sizes, x = "value",
-          add = "mean", rug = TRUE,
-          color = "Type", fill = "Type",
-          palette = c("#00AFBB", "#E7B800"),
-          na.rm = TRUE) +
-    xlab("PA size (square km)") +
-    ylab("Density") +
-    theme(legend.text = element_text(size = 12, color = "black"))
-     
-ggsave("results/figures/pa_size_compare.png", width = 4, height = 4)
+v1 <- ggviolin(pa_sizes, x = "Type", y = "value", fill = "Type",
+               palette = c("#00AFBB", "#E7B800"),
+               add.params = list(fill = "white"), add = 'mean_ci') + 
+    theme(legend.text = element_text(size = 12, color = "black")) +
+    ylim(0, 3000) + ylab("PA size (square km)") + xlab("")
 
 pa_dists <- pts_all %>% st_drop_geometry() %>% 
     select(taxon, dist_to_PA_ours, dist_to_PA) %>% 
@@ -87,15 +82,16 @@ pa_dists <- pts_all %>% st_drop_geometry() %>%
     mutate(Type = factor(Type, levels = c("dist_to_PA", "dist_to_PA_ours"),
                          labels = c("Original", "Updated")))
 
-ggdensity(pa_dists, x = "value",
-          add = "mean", rug = TRUE,
-          color = "Type", fill = "Type",
-          palette = c("#00AFBB", "#E7B800"),
-          na.rm = TRUE) +
-    xlab("Distance to PA (km)") +
-    ylab("Density") +
-    theme(legend.text = element_text(size = 12, color = "black"))
-ggsave("results/figures/dist_pa_compare.png", width = 4, height = 4)
+v2 <- ggviolin(pa_dists, x = "Type", y = "value", fill = "Type",
+               palette = c("#00AFBB", "#E7B800"),
+               add.params = list(fill = "white"), add = 'mean_ci') +
+    theme(legend.text = element_text(size = 12, color = "black")) +
+    ylab("Distance to PA (square km)") + xlab("")
+
+ggarrange(v1, v2, ncol = 2, common.legend = TRUE)
+
+ggsave("results/figures/violin_pa_size_dist.png", 
+       width = 6, height = 4, bg = "white")
 
 # PA or not PA
 sum(pts_all$PA_ours != pts_all$PA) / nrow(pts_all) * 100
@@ -103,10 +99,42 @@ sum(pts_all$PA_ours != pts_all$PA) / nrow(pts_all) * 100
 vals <- pts_all %>% st_drop_geometry() %>% 
     select(PA, PA_ours) %>% 
     mutate(PA = as.factor(PA), PA_ours = as.factor(PA_ours))
+cm <- confusionMatrix(vals$PA, vals$PA_ours, dnn = c("Updated", "Original"))
 
-cm <- confusionMatrix(vals$PA, vals$PA_ours)
+# stats
 cm$table[1, 2] / nrow(pts_all) * 100 # from 1 to 0
 cm$table[2, 1] / nrow(pts_all) * 100 # from 0 to 1
+
+# Figure
+plt <- as.data.frame(cm$table)
+levels(plt$Updated) <- c("not PA", "PA")
+levels(plt$Original) <- c("not PA", "PA")
+plt$Original <- factor(plt$Original, levels = rev(levels(plt$Original)))
+
+c1 <- ggplot(plt, aes(x = Original, y = Updated, fill= Freq)) +
+    geom_tile(color = "white") + coord_equal() + labs(x = "", y = "") +
+    geom_text(aes(Original, Updated, label = round(Freq, 0)), 
+              color = "white", size = 4, fontface = "bold") +
+    scale_fill_continuous_sequential(name = "Count", palette = "Heat") +
+    xlab("Original") + ylab("Updated") +
+    theme_minimal() +
+    theme(panel.grid.major = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position = 'bottom',
+          legend.direction = "horizontal",
+          legend.spacing.y = unit(0.1, 'cm'),
+          legend.margin = margin(rep(0, 4)), 
+          text = element_text(size = 10, color = "black"),
+          legend.text = element_text(size = 10),
+          legend.title = element_text(size = 10),
+          axis.text.x = element_text(color= "black", vjust = 1, 
+                                     size = 10, hjust = 1),
+          axis.text.y = element_text(size = 10, color = "black")) +
+    guides(fill = guide_colorbar(
+        barwidth = 7, barheight = 0.8,
+        title.position = "top", title.hjust = 0.5))
 
 # BigPA or not BigPA
 sum(paste(pts_all$BigPA_ours) != paste(pts_all$BigPA)) / nrow(pts_all) * 100
@@ -116,13 +144,48 @@ vals <- pts_all %>% st_drop_geometry() %>%
     mutate(BigPA = as.factor(paste(BigPA)), 
            BigPA_ours = as.factor(paste(BigPA_ours)))
 
-cm <- confusionMatrix(vals$BigPA, vals$BigPA_ours)
+cm <- confusionMatrix(vals$BigPA, vals$BigPA_ours, 
+                      dnn = c("Updated", "Original"))
+
+# stats
 cm$table[1, 2] / nrow(pts_all) * 100 # from 1 to 0
 cm$table[3, 2] / nrow(pts_all) * 100 # from 1 to NA
 cm$table[2, 1] / nrow(pts_all) * 100 # from 0 to 1
 cm$table[3, 1] / nrow(pts_all) * 100 # from 0 to NA
 cm$table[1, 3] / nrow(pts_all) * 100 # from NA to 0
 cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
+
+# Figure
+plt <- as.data.frame(cm$table)
+levels(plt$Updated) <- c("< 500", ">= 500", "Inside")
+levels(plt$Original) <- c("< 500", ">= 500", "Inside")
+plt$Original <- factor(plt$Original, levels = rev(levels(plt$Original)))
+
+c2 <- ggplot(plt, aes(Updated, Original, fill= Freq)) +
+    geom_tile(color = "white") + coord_equal() + labs(x = "", y = "") +
+    geom_text(aes(Updated, Original, label = round(Freq, 0)), 
+              color = "white", size = 4, fontface = "bold") +
+    scale_fill_continuous_sequential(name = "Count", palette = "Heat") +
+    theme_minimal() +
+    xlab("Original") + ylab("Updated") +
+    theme(panel.grid.major = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          axis.ticks = element_blank(),
+          # legend.justification = c(1, 0),
+          legend.position = 'bottom',
+          legend.direction = "horizontal",
+          legend.spacing.y = unit(0.1, 'cm'),
+          legend.margin = margin(rep(0, 4)), 
+          text = element_text(size = 10, color = "black"),
+          legend.text = element_text(size = 10),
+          legend.title = element_text(size = 10),
+          axis.text.x = element_text(color= "black", vjust = 1, 
+                                     size = 10, hjust = 1),
+          axis.text.y = element_text(size = 10, color = "black")) +
+    guides(fill = guide_colorbar(
+        barwidth = 7, barheight = 0.8,
+        title.position = "top", title.hjust = 0.5))
 
 # CloseToPA or not CloseToPA
 sum(paste(pts_all$CloseToPA_ours) != paste(pts_all$CloseToPA)) / nrow(pts_all) * 100
@@ -132,10 +195,50 @@ vals <- pts_all %>% st_drop_geometry() %>%
     mutate(CloseToPA = as.factor(paste(CloseToPA)), 
            CloseToPA_ours = as.factor(paste(CloseToPA_ours)))
 
-cm <- confusionMatrix(vals$CloseToPA, vals$CloseToPA_ours)
+cm <- confusionMatrix(vals$CloseToPA, vals$CloseToPA_ours,
+                      dnn = c("Updated", "Original"))
+
+# stats
 cm$table[1, 2] / nrow(pts_all) * 100 # from 1 to 0
 cm$table[3, 2] / nrow(pts_all) * 100 # from 1 to NA
 cm$table[2, 1] / nrow(pts_all) * 100 # from 0 to 1
 cm$table[3, 1] / nrow(pts_all) * 100 # from 0 to NA
 cm$table[1, 3] / nrow(pts_all) * 100 # from NA to 0
 cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
+
+# Figure
+plt <- as.data.frame(cm$table)
+levels(plt$Updated) <- c("< 2", ">= 2", "Inside")
+levels(plt$Original) <- c("< 2", ">= 2", "Inside")
+plt$Original <- factor(plt$Original, levels = rev(levels(plt$Original)))
+
+c3 <- ggplot(plt, aes(Updated, Original, fill= Freq)) +
+    geom_tile(color = "white") + coord_equal() + labs(x = "", y = "") +
+    geom_text(aes(Updated, Original, label = round(Freq, 0)), 
+              color = "white", size = 4, fontface = "bold") +
+    scale_fill_continuous_sequential(name = "Count", palette = "Heat") +
+    theme_minimal() +
+    xlab("Original") + ylab("Updated") +
+    theme(panel.grid.major = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          axis.ticks = element_blank(),
+          # legend.justification = c(1, 0),
+          legend.position = 'bottom',
+          legend.direction = "horizontal",
+          legend.spacing.y = unit(0.1, 'cm'),
+          legend.margin = margin(rep(0, 4)), 
+          text = element_text(size = 10, color = "black"),
+          legend.text = element_text(size = 10),
+          legend.title = element_text(size = 10),
+          axis.text.x = element_text(color= "black", vjust = 1, 
+                                     size = 10, hjust = 1),
+          axis.text.y = element_text(size = 10, color = "black")) +
+    guides(fill = guide_colorbar(
+        barwidth = 7, barheight = 0.8,
+        title.position = "top", title.hjust = 0.5))
+
+ggarrange(c1, c2, c3, ncol = 3, common.legend = TRUE, legend = "bottom")
+
+ggsave("results/figures/pa_change_confusion_matrics.png", 
+       width = 8, height = 3, bg = "white")
