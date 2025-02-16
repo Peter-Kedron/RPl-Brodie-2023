@@ -4,7 +4,7 @@
 
 # Load libraries
 pkgs <- c("sf", "dplyr", "terra", "stringr", "ggplot2", 
-          "tidyverse", "rnaturalearth", "ggpubr", "caret")
+          "tidyverse", "rnaturalearth", "ggpubr", "caret", "colorspace")
 sapply(pkgs, require, character.only = TRUE)
 
 # Set directories
@@ -107,34 +107,32 @@ cm$table[2, 1] / nrow(pts_all) * 100 # from 0 to 1
 
 # Figure
 plt <- as.data.frame(cm$table)
-levels(plt$Updated) <- c("not PA", "PA")
-levels(plt$Original) <- c("not PA", "PA")
+levels(plt$Updated) <- c("Outside PA", "Inside PA")
+levels(plt$Original) <- c("Outside PA", "Inside PA")
 plt$Original <- factor(plt$Original, levels = rev(levels(plt$Original)))
 
 c1 <- ggplot(plt, aes(x = Original, y = Updated, fill= Freq)) +
-    geom_tile(color = "white") + coord_equal() + labs(x = "", y = "") +
+    geom_tile(color = "white") + coord_equal() +
     geom_text(aes(Original, Updated, label = round(Freq, 0)), 
-              color = "white", size = 4, fontface = "bold") +
-    scale_fill_continuous_sequential(name = "Count", palette = "Heat") +
-    xlab("Original") + ylab("Updated") +
+              color = "black", size = 4, fontface = "bold") +
+    scale_fill_continuous_sequential(name = "Number", palette = "Heat") +
+    xlab("Brodie et al. (2023)") + ylab("Reanalysis") +
     theme_minimal() +
     theme(panel.grid.major = element_blank(),
           panel.border = element_blank(),
           panel.background = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'bottom',
-          legend.direction = "horizontal",
           legend.spacing.y = unit(0.1, 'cm'),
           legend.margin = margin(rep(0, 4)), 
           text = element_text(size = 10, color = "black"),
           legend.text = element_text(size = 10),
           legend.title = element_text(size = 10),
-          axis.text.x = element_text(color= "black", vjust = 1, 
-                                     size = 10, hjust = 1),
-          axis.text.y = element_text(size = 10, color = "black")) +
-    guides(fill = guide_colorbar(
-        barwidth = 7, barheight = 0.8,
-        title.position = "top", title.hjust = 0.5))
+          axis.text.x = element_text(color= "black", size = 10),
+          axis.text.y = element_text(size = 10, color = "black", 
+                                     angle = 90, hjust = 0.5),
+          axis.title = element_text(size = 10, face = "italic", color = "blue"),
+          axis.title.x = element_text(vjust = -2),
+          axis.title.y = element_text(vjust = 2))
 
 # BigPA or not BigPA
 sum(paste(pts_all$BigPA_ours) != paste(pts_all$BigPA)) / nrow(pts_all) * 100
@@ -157,22 +155,23 @@ cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
 
 # Figure
 plt <- as.data.frame(cm$table)
-levels(plt$Updated) <- c("< 500", ">= 500", "Inside")
-levels(plt$Original) <- c("< 500", ">= 500", "Inside")
-plt$Original <- factor(plt$Original, levels = rev(levels(plt$Original)))
+levels(plt$Updated) <- c(expression("<"~500~km^2), expression(">="~500~km^2), "Inside~PA")
+levels(plt$Original) <- c(expression("<"~500~km^2), expression(">="~500~km^2), "Inside~PA")
+plt$Updated <- factor(plt$Updated, levels = rev(levels(plt$Updated)))
 
-c2 <- ggplot(plt, aes(Updated, Original, fill= Freq)) +
-    geom_tile(color = "white") + coord_equal() + labs(x = "", y = "") +
-    geom_text(aes(Updated, Original, label = round(Freq, 0)), 
-              color = "white", size = 4, fontface = "bold") +
-    scale_fill_continuous_sequential(name = "Count", palette = "Heat") +
+c2 <- ggplot(plt, aes(Original, Updated, fill= Freq)) +
+    geom_tile(color = "white") + coord_equal() + 
+    geom_text(aes(Original, Updated, label = round(Freq, 0)), 
+              color = "black", size = 4, fontface = "bold") +
+    scale_fill_continuous_sequential(name = "Number", palette = "Heat") +
+    xlab("Brodie et al. (2023)") + ylab("Reanalysis") +
+    scale_x_discrete(labels= str2expression(levels(plt$Original))) + 
+    scale_y_discrete(labels= str2expression(levels(plt$Updated))) +
     theme_minimal() +
-    xlab("Original") + ylab("Updated") +
     theme(panel.grid.major = element_blank(),
           panel.border = element_blank(),
           panel.background = element_blank(),
           axis.ticks = element_blank(),
-          # legend.justification = c(1, 0),
           legend.position = 'bottom',
           legend.direction = "horizontal",
           legend.spacing.y = unit(0.1, 'cm'),
@@ -180,12 +179,12 @@ c2 <- ggplot(plt, aes(Updated, Original, fill= Freq)) +
           text = element_text(size = 10, color = "black"),
           legend.text = element_text(size = 10),
           legend.title = element_text(size = 10),
-          axis.text.x = element_text(color= "black", vjust = 1, 
-                                     size = 10, hjust = 1),
-          axis.text.y = element_text(size = 10, color = "black")) +
-    guides(fill = guide_colorbar(
-        barwidth = 7, barheight = 0.8,
-        title.position = "top", title.hjust = 0.5))
+          axis.text.x = element_text(color= "black", size = 10),
+          axis.text.y = element_text(size = 10, color = "black", 
+                                     angle = 90, hjust = 0.5),
+          axis.title = element_text(size = 10, face = "italic", color = "blue"),
+          axis.title.x = element_text(vjust = -2),
+          axis.title.y = element_text(vjust = 2))
 
 # CloseToPA or not CloseToPA
 sum(paste(pts_all$CloseToPA_ours) != paste(pts_all$CloseToPA)) / nrow(pts_all) * 100
@@ -208,37 +207,35 @@ cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
 
 # Figure
 plt <- as.data.frame(cm$table)
-levels(plt$Updated) <- c("< 2", ">= 2", "Inside")
-levels(plt$Original) <- c("< 2", ">= 2", "Inside")
-plt$Original <- factor(plt$Original, levels = rev(levels(plt$Original)))
+levels(plt$Updated) <- c("< 2 km", ">= 2 km", "Inside PA")
+levels(plt$Original) <- c("< 2 km", ">= 2 km", "Inside PA")
+plt$Updated <- factor(plt$Updated, levels = rev(levels(plt$Updated)))
 
-c3 <- ggplot(plt, aes(Updated, Original, fill= Freq)) +
+c3 <- ggplot(plt, aes(Original, Updated, fill= Freq)) +
     geom_tile(color = "white") + coord_equal() + labs(x = "", y = "") +
     geom_text(aes(Updated, Original, label = round(Freq, 0)), 
-              color = "white", size = 4, fontface = "bold") +
-    scale_fill_continuous_sequential(name = "Count", palette = "Heat") +
+              color = "black", size = 4, fontface = "bold") +
+    scale_fill_continuous_sequential(name = "Number", palette = "Heat") +
     theme_minimal() +
-    xlab("Original") + ylab("Updated") +
+    xlab("Brodie et al. (2023)") + ylab("Reanalysis") +
+    theme_minimal() +
     theme(panel.grid.major = element_blank(),
           panel.border = element_blank(),
           panel.background = element_blank(),
           axis.ticks = element_blank(),
-          # legend.justification = c(1, 0),
-          legend.position = 'bottom',
-          legend.direction = "horizontal",
           legend.spacing.y = unit(0.1, 'cm'),
           legend.margin = margin(rep(0, 4)), 
           text = element_text(size = 10, color = "black"),
           legend.text = element_text(size = 10),
           legend.title = element_text(size = 10),
-          axis.text.x = element_text(color= "black", vjust = 1, 
-                                     size = 10, hjust = 1),
-          axis.text.y = element_text(size = 10, color = "black")) +
-    guides(fill = guide_colorbar(
-        barwidth = 7, barheight = 0.8,
-        title.position = "top", title.hjust = 0.5))
+          axis.text.x = element_text(color= "black", size = 10),
+          axis.text.y = element_text(size = 10, color = "black", 
+                                     angle = 90, hjust = 0.5),
+          axis.title = element_text(size = 10, face = "italic", color = "blue"),
+          axis.title.x = element_text(vjust = -2),
+          axis.title.y = element_text(vjust = 2))
 
-ggarrange(c1, c2, c3, ncol = 3, common.legend = TRUE, legend = "bottom")
+ggarrange(c1, c2, c3, ncol = 3, common.legend = TRUE, legend = "right")
 
 ggsave("results/figures/pa_change_confusion_matrics.png", 
-       width = 8, height = 3, bg = "white")
+       width = 9, height = 3, bg = "white")
