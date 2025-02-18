@@ -1,3 +1,4 @@
-# Derived Data
+# Derived data
 
-Save cleaned, preprocessed data here. Data in this folder should be ready for analysis or contain the final results of analysis.
+- Files starting with `models` are model objects generated from the reproduction and replication analyses.
+- Files stored in the `public` folder are intermediate data generated from the reproduction and replication analyses.

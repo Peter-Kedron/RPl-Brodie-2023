@@ -1,8 +1,5 @@
 # Raw Public Data
 
-Store raw data as collected or downloaded here if the data is suitable for public redistribution and if the data files are less than `100mb`. Include any required licenses and citations in the `data/metadata` folder.
-
-- Files starting with `GEDI` is the GEDI tree structure layers.
-- Folder `protected_area` has database for protected areas.
-- Folder `training` has the raw csv files for the model training.
+- Files starting with `GEDI` are GEDI tree structure layers downloaded before the Brodie et al. (2024) correction to run the original data. All other files are downloaded from Brodie et al. (2023) and the correction.
+- Folder `training` has the raw csv files for the model training downloaded from Brodie et al. (2023) to run the reproduction report.
 
