@@ -64,8 +64,8 @@ This research compendium is structured with four main directories:
 Important local **documents** include:
 - Reproduction report: [docs/report/01-RPR-Report.pdf](docs/report/01-RPR-Report.pdf)
 - Replication report: [docs/report/01-RPR-Report.pdf](docs/report/RPL-Report.pdf)
-- Manuscript: [docs/manuscript/manuscript.pdf](docs/manuscript/manuscript.pdf)
-- Presentation: [docs/presentation/presentation.pdf](docs/presentation/presentation.pdf)
+- Manuscript: [docs/manuscript/manuscript.docx](docs/manuscript/manuscript.docx)
+- Presentation: [docs/presentation/Kedron-Brodie-Replication.pdf](docs/presentation/Kedron-Brodie-Replication.pdf)
 
 #### Compendium reference
 
