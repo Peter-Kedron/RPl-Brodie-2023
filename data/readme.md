@@ -1,10 +1,10 @@
 # Data
 
-Store all of your research data in subdirectories here.
+## Raw public data
 
-Complete the [data_metadata.csv](data_metadata.csv) file indexing each data file, including the fields:
+- Folder `raw/public/training` has the raw csv files for the model training downloaded from Brodie et al. (2023) to run the reproduction report.
+- Files starting with `GEDI` are GEDI tree structure layers downloaded before the Brodie et al. (2024) correction to run the original data. All other files are downloaded from Brodie et al. (2023) and the correction.
 
-- `path`: the path to the data folder, likely one of: `raw\private`, `raw\public`, `derived\private` or `derived\public`
-- `name`: the file name, including extension
-- `metadata`: list of metadata files for this data source, stored in the `data\metadata` folder. These may include ISO-191** or FGDC standard `XML` files, data dictionaries, licenses or attributions, user guides, webpage printouts, etc.
-- `description`: *very* brief description of the dataset. If the data is **simulated**,  **randomized**, or represents only a limited **sample** of the full research dataset, you should note those limitations here.
+## Derived public data
+
+- Files stored in the `derived/public` folder are intermediate data generated from the reproduction and replication analyses.
