@@ -99,10 +99,10 @@ coefs <- lapply(names(mods), function(taxon){
         # Do the tidy work
         vals <- broom.mixed::tidy(
             models[[nm]], effects='fixed', conf.int = TRUE) %>% 
-            mutate(report_value = sprintf("%.3f<br>(%.3f; %.3f)", 
+            mutate(report_value = sprintf("%.2f<br>(%.2f; %.2f)", 
                                           estimate, std.error, p.value)) %>% 
             select(term, report_value) %>% 
-            rbind(c("R2", sprintf("%.3f", r_square)), .) %>% 
+            rbind(c("R2", sprintf("%.2f", r_square)), .) %>% 
             left_join(var_cvt, by = "term") %>% 
             mutate(var_nm = var_nm, Effect = effect_nm) %>% 
             select(Effect, Variable, report_value, var_nm)
@@ -151,14 +151,8 @@ coefs <- lapply(names(mods), function(taxon){
             vals <- rbind(vals[1:5, ], vals[7, ], vals[6, ])
         }
         
-        se_orig <- ttest_orig$stderr
-        se <- ttest$stderr
-        p_orig <- ifelse(ttest_orig$p.value < 0.001, "P<0.001", 
-                         sprintf("P=%.3f", ttest_orig$p.value))
-        p <- ifelse(ttest$p.value < 0.001, "P<0.001", 
-                    sprintf("P=%.3f", ttest$p.value))
-        p_orig <- sprintf("%s; %.2f", p_orig, se_orig)
-        p <- sprintf("%s; %.2f", p, se)
+        p_orig <- sprintf("%.2f; %.2f", ttest_orig$p.value, ttest_orig$stderr)
+        p <- sprintf("%.2f; %.2f", ttest$p.value, ttest$stderr)
         
         diffs <- data.frame(
             Variable = c("Reproduce", "Replicate"), 
