@@ -112,32 +112,38 @@ coefs <- lapply(names(mods), function(taxon){
             pred <- models_orig[[mod_to_load]]$fitted
             pred_pa <- pred[models_orig[[mod_to_load]]$data$BigPA == 1]
             pred_npa <- pred[models_orig[[mod_to_load]]$data$BigPA == 0]
+            ttest_orig <- t.test(pred_pa, pred_npa) # assume is valid
             diff_orig <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
             
             pred <- models[[nm]]$fitted
             pred_pa <- pred[models[[nm]]$data$BigPA == 1]
             pred_npa <- pred[models[[nm]]$data$BigPA == 0]
+            ttest <- t.test(pred_pa, pred_npa) # assume is valid
             diff <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
             
         } else if ("CloseToPA" %in% names(models[[nm]]$data)){
             pred <- models_orig[[mod_to_load]]$fitted
             pred_pa <- pred[models_orig[[mod_to_load]]$data$CloseToPA == 1]
             pred_npa <- pred[models_orig[[mod_to_load]]$data$CloseToPA == 0]
+            ttest_orig <- t.test(pred_pa, pred_npa) # assume is valid
             diff_orig <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
             
             pred <- models[[nm]]$fitted
             pred_pa <- pred[models[[nm]]$data$CloseToPA == 1]
             pred_npa <- pred[models[[nm]]$data$CloseToPA == 0]
+            ttest <- t.test(pred_pa, pred_npa) # assume is valid
             diff <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
         } else {
             pred <- models_orig[[mod_to_load]]$fitted
             pred_pa <- pred[models_orig[[mod_to_load]]$data$PA == 1]
             pred_npa <- pred[models_orig[[mod_to_load]]$data$PA == 0]
+            ttest_orig <- t.test(pred_pa, pred_npa) # assume is valid
             diff_orig <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
             
             pred <- models[[nm]]$fitted
             pred_pa <- pred[models[[nm]]$data$PA == 1]
             pred_npa <- pred[models[[nm]]$data$PA == 0]
+            ttest <- t.test(pred_pa, pred_npa) # assume is valid
             diff <- (mean(pred_pa) - mean(pred_npa)) / mean(pred_npa) * 100
         }
         
@@ -145,9 +151,20 @@ coefs <- lapply(names(mods), function(taxon){
             vals <- rbind(vals[1:5, ], vals[7, ], vals[6, ])
         }
         
-        diffs <- data.frame(Variable = c("Reproduce", "Replicate"),
-                            report_value = sprintf("%.1f%%", (c(diff_orig, diff))),
-                            var_nm = var_nm, Effect = effect_nm) %>% 
+        se_orig <- ttest_orig$stderr
+        se <- ttest$stderr
+        p_orig <- ifelse(ttest_orig$p.value < 0.001, "P<0.001", 
+                         sprintf("P=%.3f", ttest_orig$p.value))
+        p <- ifelse(ttest$p.value < 0.001, "P<0.001", 
+                    sprintf("P=%.3f", ttest$p.value))
+        p_orig <- sprintf("%s; %.2f", p_orig, se_orig)
+        p <- sprintf("%s; %.2f", p, se)
+        
+        diffs <- data.frame(
+            Variable = c("Reproduce", "Replicate"), 
+            report_value = sprintf("%.1f%% (%s)", 
+                                   c(diff_orig, diff), c(p_orig, p)),
+            var_nm = var_nm, Effect = effect_nm) %>% 
             select(Effect, Variable, report_value, var_nm)
         
         rbind(vals, diffs)

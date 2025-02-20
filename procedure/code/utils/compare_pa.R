@@ -127,8 +127,8 @@ c1 <- ggplot(plt, aes(x = Original, y = Updated, fill= Freq)) +
           text = element_text(size = 10, color = "black"),
           legend.text = element_text(size = 10),
           legend.title = element_text(size = 10),
-          axis.text.x = element_text(color= "black", size = 10),
-          axis.text.y = element_text(size = 10, color = "black", 
+          axis.text.x = element_text(color= "black", size = 9, vjust = 0),
+          axis.text.y = element_text(size = 9, color = "black", 
                                      angle = 90, hjust = 0.5),
           axis.title = element_text(size = 10, face = "italic", color = "blue"),
           axis.title.x = element_text(vjust = -2),
@@ -155,8 +155,8 @@ cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
 
 # Figure
 plt <- as.data.frame(cm$table)
-levels(plt$Updated) <- c(expression("<"~500~km^2), expression(">="~500~km^2), "Inside~PA")
-levels(plt$Original) <- c(expression("<"~500~km^2), expression(">="~500~km^2), "Inside~PA")
+levels(plt$Updated) <- c(expression("<"~500~km^2), expression("\u2265"~500~km^2), "Inside~PA")
+levels(plt$Original) <- c(expression("<"~500~km^2), expression("\u2265"~500~km^2), "Inside~PA")
 plt$Updated <- factor(plt$Updated, levels = rev(levels(plt$Updated)))
 
 c2 <- ggplot(plt, aes(Original, Updated, fill= Freq)) +
@@ -179,8 +179,8 @@ c2 <- ggplot(plt, aes(Original, Updated, fill= Freq)) +
           text = element_text(size = 10, color = "black"),
           legend.text = element_text(size = 10),
           legend.title = element_text(size = 10),
-          axis.text.x = element_text(color= "black", size = 10),
-          axis.text.y = element_text(size = 10, color = "black", 
+          axis.text.x = element_text(color= "black", size = 9, vjust = 0),
+          axis.text.y = element_text(size = 9, color = "black", 
                                      angle = 90, hjust = 0.5),
           axis.title = element_text(size = 10, face = "italic", color = "blue"),
           axis.title.x = element_text(vjust = -2),
@@ -207,8 +207,8 @@ cm$table[2, 3] / nrow(pts_all) * 100 # from NA to 1
 
 # Figure
 plt <- as.data.frame(cm$table)
-levels(plt$Updated) <- c("< 2 km", ">= 2 km", "Inside PA")
-levels(plt$Original) <- c("< 2 km", ">= 2 km", "Inside PA")
+levels(plt$Updated) <- c("< 2 km", "\u2265 2 km", "Inside PA")
+levels(plt$Original) <- c("< 2 km", "\u2265 2 km", "Inside PA")
 plt$Updated <- factor(plt$Updated, levels = rev(levels(plt$Updated)))
 
 c3 <- ggplot(plt, aes(Original, Updated, fill= Freq)) +
@@ -228,14 +228,17 @@ c3 <- ggplot(plt, aes(Original, Updated, fill= Freq)) +
           text = element_text(size = 10, color = "black"),
           legend.text = element_text(size = 10),
           legend.title = element_text(size = 10),
-          axis.text.x = element_text(color= "black", size = 10),
-          axis.text.y = element_text(size = 10, color = "black", 
+          axis.text.x = element_text(color= "black", size = 9, vjust = 0),
+          axis.text.y = element_text(size = 9, color = "black", 
                                      angle = 90, hjust = 0.5),
           axis.title = element_text(size = 10, face = "italic", color = "blue"),
           axis.title.x = element_text(vjust = -2),
           axis.title.y = element_text(vjust = 2))
 
-ggarrange(c1, c2, c3, ncol = 3, common.legend = TRUE, legend = "right")
+ggarrange(c1, c2, c3, ncol = 3, labels = c("a", "b", "c"), 
+          hjust = c(-14, -13, -14),
+          font.label = list(size = 14, color = "black", face = "bold"),
+          common.legend = TRUE, legend = "right")
 
 ggsave("results/figures/pa_change_confusion_matrics.png", 
        width = 9, height = 3, bg = "white")

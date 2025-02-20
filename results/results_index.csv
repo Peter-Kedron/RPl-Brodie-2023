@@ -1,1 +1,5 @@
-﻿path,name,description
+﻿name,description
+models_bird_brodie_orig.rda,Reproduced models for birds
+models_mammal_brodie_orig.rda,Reproduced models for mammals
+models_updatePA.rda,Reanalysised models with updated PAs
+models_replicate.rda,Extended models with updated PAs and connectivity
