@@ -21,7 +21,7 @@ This study is a *reproduction/replication* of:
 
 - Reproduction report: [docs/report/01-RPR-Report.pdf](docs/report/01-RPR-Report.pdf)
 - Replication report: [docs/report/RPL-Report.pdf](docs/report/RPL-Report.pdf)
-- Manuscript: [docs/manuscript/manuscript.docx](docs/manuscript/manuscript.docx)
+- Manuscript: 
 
 ## Study Metadata
 
