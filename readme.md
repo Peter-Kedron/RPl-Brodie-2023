@@ -42,8 +42,8 @@ covariates - 1 km raster, HDI - country-level, Protected Areas - PA Polygons
 
 ## Related to
 
-- `OSF Project`:
-- `Preprint`:
+- `OSF Project`: [https://osf.io/qdbu2/](https://osf.io/qdbu2/)
+- `Preprint`: ---
 - `Prior Study`: [https://doi.org/10.1038/s41586-024-07333-z](https://doi.org/10.1038/s41586-024-07333-z)
 
 ## Metadata for access
